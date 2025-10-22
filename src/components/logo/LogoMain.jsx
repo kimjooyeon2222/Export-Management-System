@@ -5,9 +5,9 @@ import { useTheme } from '@mui/material/styles';
 export default function LogoMain() {
   return (
     <img
-      src="/assets/images/EMS_icon.png"
+      src="/assets/images/EMS_icon.jpg"
       alt="EMS Logo"
-      width={140}
+      width={200}
       height="auto"
       style={{
         display: 'block',

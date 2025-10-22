@@ -5,7 +5,7 @@ import { useTheme } from '@mui/material/styles';
 export default function LogoIcon() {
   return (
     <img
-      src="/assets/images/EMS_icon_2.png"
+      src="/assets/images/EMS_icon_2.jpg"
       alt="EMS Logo"
       style={{
         width: '40px',      // ✅ 원하는 크기로 조정 (예: 60~100px)
