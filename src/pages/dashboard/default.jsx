@@ -51,25 +51,99 @@ const actionSX = {
 // ==============================|| DASHBOARD - DEFAULT ||============================== //
 
 export default function DashboardDefault() {
+  // EMS 버튼 데이터
+  const emsButtons = [
+    { label: 'INVOICE TRK', color: '#4A4A4A' },
+    { label: '단조품', color: '#D32F2F' },
+    { label: '오일', color: '#FBC02D', textColor: '#000' },
+    { label: 'AXLE서브품', color: '#FDD835', textColor: '#000' },
+    { label: 'EV서브품', color: '#43A047' },
+    { label: '브라켓', color: '#1976D2' },
+    { label: '공구대차(종료)', color: '#8E24AA' },
+    { label: '수출품 사진', color: '#2E7D32' }
+  ];
+
   return (
     <Grid container rowSpacing={4.5} columnSpacing={2.75}>
       {/* row 1 */}
       <Grid sx={{ mb: -2.25 }} size={12}>
-        <Typography variant="h5">Dashboard</Typography>
+        <Typography variant="h5">수출통합관리 시스템</Typography>
       </Grid>
-      <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
-        <AnalyticEcommerce title="Total Page Views" count="4,42,236" percentage={59.3} extra="35,000" />
-      </Grid>
-      <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
-        <AnalyticEcommerce title="Total Users" count="78,250" percentage={70.5} extra="8,900" />
-      </Grid>
-      <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
-        <AnalyticEcommerce title="Total Order" count="18,800" percentage={27.4} isLoss color="warning" extra="1,943" />
-      </Grid>
-      <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
-        <AnalyticEcommerce title="Total Sales" count="35,078" percentage={27.4} isLoss color="warning" extra="20,395" />
-      </Grid>
-      <Grid sx={{ display: { sm: 'none', md: 'block', lg: 'none' } }} size={{ md: 8 }} />
+    {/* ✅ EMS 버튼 섹션 (비율 유지형, 축소 시도에도 일정한 간격 유지) */}
+    <Grid item xs={12}>
+      <MainCard sx={{ mt: 2.5, p: 3, textAlign: 'center', width:'100%', maxWidth:'none', margin:'0 auto', position: 'relative' }}>
+        {/* 제목 + 날짜 */}
+        <Box sx={{ position: 'relative', mb: 4 }}>
+          <Typography
+            variant="h5"
+            align="center"
+            sx={{
+              fontWeight: 'bold',
+              fontSize: '1.5rem',
+              mb: 2,
+              mt: 1
+            }}
+          >
+            ※ 수출현황 바로가기 ※
+          </Typography>
+          <Typography
+            variant="subtitle2"
+            sx={{
+              fontWeight: 'bold',
+              position: 'absolute',
+              right: '0%',
+              top: '-30px',
+              fontSize: '1rem',
+              color: 'text.secondary'
+            }}
+          >
+            2025.10.22
+           </Typography>
+        </Box>
+
+        {/* 버튼 그룹 */}
+        <Grid
+          container
+          spacing={2}
+          justifyContent="center"
+          alignItems="center"
+          sx={{
+            width: '100%',
+            mx: 'auto',
+          }}
+        >
+          {emsButtons.map((btn, i) => (
+            <Grid item xs={6} sm={3} md={3} lg={1.5} key={i}>
+              <Button
+                variant="contained"
+                fullWidth // ✅ 버튼이 Grid 셀 비율에 맞게 자동 확장
+                sx={{
+                  backgroundColor: btn.color,
+                  color: btn.textColor || '#fff',
+                  fontWeight: 'bold',
+                  borderRadius: 2,
+                  height: 55,
+                  boxShadow: '0 3px 6px rgba(0,0,0,0.2)',
+                  '&:hover': {
+                    opacity: 0.9,
+                    backgroundColor: btn.color
+                  }
+                }}
+              >
+                {btn.label}
+              
+              </Button>
+        </Grid>
+          ))}
+        </Grid>
+      </MainCard>
+  
+
+</Grid>
+
+     
+     
+
       {/* row 2 */}
       <Grid size={{ xs: 12, md: 7, lg: 8 }}>
         <UniqueVisitorCard />
@@ -79,7 +153,6 @@ export default function DashboardDefault() {
           <Grid>
             <Typography variant="h5">Income Overview</Typography>
           </Grid>
-          <Grid />
         </Grid>
         <MainCard sx={{ mt: 2 }} content={false}>
           <Box sx={{ p: 3, pb: 0 }}>
@@ -93,24 +166,24 @@ export default function DashboardDefault() {
           <MonthlyBarChart />
         </MainCard>
       </Grid>
+
       {/* row 3 */}
       <Grid size={{ xs: 12, md: 7, lg: 8 }}>
         <Grid container alignItems="center" justifyContent="space-between">
           <Grid>
             <Typography variant="h5">Recent Orders</Typography>
           </Grid>
-          <Grid />
         </Grid>
         <MainCard sx={{ mt: 2 }} content={false}>
           <OrdersTable />
         </MainCard>
       </Grid>
+
       <Grid size={{ xs: 12, md: 5, lg: 4 }}>
         <Grid container alignItems="center" justifyContent="space-between">
           <Grid>
             <Typography variant="h5">Analytics Report</Typography>
           </Grid>
-          <Grid />
         </Grid>
         <MainCard sx={{ mt: 2 }} content={false}>
           <List sx={{ p: 0, '& .MuiListItemButton-root': { py: 2 } }}>
@@ -130,6 +203,7 @@ export default function DashboardDefault() {
           <ReportAreaChart />
         </MainCard>
       </Grid>
+
       {/* row 4 */}
       <Grid size={{ xs: 12, md: 7, lg: 8 }}>
         <SaleReportCard />
@@ -139,8 +213,8 @@ export default function DashboardDefault() {
           <Grid>
             <Typography variant="h5">Transaction History</Typography>
           </Grid>
-          <Grid />
         </Grid>
+        {/* 아래 부분은 기존 그대로 */}
         <MainCard sx={{ mt: 2 }} content={false}>
           <List
             component="nav"
@@ -155,20 +229,7 @@ export default function DashboardDefault() {
               }
             }}
           >
-            <ListItem
-              component={ListItemButton}
-              divider
-              secondaryAction={
-                <Stack sx={{ alignItems: 'flex-end' }}>
-                  <Typography variant="subtitle1" noWrap>
-                    + $1,430
-                  </Typography>
-                  <Typography variant="h6" color="secondary" noWrap>
-                    78%
-                  </Typography>
-                </Stack>
-              }
-            >
+            <ListItem component={ListItemButton} divider>
               <ListItemAvatar>
                 <Avatar sx={{ color: 'success.main', bgcolor: 'success.lighter' }}>
                   <GiftOutlined />
@@ -176,75 +237,7 @@ export default function DashboardDefault() {
               </ListItemAvatar>
               <ListItemText primary={<Typography variant="subtitle1">Order #002434</Typography>} secondary="Today, 2:00 AM" />
             </ListItem>
-            <ListItem
-              component={ListItemButton}
-              divider
-              secondaryAction={
-                <Stack sx={{ alignItems: 'flex-end' }}>
-                  <Typography variant="subtitle1" noWrap>
-                    + $302
-                  </Typography>
-                  <Typography variant="h6" color="secondary" noWrap>
-                    8%
-                  </Typography>
-                </Stack>
-              }
-            >
-              <ListItemAvatar>
-                <Avatar sx={{ color: 'primary.main', bgcolor: 'primary.lighter' }}>
-                  <MessageOutlined />
-                </Avatar>
-              </ListItemAvatar>
-              <ListItemText primary={<Typography variant="subtitle1">Order #984947</Typography>} secondary="5 August, 1:45 PM" />
-            </ListItem>
-            <ListItem
-              component={ListItemButton}
-              secondaryAction={
-                <Stack sx={{ alignItems: 'flex-end' }}>
-                  <Typography variant="subtitle1" noWrap>
-                    + $682
-                  </Typography>
-                  <Typography variant="h6" color="secondary" noWrap>
-                    16%
-                  </Typography>
-                </Stack>
-              }
-            >
-              <ListItemAvatar>
-                <Avatar sx={{ color: 'error.main', bgcolor: 'error.lighter' }}>
-                  <SettingOutlined />
-                </Avatar>
-              </ListItemAvatar>
-              <ListItemText primary={<Typography variant="subtitle1">Order #988784</Typography>} secondary="7 hours ago" />
-            </ListItem>
           </List>
-        </MainCard>
-        <MainCard sx={{ mt: 2 }}>
-          <Stack sx={{ gap: 3 }}>
-            <Grid container justifyContent="space-between" alignItems="center">
-              <Grid>
-                <Stack>
-                  <Typography variant="h5" noWrap>
-                    Help & Support Chat
-                  </Typography>
-                  <Typography variant="caption" color="secondary" noWrap>
-                    Typical replay within 5 min
-                  </Typography>
-                </Stack>
-              </Grid>
-              <Grid>
-                <AvatarGroup sx={{ '& .MuiAvatar-root': { width: 32, height: 32 } }}>
-                  <Avatar alt="Remy Sharp" src={avatar1} />
-                  <Avatar alt="Travis Howard" src={avatar2} />
-                  <Avatar alt="Cindy Baker" src={avatar3} />
-                  <Avatar alt="Agnes Walker" src={avatar4} />
-                </AvatarGroup>
-              </Grid>
-            </Grid>
-            <Button size="small" variant="contained" sx={{ textTransform: 'capitalize' }}>
-              Need Help?
-            </Button>
-          </Stack>
         </MainCard>
       </Grid>
     </Grid>
