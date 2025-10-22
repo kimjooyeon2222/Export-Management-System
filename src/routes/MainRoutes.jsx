@@ -15,6 +15,8 @@ const Shadow = Loadable(lazy(() => import('pages/component-overview/shadows')));
 // render - sample page
 const SamplePage = Loadable(lazy(() => import('pages/extra-pages/sample-page')));
 
+// render - Invoice Page (추가)
+const InvoicePage = Loadable(lazy(() => import('pages/invoice/InvoicePage')));
 // ==============================|| MAIN ROUTING ||============================== //
 
 const MainRoutes = {
@@ -49,6 +51,10 @@ const MainRoutes = {
     {
       path: 'sample-page',
       element: <SamplePage />
+    },
+    {
+      path: 'invoice', 
+      element: <InvoicePage />
     }
   ]
 };

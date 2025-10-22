@@ -30,6 +30,7 @@ import avatar1 from 'assets/images/users/avatar-1.png';
 import avatar2 from 'assets/images/users/avatar-2.png';
 import avatar3 from 'assets/images/users/avatar-3.png';
 import avatar4 from 'assets/images/users/avatar-4.png';
+import { useNavigate } from 'react-router-dom';
 
 // avatar style
 const avatarSX = {
@@ -51,6 +52,8 @@ const actionSX = {
 // ==============================|| DASHBOARD - DEFAULT ||============================== //
 
 export default function DashboardDefault() {
+  const navigate = useNavigate();
+
   // EMS 버튼 데이터
   const emsButtons = [
     { label: 'INVOICE TRK', color: '#4A4A4A' },
@@ -117,6 +120,13 @@ export default function DashboardDefault() {
               <Button
                 variant="contained"
                 fullWidth // ✅ 버튼이 Grid 셀 비율에 맞게 자동 확장
+                onClick={() => {
+                 if (btn.label === 'INVOICE TRK') {
+                   navigate('/invoice'); // invoice 페이지로 이동
+                 } else {
+                   alert(`${btn.label} 페이지는 준비 중입니다.`);
+                 }
+               }}
                 sx={{
                   backgroundColor: btn.color,
                   color: btn.textColor || '#fff',
