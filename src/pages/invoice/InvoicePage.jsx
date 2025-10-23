@@ -57,7 +57,7 @@ export default function InvoicePage() {
         sx={{
           fontWeight: 'bold',
           color: 'black',
-          fontSize: '2rem',
+          fontSize: '1.3rem',
           pl: 3,
           pt: 2,
           letterSpacing: '0.5px',
@@ -210,7 +210,7 @@ export default function InvoicePage() {
           {/* 오른쪽: 수출자 + 품목구분 */}
           <Box sx={{ flex: 1, display: 'flex', flexDirection: 'row', justifyContent: 'space-between', p: 1 }}>
             <Box sx={{ flex: 1, mr: 1 }}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1, textAlign: 'center' }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1, textAlign: 'center', fontSize:'0.9rem' }}>
                 수출자
               </Typography>
               {['모텍', '오토텍', '이엔지', '정공'].map((item) => (
@@ -236,7 +236,7 @@ export default function InvoicePage() {
             </Box>
 
             <Box sx={{ flex: 1 }}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1, textAlign: 'center' }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1, textAlign: 'center',fontSize:'0.9rem' }}>
                 품목구분
               </Typography>
               {['EV-SUB', 'TOOL', '건설자재', '단조소재', '설비', '오일'].map((item) => (
