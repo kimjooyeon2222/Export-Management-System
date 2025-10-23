@@ -18,6 +18,115 @@ export default function InvoicePage() {
   const [poNumber, setPoNumber] = useState('');
   const [searchResult, setSearchResult] = useState(null);
   const [showUpcoming, setShowUpcoming] = useState(false);
+  const [userRole] = useState('admin');
+
+  const today = new Date();
+  const getDateOffset = (offsetDays) => {
+    const d = new Date(today);
+    d.setDate(d.getDate() + offsetDays);
+    return d.toISOString().split('T')[0];
+  };
+
+  // ✅ 기본 데이터
+  const [rows, setRows] = useState([
+    {
+      id: 301,
+      exporter: '오토텍',
+      inv: 'ATT-SUP-20250707-V1',
+      po: 'PO-450001',
+      amount: '$34,070.40',
+      item: 'TOOL',
+      cont: 'RFCU2295502',
+      bl: 'WIU525070633',
+      etd: getDateOffset(-10),
+      eta: getDateOffset(-3),
+      delayed: getDateOffset(-2),
+      count: '3일',
+      needsHelp: 'X',
+      note: '도착완료 데이터'
+    },
+    {
+      id: 302,
+      exporter: '오토텍',
+      inv: 'ATT-SUP-20250707-V2',
+      po: 'PO-450002',
+      amount: '$34,070.40',
+      item: 'TOOL',
+      cont: 'RFCU2295502',
+      bl: 'WIU525070633',
+      etd: getDateOffset(-7),
+      eta: getDateOffset(0),
+      delayed: getDateOffset(0),
+      count: '1일',
+      needsHelp: 'X',
+      note: '금일 도착분'
+    },
+    {
+      id: 303,
+      exporter: '오토텍',
+      inv: 'ATT-SUP-20250707-V3',
+      po: 'PO-450003',
+      amount: '$34,070.40',
+      item: 'TOOL',
+      cont: 'RFCU2295502',
+      bl: 'WIU525070633',
+      etd: getDateOffset(-5),
+      eta: getDateOffset(3),
+      delayed: getDateOffset(3),
+      count: '2일',
+      needsHelp: '△',
+      note: '5일 이내 도착 예정'
+    },
+    {
+      id: 304,
+      exporter: '오토텍',
+      inv: 'ATT-SUP-20250707-V4',
+      po: 'PO-450004',
+      amount: '$34,070.40',
+      item: 'TOOL',
+      cont: 'RFCU2295502',
+      bl: 'WIU525070633',
+      etd: getDateOffset(-15),
+      eta: getDateOffset(8),
+      delayed: getDateOffset(8),
+      count: '11일',
+      needsHelp: 'X',
+      note: '지연일수 10일 이상 경고'
+    }
+  ]);
+
+  // ✅ CRUD 기능
+  const handleAdd = () => {
+    const newRow = {
+      id: rows[rows.length - 1]?.id + 1 || 1,
+      exporter: '신규',
+      inv: 'NEW-INV',
+      po: 'PO-NEW',
+      amount: '$0.00',
+      item: 'NEW ITEM',
+      cont: 'NEW-CONT',
+      bl: 'NEW-BL',
+      etd: getDateOffset(0),
+      eta: getDateOffset(2),
+      delayed: getDateOffset(2),
+      count: '0일',
+      needsHelp: '-',
+      note: '신규 데이터'
+    };
+    setRows([...rows, newRow]);
+  };
+
+  const handleEdit = (id, field, value) => {
+    setRows((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, [field]: value } : r))
+    );
+  };
+
+  const handleDelete = (id) => {
+    if (window.confirm('정말 삭제하시겠습니까?')) {
+      setRows((prev) => prev.filter((r) => r.id !== id));
+    }
+  };
 
   const shipment = {
     exporter: '오토텍',
@@ -30,72 +139,6 @@ export default function InvoicePage() {
     arrival: '미착'
   };
 
-  const today = new Date();
-  const getDateOffset = (offsetDays) => {
-    const d = new Date(today);
-    d.setDate(d.getDate() + offsetDays);
-    return d.toISOString().split('T')[0];
-  };
-
-  const rows = [
-    {
-      id: 301,
-      exporter: '오토텍',
-      inv: 'ATT-SUP-20250707-V1',
-      amount: '$34,070.40',
-      item: 'TOOL',
-      cont: 'RFCU2295502',
-      bl: 'WIU525070633',
-      etd: getDateOffset(-10),
-      eta: getDateOffset(-3),
-      delayed: getDateOffset(-2),
-      count: '3일',
-      note: '도착완료 데이터'
-    },
-    {
-      id: 302,
-      exporter: '오토텍',
-      inv: 'ATT-SUP-20250707-V2',
-      amount: '$34,070.40',
-      item: 'TOOL',
-      cont: 'RFCU2295502',
-      bl: 'WIU525070633',
-      etd: getDateOffset(-7),
-      eta: getDateOffset(0),
-      delayed: getDateOffset(0),
-      count: '1일',
-      note: '금일 도착분'
-    },
-    {
-      id: 303,
-      exporter: '오토텍',
-      inv: 'ATT-SUP-20250707-V3',
-      amount: '$34,070.40',
-      item: 'TOOL',
-      cont: 'RFCU2295502',
-      bl: 'WIU525070633',
-      etd: getDateOffset(-5),
-      eta: getDateOffset(3),
-      delayed: getDateOffset(3),
-      count: '2일',
-      note: '5일 이내 도착 예정'
-    },
-    {
-      id: 304,
-      exporter: '오토텍',
-      inv: 'ATT-SUP-20250707-V4',
-      amount: '$34,070.40',
-      item: 'TOOL',
-      cont: 'RFCU2295502',
-      bl: 'WIU525070633',
-      etd: getDateOffset(-15),
-      eta: getDateOffset(8),
-      delayed: getDateOffset(8),
-      count: '11일',
-      note: '지연일수 10일 이상 경고'
-    }
-  ];
-
   const handleSearch = () => {
     if (poNumber === '4500001303') setSearchResult(shipment);
     else setSearchResult(null);
@@ -106,22 +149,20 @@ export default function InvoicePage() {
   const filteredRows = rows.filter((r) => {
     if (!showUpcoming) return true;
     const etaDate = parseDate(r.eta);
-    const diffETA = Math.floor((etaDate - today) / (1000 * 60 * 60 * 24));
-    // 빨간 배경 조건: 오늘 이후 도착 (0일 초과)
+    const diffETA = Math.floor(
+      (etaDate - today) / (1000 * 60 * 60 * 24)
+    );
     return diffETA > 0;
   });
 
   return (
     <Box sx={{ bgcolor: '#fff', height: '100vh', display: 'flex', flexDirection: 'column' }}>
-      {/* 상단 타이틀 */}
-      <Typography
-        variant="h6"
-        sx={{ fontWeight: 'bold', color: 'black', fontSize: '1.3rem', pl: 3, pt: 2 }}
-      >
+      {/* 타이틀 */}
+      <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'black', fontSize: '1.3rem', pl: 3, pt: 2 }}>
         수출일정 통합관리부
       </Typography>
 
-      {/* 상단 헤더 */}
+      {/* 헤더 */}
       <Box
         sx={{
           bgcolor: '#b34b00',
@@ -146,7 +187,7 @@ export default function InvoicePage() {
             '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }
           }}
         >
-          ← 메인으로 돌아가기
+          ← 메인으로
         </Button>
 
         {/* 중앙 검색창 */}
@@ -193,7 +234,7 @@ export default function InvoicePage() {
           </Button>
         </Box>
 
-        {/* 오른쪽 버튼 */}
+        {/* 우측 필터 버튼 */}
         <Button
           onClick={() => setShowUpcoming((prev) => !prev)}
           sx={{
@@ -208,120 +249,149 @@ export default function InvoicePage() {
         >
           <Typography component="span" sx={{ color: 'black', fontWeight: 'bold' }}>
             금일 이후 도착분
-          </Typography>{' '}
+          </Typography>
           <Typography component="span" sx={{ color: '#d32f2f', fontWeight: 'bold' }}>
             (5일전)
           </Typography>
         </Button>
       </Box>
 
-      {/* 본문 */}
-      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        {/* 상단: 검색결과 + 수출자/품목 */}
-        <Box sx={{ flex: '0 0 37%', display: 'flex', p: 2, gap: 2 }}>
-          {/* 왼쪽 검색결과 */}
-          <Box
-            sx={{
-              flex: 3,
-              border: '1px solid #ccc',
-              borderRadius: 1,
-              p: 2,
-              overflowY: 'auto'
-            }}
-          >
-            {searchResult ? (
-              <Table size="small">
-                <TableHead sx={{ bgcolor: '#f9f9f9' }}>
-                  <TableRow>
-                    {['수출자', 'INV#', 'CONT#', 'BL#', 'ETD', 'ETA', '공장도', '도착여부'].map((col) => (
-                      <TableCell key={col} align="center" sx={{ fontWeight: 'bold' }}>
-                        {col}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  <TableRow>
-                    <TableCell align="center">{searchResult.exporter}</TableCell>
-                    <TableCell align="center">{searchResult.inv}</TableCell>
-                    <TableCell align="center">{searchResult.cont}</TableCell>
-                    <TableCell align="center">{searchResult.bl}</TableCell>
-                    <TableCell align="center">{searchResult.etd}</TableCell>
-                    <TableCell align="center">{searchResult.eta}</TableCell>
-                    <TableCell align="center">{searchResult.factory}</TableCell>
-                    <TableCell align="center" sx={{ color: 'red', fontWeight: 'bold' }}>
-                      {searchResult.arrival}
+      {/* 검색결과 + 수출자/품목 버튼 */}
+      <Box sx={{ flex: '0 0 37%', display: 'flex', p: 2, gap: 2 }}>
+        {/* 왼쪽 검색결과 */}
+        <Box
+          sx={{
+            flex: 3,
+            border: '1px solid #ccc',
+            borderRadius: 1,
+            p: 2,
+            overflowY: 'auto'
+          }}
+        >
+          {searchResult ? (
+            <Table size="small">
+              <TableHead sx={{ bgcolor: '#f9f9f9' }}>
+                <TableRow>
+                  {['수출자', 'INV#', 'CONT#', 'BL#', 'ETD', 'ETA', '공장도', '도착여부'].map((col) => (
+                    <TableCell key={col} align="center" sx={{ fontWeight: 'bold' }}>
+                      {col}
                     </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            ) : (
-              <Typography sx={{ textAlign: 'center', color: '#888' }}>검색 결과가 없습니다.</Typography>
-            )}
-          </Box>
-
-          {/* 오른쪽 수출자/품목 */}
-          <Box sx={{ flex: 1, display: 'flex', justifyContent: 'space-between', p: 1 }}>
-            <Box sx={{ flex: 1, mr: 1 }}>
-              <Typography sx={{ fontWeight: 'bold', mb: 1, textAlign: 'center' }}>수출자</Typography>
-              {['모텍', '오토텍', '이엔지', '정공'].map((exp) => (
-                <Button
-                  key={exp}
-                  fullWidth
-                  sx={{
-                    mb: 1,
-                    bgcolor: '#f5c374',
-                    color: '#4b2e05',
-                    fontWeight: 'bold',
-                    borderRadius: 2,
-                    textTransform: 'none',
-                    fontSize: '1rem',
-                    '&:hover': { bgcolor: '#e9a43c' }
-                  }}
-                >
-                  {exp}
-                </Button>
-              ))}
-            </Box>
-
-            <Box sx={{ flex: 1 }}>
-              <Typography sx={{ fontWeight: 'bold', mb: 1, textAlign: 'center' }}>품목구분</Typography>
-              {['EV-SUB', 'TOOL', '건설자재', '단조소재', '설비', '오일'].map((cat) => (
-                <Button
-                  key={cat}
-                  fullWidth
-                  sx={{
-                    mb: 1,
-                    bgcolor: '#66b2b2',
-                    color: 'white',
-                    fontWeight: 'bold',
-                    borderRadius: 2,
-                    textTransform: 'none',
-                    fontSize: '1rem',
-                    '&:hover': { bgcolor: '#559c9c' }
-                  }}
-                >
-                  {cat}
-                </Button>
-              ))}
-            </Box>
-          </Box>
+                  ))}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                <TableRow>
+                  <TableCell align="center">{searchResult.exporter}</TableCell>
+                  <TableCell align="center">{searchResult.inv}</TableCell>
+                  <TableCell align="center">{searchResult.cont}</TableCell>
+                  <TableCell align="center">{searchResult.bl}</TableCell>
+                  <TableCell align="center">{searchResult.etd}</TableCell>
+                  <TableCell align="center">{searchResult.eta}</TableCell>
+                  <TableCell align="center">{searchResult.factory}</TableCell>
+                  <TableCell align="center" sx={{ color: 'red', fontWeight: 'bold' }}>
+                    {searchResult.arrival}
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          ) : (
+            <Typography sx={{ textAlign: 'center', color: '#888' }}>
+              검색 결과가 없습니다.
+            </Typography>
+          )}
         </Box>
 
-        {/* 하단 표 */}
-        <Box sx={{ flexGrow: 1, overflowY: 'auto', px: 2, pb: 2 }}>
-          <Paper elevation={2}>
-            <Table size="small" stickyHeader>
-              <TableHead sx={{ bgcolor: '#ffda66' }}>
-                <TableRow>
-                  {[
-                    'NO',
-                    'EXPORTER',
-                    'INV#',
-                    'INV# 금액',
-                    '품목구분',
-                    'CONT#',
-                    'BL#',
+        {/* 오른쪽 수출자 / 품목 버튼 */}
+        <Box sx={{ flex: 1, display: 'flex', justifyContent: 'space-between', p: 1 }}>
+          <Box sx={{ flex: 1, mr: 1 }}>
+            <Typography sx={{ fontWeight: 'bold', mb: 1, textAlign: 'center' }}>수출자</Typography>
+            {['모텍', '오토텍', '이엔지', '정공'].map((exp) => (
+              <Button
+                key={exp}
+                fullWidth
+                sx={{
+                  mb: 1,
+                  bgcolor: '#f5c374',
+                  color: '#4b2e05',
+                  fontWeight: 'bold',
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  fontSize: '1rem',
+                  '&:hover': { bgcolor: '#e9a43c' }
+                }}
+              >
+                {exp}
+              </Button>
+            ))}
+          </Box>
+
+          <Box sx={{ flex: 1 }}>
+            <Typography sx={{ fontWeight: 'bold', mb: 1, textAlign: 'center' }}>품목구분</Typography>
+            {['EV-SUB', 'TOOL', '건설자재', '단조소재', '설비', '오일'].map((cat) => (
+              <Button
+                key={cat}
+                fullWidth
+                sx={{
+                  mb: 1,
+                  bgcolor: '#66b2b2',
+                  color: 'white',
+                  fontWeight: 'bold',
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  fontSize: '1rem',
+                  '&:hover': { bgcolor: '#559c9c' }
+                }}
+              >
+                {cat}
+              </Button>
+            ))}
+          </Box>
+        </Box>
+      </Box>
+
+      {/* 관리자용 버튼 */}
+      {userRole === 'admin' && (
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, px: 3, pb: 1 }}>
+          <Button variant="contained" color="success" size="small" onClick={handleAdd}>
+            추가
+          </Button>
+          <Button
+            variant="contained"
+            color="warning"
+            size="small"
+            onClick={() => alert('수정은 셀 클릭으로 가능합니다.')}
+          >
+            수정
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            size="small"
+            onClick={() => {
+              const id = prompt('삭제할 ID를 입력하세요:');
+              if (id) handleDelete(Number(id));
+            }}
+          >
+            삭제
+          </Button>
+        </Box>
+      )}
+
+      {/* 하단 표 */}
+      <Box sx={{ flexGrow: 1, overflowY: 'auto', px: 2, pb: 2 }}>
+        <Paper elevation={2}>
+          <Table size="small" stickyHeader>
+            <TableHead sx={{ bgcolor: '#ffda66' }}>
+              <TableRow>
+                {[
+                  'NO',
+                  '발주번호',
+                  'EXPORTER',
+                  'INV#',
+                  'INV 금액',
+                  '품목구분',
+                  'CONT#',
+                  'BL#',
                     <Box key="etdHeader" sx={{ textAlign: 'center', whiteSpace: 'pre-line' }}>
                       ETD<br />(출발 예정 시간)
                     </Box>,
@@ -362,66 +432,97 @@ export default function InvoicePage() {
                         </Typography>
                       </Box>
                     </Box>,
-                    '도비필요',
-                    '비고'
-                  ].map((header, idx) => (
-                    <TableCell key={idx} align="center" sx={{ fontWeight: 'bold', color: '#333' }}>
-                      {header}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              </TableHead>
+                  '도비필요',
+                  '비고'
+                ].map((h) => (
+                  <TableCell key={h} align="center" sx={{ fontWeight: 'bold', color: '#333' }}>
+                    {h}
+                  </TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
 
-              <TableBody>
-                {filteredRows.map((row, i) => {
-                  const etaDate = parseDate(row.eta);
-                  const diffETA = Math.floor((etaDate - today) / (1000 * 60 * 60 * 24));
-                  const countValue = parseInt(row.count.replace('일', '')) || 0;
+            <TableBody>
+              {filteredRows.map((row, i) => {
+                const etaDate = parseDate(row.eta);
+                const diffETA = Math.floor((etaDate - today) / (1000 * 60 * 60 * 24));
+                const countNum = parseInt(row.count.replace('일', '')) || 0;
 
-                  let delayedStyle = {};
+                let delayedStyle = {};
                   if (diffETA < 0) delayedStyle = { bgcolor: '#d6eaff' };
                   else if (diffETA === 0)
                     delayedStyle = { bgcolor: '#ffe0b2', color: '#e65100', fontWeight: 'bold' };
                   else if (diffETA > 0 && diffETA <= 5)
                     delayedStyle = { bgcolor: '#ffcccc', color: '#b71c1c', fontWeight: 'bold' };
                   else delayedStyle = { bgcolor: '#ffcccc' };
+               
 
-                  const countStyle =
-                    countValue >= 10 ? { bgcolor: '#ccf2e0', color: 'red', fontWeight: 'bold' } : {};
+                const countStyle = countNum >= 10 ? { bgcolor: '#ccf2e0', color: 'red' } : {};
+                const rowBg = i % 2 === 0 ? '#fff5e6' : '#ffffff';
 
-                  const rowBgColor = i % 2 === 0 ? '#fff5e6' : '#ffffff';
-
-                  return (
-                    <TableRow key={row.id} sx={{ bgcolor: rowBgColor }}>
-                      <TableCell align="center">{row.id}</TableCell>
-                      <TableCell align="center">{row.exporter}</TableCell>
+                return (
+                  <TableRow key={row.id} sx={{ bgcolor: rowBg }}>
+                    {[
+                      row.id,
+                      row.po,
+                      row.exporter,
+                      row.inv,
+                      row.amount,
+                      row.item,
+                      row.cont,
+                      row.bl,
+                      row.etd,
+                      row.eta,
+                      row.delayed,
+                      row.count,
+                      row.needsHelp,
+                      row.note
+                    ].map((val, idx) => (
                       <TableCell
+                        key={idx}
                         align="center"
-                        sx={{ color: '#1565c0', textDecoration: 'underline', cursor: 'pointer' }}
+                        sx={
+                          idx === 10
+                            ? delayedStyle
+                            : idx === 11
+                            ? countStyle
+                            : userRole === 'admin'
+                            ? { cursor: 'pointer' }
+                            : {}
+                        }
+                        onClick={() => {
+                          if (userRole !== 'admin') return;
+                          const value = prompt(`값 수정`, String(val || ''));
+                          if (value !== null) {
+                            const keys = [
+                              'id',
+                              'po',
+                              'exporter',
+                              'inv',
+                              'amount',
+                              'item',
+                              'cont',
+                              'bl',
+                              'etd',
+                              'eta',
+                              'delayed',
+                              'count',
+                              'needsHelp',
+                              'note'
+                            ];
+                            handleEdit(row.id, keys[idx], value);
+                          }
+                        }}
                       >
-                        {row.inv}
+                        {val}
                       </TableCell>
-                      <TableCell align="center">{row.amount}</TableCell>
-                      <TableCell align="center">{row.item}</TableCell>
-                      <TableCell align="center">{row.cont}</TableCell>
-                      <TableCell align="center">{row.bl}</TableCell>
-                      <TableCell align="center">{row.etd}</TableCell>
-                      <TableCell align="center">{row.eta}</TableCell>
-                      <TableCell align="center" sx={delayedStyle}>
-                        {row.delayed}
-                      </TableCell>
-                      <TableCell align="center" sx={countStyle}>
-                        {row.count}
-                      </TableCell>
-                      <TableCell align="center">X</TableCell>
-                      <TableCell align="center">{row.note}</TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </Paper>
-        </Box>
+                    ))}
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </Paper>
       </Box>
     </Box>
   );
