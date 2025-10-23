@@ -25,7 +25,7 @@ const utilities = {
   title: 'Utilities',
   type: 'group',
   children: [
-    {
+/*     {
       id: 'util-typography',
       title: 'Typography',
       type: 'item',
@@ -45,7 +45,7 @@ const utilities = {
       type: 'item',
       url: '/shadow',
       icon: icons.BarcodeOutlined
-    }
+    } */
   ]
 };
 

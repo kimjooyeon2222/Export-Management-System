@@ -15,7 +15,7 @@ export default function AuthFooter() {
       >
         <Typography variant="subtitle2" color="secondary">
           © Made with love by Team{' '}
-          <Link href="https://codedthemes.com/" target="_blank" underline="hover">
+          <Link href="http://www.shinhwa-eng.com/" target="_blank" underline="hover">
             CodedThemes
           </Link>
         </Typography>

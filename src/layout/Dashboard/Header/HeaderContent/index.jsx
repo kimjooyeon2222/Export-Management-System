@@ -22,9 +22,9 @@ export default function HeaderContent() {
     <>
       {!downLG && <Search />}
       {downLG && <Box sx={{ width: '100%', ml: 1 }} />}
-      <IconButton
+{/*       <IconButton
         component={Link}
-        href="https://github.com/codedthemes/mantis-free-react-admin-template"
+        href="http://www.shinhwa-eng.com/"
         target="_blank"
         disableRipple
         color="secondary"
@@ -32,7 +32,7 @@ export default function HeaderContent() {
         sx={{ color: 'text.primary', bgcolor: 'grey.100' }}
       >
         <GithubOutlined />
-      </IconButton>
+      </IconButton> */}
 
       <Notification />
       {!downLG && <Profile />}

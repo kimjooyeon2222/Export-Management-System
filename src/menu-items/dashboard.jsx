@@ -1,24 +1,25 @@
 // assets
-import { DashboardOutlined } from '@ant-design/icons';
+import IosShareIcon from '@mui/icons-material/IosShare';
 
 // icons
 const icons = {
-  DashboardOutlined
+  IosShareIcon
 };
+
 
 // ==============================|| MENU ITEMS - DASHBOARD ||============================== //
 
 const dashboard = {
   id: 'group-dashboard',
-  title: 'Navigation',
+  title: 'Menu',
   type: 'group',
   children: [
     {
       id: 'dashboard',
-      title: 'Dashboard',
+      title: '수출통합관리 시스템',
       type: 'item',
       url: '/dashboard/default',
-      icon: icons.DashboardOutlined,
+      icon: icons.IosShareIcon,
       breadcrumbs: false
     }
   ]

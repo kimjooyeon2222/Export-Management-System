@@ -16,7 +16,7 @@ const pages = {
   children: [
     {
       id: 'login1',
-      title: 'Login',
+      title: '로그인',
       type: 'item',
       url: '/login',
       icon: icons.LoginOutlined,
@@ -24,7 +24,7 @@ const pages = {
     },
     {
       id: 'register1',
-      title: 'Register',
+      title: '회원가입',
       type: 'item',
       url: '/register',
       icon: icons.ProfileOutlined,

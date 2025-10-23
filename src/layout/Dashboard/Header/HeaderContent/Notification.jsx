@@ -66,7 +66,7 @@ export default function Notification() {
 
   return (
     <Box sx={{ flexShrink: 0, ml: 0.75 }}>
-      <IconButton
+      {/* <IconButton
         color="secondary"
         variant="light"
         sx={(theme) => ({
@@ -83,8 +83,8 @@ export default function Notification() {
         <Badge badgeContent={read} color="primary">
           <BellOutlined />
         </Badge>
-      </IconButton>
-      <Popper
+      </IconButton> */}
+      {/* <Popper
         placement={downMD ? 'bottom' : 'bottom-end'}
         open={open}
         anchorEl={anchorRef.current}
@@ -250,7 +250,7 @@ export default function Notification() {
             </Paper>
           </Transitions>
         )}
-      </Popper>
+      </Popper> */}
     </Box>
   );
 }
