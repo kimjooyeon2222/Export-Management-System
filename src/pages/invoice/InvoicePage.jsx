@@ -19,6 +19,8 @@ export default function InvoicePage() {
   const [searchResult, setSearchResult] = useState(null);
   const [showUpcoming, setShowUpcoming] = useState(false);
   const [userRole] = useState('admin');
+// === 상단에 추가 ===
+  const [isEditMode, setIsEditMode] = useState(false);
 
   const today = new Date();
   const getDateOffset = (offsetDays) => {
@@ -357,11 +359,21 @@ export default function InvoicePage() {
           </Button>
           <Button
             variant="contained"
-            color="warning"
+            color={isEditMode ? 'secondary' : 'warning'}
             size="small"
-            onClick={() => alert('수정은 셀 클릭으로 가능합니다.')}
+            onClick={() => {
+              setIsEditMode((prev) => {
+                const newMode = !prev;
+                if (newMode) {
+                  alert('🔧 수정 모드가 활성화되었습니다.\n셀을 클릭하면 데이터를 편집할 수 있습니다.');
+                } else {
+                  alert('✅ 수정 모드가 종료되었습니다.\n이제 표는 읽기 전용 상태입니다.');
+                }
+                return newMode;
+              });
+            }}
           >
-            수정
+            {isEditMode ? '수정 종료' : '수정 모드'}
           </Button>
           <Button
             variant="contained"
@@ -491,7 +503,7 @@ export default function InvoicePage() {
                             : {}
                         }
                         onClick={() => {
-                          if (userRole !== 'admin') return;
+                          if (userRole !== 'admin' || !isEditMode) return;
                           const value = prompt(`값 수정`, String(val || ''));
                           if (value !== null) {
                             const keys = [
