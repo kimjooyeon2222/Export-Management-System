@@ -40,9 +40,9 @@ export default function InvoicePage() {
       item: 'TOOL',
       cont: 'RFCU2295502',
       bl: 'WIU525070633',
-      etd: getDateOffset(-10),
+      etd: getDateOffset(-2),
       eta: getDateOffset(-3),
-      delayed: getDateOffset(-2),
+      delayed: getDateOffset(12),
       count: '3일',
       needsHelp: 'X',
       note: '도착완료 데이터'
@@ -546,82 +546,96 @@ useEffect(() => {
             </TableHead>
 
             <TableBody>
-              {filteredRows.map((row, i) => {
-                const etaDate = parseDate(row.eta);
-                const diffETA = Math.floor((etaDate - today) / (1000 * 60 * 60 * 24));
-                const countNum = parseInt(row.count.replace('일', '')) || 0;
+  {filteredRows.map((row, i) => {
+    const etaDate = parseDate(row.eta);
+    const delayedDate = parseDate(row.delayed);
+    const diffDays = Math.floor((delayedDate - etaDate) / (1000 * 60 * 60 * 24)); // ✅ 날짜 차이 계산
 
-                let delayedStyle = {};
-                  if (diffETA < 0) delayedStyle = { bgcolor: '#d6eaff' };
-                  else if (diffETA === 0)
-                    delayedStyle = { bgcolor: '#ffe0b2', color: '#e65100', fontWeight: 'bold' };
-                  else if (diffETA > 0 && diffETA <= 5)
-                    delayedStyle = { bgcolor: '#ffcccc', color: '#b71c1c', fontWeight: 'bold' };
-                  else delayedStyle = { bgcolor: '#ffcccc' };
-               
+    const countText = `${diffDays}일`; // ✅ COUNT 컬럼 표시용
 
-                const countStyle = countNum >= 10 ? { bgcolor: '#ccf2e0', color: 'red' } : {};
-                const rowBg = i % 2 === 0 ? '#fff5e6' : '#ffffff';
+    // 배경/경고 색상 계산 로직
+    const diffETA = Math.floor((etaDate - today) / (1000 * 60 * 60 * 24));
+    const countNum = diffDays;
 
-                return (
-                  <TableRow key={row.id} sx={{ bgcolor: rowBg }}>
-                    {[
-                      row.id,
-                      row.po,
-                      row.exporter,
-                      row.inv,
-                      row.amount,
-                      row.item,
-                      row.cont,
-                      row.bl,
-                      row.etd,
-                      row.eta,
-                      row.delayed,
-                      row.count,
-                      row.needsHelp,
-                      row.note
-                    ].map((val, idx) => (
-                      <TableCell
-                        key={idx}
-                        align="center"
-                        sx={{
-                           ...(idx === 3 && { color: 'blue', cursor: 'pointer', textDecoration: 'underline' }), // INV 열만 파란색 + 링크 효과
-                           ...(idx === 10 ? delayedStyle : {}), // delayed 스타일
-                           ...(idx === 11 ? countStyle : {}), // count 스타일
-                           ...(userRole === 'admin' && { cursor: 'pointer' })
-                        }}
-                        onClick={() => {
-                         // ✅ INV(4번째 열) 클릭 시 — 수정 모드가 아닐 때만 페이지 이동
-                         if (idx === 3) {
-                          if (!isEditMode) {
-                            navigate(`/packing-list/${row.inv}`);
-                          } else {
-                            // 수정 모드일 때는 페이지 이동 대신 수정 가능하도록 함
-                            const value = prompt('INV 값을 수정하세요:', String(val || ''));
-                            if (value !== null) handleEdit(row.id, 'inv', value);
-                          }
-                          return; // 아래 코드 실행 방지
-                        }
+    let delayedStyle = {};
+    if (diffETA < 0) delayedStyle = { bgcolor: '#d6eaff' };
+    else if (diffETA === 0)
+      delayedStyle = { bgcolor: '#ffe0b2', color: '#e65100', fontWeight: 'bold' };
+    else if (diffETA > 0 && diffETA <= 5)
+      delayedStyle = { bgcolor: '#ffcccc', color: '#b71c1c', fontWeight: 'bold' };
+    else delayedStyle = { bgcolor: '#ffcccc' };
 
-                        // ✅ 나머지 셀: 관리자 + 수정 모드일 때만 편집 가능
-                        if (userRole !== 'admin' || !isEditMode) return;
-                        const value = prompt('값 수정', String(val || ''));
-                        if (value !== null) {
-                          const keys = [
-                            'id', 'po', 'exporter', 'inv', 'amount', 'item', 'cont', 'bl',
-                            'etd', 'eta', 'delayed', 'count', 'needsHelp', 'note'
-                          ];
-                          handleEdit(row.id, keys[idx], value);
-                         }
-                       }}
-                      >
-                        {val}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                );
-              })}
-            </TableBody>
+    const countStyle =
+  countNum >= 10
+    ? { bgcolor: '#ccf2e0', color: 'red', fontWeight: 'bold' } // 🔥 10일 이상 → 빨강 글씨만 표시
+    : { bgcolor: 'white', color: 'black', fontWeight: 'normal' }; // ⚪ 기본은 흰색
+
+
+    const rowBg = i % 2 === 0 ? '#fff5e6' : '#ffffff';
+
+    return (
+      <TableRow key={row.id} sx={{ bgcolor: rowBg }}>
+        {[
+          row.id,
+          row.po,
+          row.exporter,
+          row.inv,
+          row.amount,
+          row.item,
+          row.cont,
+          row.bl,
+          row.etd,
+          row.eta,
+          row.delayed,
+          countText, // ✅ 여기서 계산된 값 표시
+          row.needsHelp,
+          row.note
+        ].map((val, idx) => (
+          <TableCell
+            key={idx}
+            align="center"
+            sx={{
+              ...(idx === 3 && { color: 'blue', cursor: 'pointer', textDecoration: 'underline' }),
+              ...(idx === 10 ? delayedStyle : {}), // delayed 스타일
+              ...(idx === 11 ? countStyle : {}), // ✅ count 스타일 적용
+              ...(userRole === 'admin' && { cursor: 'pointer' })
+            }}
+            onClick={() => {
+              // INV 클릭 시 링크 이동
+              if (idx === 3 && !isEditMode) return navigate(`/packing-list/${row.inv}`);
+
+              if (userRole === 'admin' && isEditMode) {
+                const value = prompt('값 수정', String(val || ''));
+                if (value !== null) {
+                  const keys = [
+                    'id',
+                    'po',
+                    'exporter',
+                    'inv',
+                    'amount',
+                    'item',
+                    'cont',
+                    'bl',
+                    'etd',
+                    'eta',
+                    'delayed',
+                    'count',
+                    'needsHelp',
+                    'note'
+                  ];
+                  handleEdit(row.id, keys[idx], value);
+                }
+              }
+            }}
+          >
+            {val}
+          </TableCell>
+        ))}
+      </TableRow>
+    );
+  })}
+</TableBody>
+
           </Table>
         </Paper>
       </Box>
