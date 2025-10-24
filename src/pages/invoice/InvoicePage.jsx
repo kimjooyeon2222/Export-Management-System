@@ -281,26 +281,6 @@ useEffect(() => {
           </Button>
         </Box>
 
-        {/* 우측 필터 버튼 */}
-        <Button
-          onClick={() => setShowUpcoming((prev) => !prev)}
-          sx={{
-            bgcolor: showUpcoming ? '#ffd6d6' : '#ffecec',
-            color: '#d32f2f',
-            fontWeight: 'bold',
-            px: 3,
-            borderRadius: 2,
-            fontSize: '0.95rem',
-            '&:hover': { bgcolor: '#ffcccc' }
-          }}
-        >
-          <Typography component="span" sx={{ color: 'black', fontWeight: 'bold' }}>
-            금일 이후 도착분
-          </Typography>
-          <Typography component="span" sx={{ color: '#d32f2f', fontWeight: 'bold' }}>
-            (5일전)
-          </Typography>
-        </Button>
       </Box>
 
       {/* 검색결과 + 수출자/품목 버튼 */}
@@ -312,14 +292,16 @@ useEffect(() => {
             border: '1px solid #ccc',
             borderRadius: 1,
             p: 2,
-            overflowY: 'auto'
+            overflowY: 'auto',
+            maxHeight: '330px' // ✅ 검색결과 영역 고정 높이 (스크롤 전용)
+
           }}
         >
         {searchResult && searchResult.length > 0 ? (
   <Table size="small">
     <TableHead sx={{ bgcolor: '#f9f9f9' }}>
       <TableRow>
-        {['수출자', 'INV#', 'CONT#', 'BL#', 'ETD', 'ETA', '공장도', '도착여부'].map((col) => (
+        {['수출자', 'INV#', 'CONT#', 'BL#', 'ETD (출발 예정일)', 'ETA (도착 예정일)', '공장 도착', '도착여부'].map((col) => (
           <TableCell key={col} align="center" sx={{ fontWeight: 'bold' }}>
             {col}
           </TableCell>
@@ -329,7 +311,7 @@ useEffect(() => {
 
     <TableBody>
       {searchResult.map((row, i) => {
-        const factory = '공장도착';
+        const factory = '2025-01-10';
         const arrival = '도착';
 
         // ✅ 실제 저장된 Invoice 데이터와 매칭해서 상세정보 가져오기
@@ -361,8 +343,22 @@ useEffect(() => {
             <TableCell align="center">{invoiceRow?.etd || '-'}</TableCell>
             <TableCell align="center">{invoiceRow?.eta || '-'}</TableCell>
             <TableCell align="center">{factory}</TableCell>
-            <TableCell align="center" sx={{ color: 'green', fontWeight: 'bold' }}>
-              {arrival}
+            <TableCell
+              align="center"
+  sx={{
+    fontWeight: 'bold',
+    textAlign: "center",
+    color:
+      new Date(factory) <= new Date(invoiceRow?.eta)
+        ? '#2e7d32'
+        : '#c62828',
+    bgcolor:
+      new Date(factory) <= new Date(invoiceRow?.eta)
+        ? '#b7e1cd'
+        : '#f8b0b0'
+  }}
+>
+  {new Date(factory) <= new Date(invoiceRow?.eta) ? '도착' : '미도착'}
             </TableCell>
           </TableRow>
         );
@@ -429,6 +425,26 @@ useEffect(() => {
       {/* 관리자용 버튼 */}
       {userRole === 'admin' && (
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, px: 3, pb: 1 }}>
+                  {/* 우측 필터 버튼 */}
+        <Button
+          onClick={() => setShowUpcoming((prev) => !prev)}
+          sx={{
+            bgcolor: showUpcoming ? '#ffd6d6' : '#ffecec',
+            color: '#d32f2f',
+            fontWeight: 'bold',
+            px: 3,
+            borderRadius: 2,
+            fontSize: '0.95rem',
+            '&:hover': { bgcolor: '#ffcccc' }
+          }}
+        >
+          <Typography component="span" sx={{ color: 'black', fontWeight: 'bold' }}>
+            금일 이후 도착분
+          </Typography>
+          <Typography component="span" sx={{ color: '#d32f2f', fontWeight: 'bold' }}>
+            (5일전)
+          </Typography>
+        </Button>
           <Button variant="contained" color="success" size="small" onClick={handleAdd}>
             추가
           </Button>
@@ -472,7 +488,7 @@ useEffect(() => {
               <TableRow>
                 {[
                   'NO',
-                  '발주번호',
+                  '발주번호 (PO)',
                   'EXPORTER',
                   'INV#',
                   'INV 금액',
@@ -480,10 +496,10 @@ useEffect(() => {
                   'CONT#',
                   'BL#',
                     <Box key="etdHeader" sx={{ textAlign: 'center', whiteSpace: 'pre-line' }}>
-                      ETD<br />(출발 예정 시간)
+                      ETD<br />(출발 예정일)
                     </Box>,
                     <Box key="etaHeader" sx={{ textAlign: 'center', whiteSpace: 'pre-line' }}>
-                      ETA<br />(공장 도착 시간)
+                      ETA<br />(공장 도착 예정일)
                     </Box>,
                     <Box key="delayed" sx={{ textAlign: 'center', lineHeight: 1.2 }}>
                       <Typography sx={{ fontWeight: 'bold' }}>DELAYED DATE</Typography>
