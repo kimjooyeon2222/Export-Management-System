@@ -197,6 +197,10 @@ useEffect(() => {
   updateFromPackingList();
 }, [location.pathname]); // 🔥 경로가 바뀔 때마다 다시 실행됨
 
+// ✅ InvoicePage 데이터를 localStorage에도 저장 (검색결과 상세정보용)
+useEffect(() => {
+  localStorage.setItem('invoiceData', JSON.stringify(rows));
+}, [rows]);
 
   return (
     <Box sx={{ bgcolor: '#fff', height: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -311,7 +315,7 @@ useEffect(() => {
             overflowY: 'auto'
           }}
         >
-          {searchResult && searchResult.length > 0 ? (
+        {searchResult && searchResult.length > 0 ? (
   <Table size="small">
     <TableHead sx={{ bgcolor: '#f9f9f9' }}>
       <TableRow>
@@ -322,18 +326,40 @@ useEffect(() => {
         ))}
       </TableRow>
     </TableHead>
+
     <TableBody>
       {searchResult.map((row, i) => {
         const factory = '공장도착';
         const arrival = '도착';
+
+        // ✅ 실제 저장된 Invoice 데이터와 매칭해서 상세정보 가져오기
+        const invoiceRow = JSON.parse(localStorage.getItem('invoiceData') || '[]').find(
+          (r) => r.inv === row.inv
+        );
+
         return (
           <TableRow key={i}>
-            <TableCell align="center">{row.exporter || '오토텍'}</TableCell>
-            <TableCell align="center">{row.inv}</TableCell>
-            <TableCell align="center">{row.cont || '-'}</TableCell>
-            <TableCell align="center">{row.bl || '-'}</TableCell>
-            <TableCell align="center">{row.etd || '-'}</TableCell>
-            <TableCell align="center">{row.eta || '-'}</TableCell>
+            <TableCell align="center">{row.exporter || invoiceRow?.exporter || '오토텍'}</TableCell>
+
+            {/* ✅ INV 클릭 시 패킹리스트 이동 */}
+            <TableCell
+              align="center"
+              sx={{
+                color: 'blue',
+                cursor: 'pointer',
+                textDecoration: 'underline',
+                fontWeight: 'bold'
+              }}
+              onClick={() => window.location.assign(`/packing-list/${row.inv}`)}
+            >
+              {row.inv}
+            </TableCell>
+
+            {/* ✅ 나머지 상세정보 표시 */}
+            <TableCell align="center">{invoiceRow?.cont || '-'}</TableCell>
+            <TableCell align="center">{invoiceRow?.bl || '-'}</TableCell>
+            <TableCell align="center">{invoiceRow?.etd || '-'}</TableCell>
+            <TableCell align="center">{invoiceRow?.eta || '-'}</TableCell>
             <TableCell align="center">{factory}</TableCell>
             <TableCell align="center" sx={{ color: 'green', fontWeight: 'bold' }}>
               {arrival}
@@ -348,6 +374,7 @@ useEffect(() => {
     검색 결과가 없습니다.
   </Typography>
 )}
+
 
         </Box>
 
