@@ -301,7 +301,7 @@ useEffect(() => {
   <Table size="small">
     <TableHead sx={{ bgcolor: '#f9f9f9' }}>
       <TableRow>
-        {['수출자', 'INV#', 'CONT#', 'BL#', 'ETD (출발 예정일)', 'ETA (도착 예정일)', '공장 도착', '도착여부'].map((col) => (
+        {['수출자', 'INV#', 'CONT#', 'BL#', 'ETD (출발 예정일)', 'ETA (도착 예정일)', '공장 도착일', '도착여부'].map((col) => (
           <TableCell key={col} align="center" sx={{ fontWeight: 'bold' }}>
             {col}
           </TableCell>
@@ -311,58 +311,63 @@ useEffect(() => {
 
     <TableBody>
       {searchResult.map((row, i) => {
-        const factory = '2025-01-10';
-        const arrival = '도착';
+  // ✅ invoiceData에서 INV# 일치하는 행 찾기
+  const invoiceData = JSON.parse(localStorage.getItem('invoiceData') || '[]');
+  const matched = invoiceData.find((r) => r.inv === row.inv);
 
-        // ✅ 실제 저장된 Invoice 데이터와 매칭해서 상세정보 가져오기
-        const invoiceRow = JSON.parse(localStorage.getItem('invoiceData') || '[]').find(
-          (r) => r.inv === row.inv
-        );
+  // ✅ 실제 데이터 병합
+  const merged = { ...row, ...matched };
 
-        return (
-          <TableRow key={i}>
-            <TableCell align="center">{row.exporter || invoiceRow?.exporter || '오토텍'}</TableCell>
+  // ✅ 하단 표(Invoice Data)에서 delayed, eta, etd 값 불러오기
+  const etd = merged.etd || '-';
+  const eta = merged.eta || '-';
+  const delayed = merged.delayed || '-';
 
-            {/* ✅ INV 클릭 시 패킹리스트 이동 */}
-            <TableCell
-              align="center"
-              sx={{
-                color: 'blue',
-                cursor: 'pointer',
-                textDecoration: 'underline',
-                fontWeight: 'bold'
-              }}
-              onClick={() => window.location.assign(`/packing-list/${row.inv}`)}
-            >
-              {row.inv}
-            </TableCell>
+  // ✅ 도착 여부 계산
+  const arrived = new Date(delayed) <= new Date();
 
-            {/* ✅ 나머지 상세정보 표시 */}
-            <TableCell align="center">{invoiceRow?.cont || '-'}</TableCell>
-            <TableCell align="center">{invoiceRow?.bl || '-'}</TableCell>
-            <TableCell align="center">{invoiceRow?.etd || '-'}</TableCell>
-            <TableCell align="center">{invoiceRow?.eta || '-'}</TableCell>
-            <TableCell align="center">{factory}</TableCell>
-            <TableCell
-              align="center"
-  sx={{
-    fontWeight: 'bold',
-    textAlign: "center",
-    color:
-      new Date(factory) <= new Date(invoiceRow?.eta)
-        ? '#2e7d32'
-        : '#c62828',
-    bgcolor:
-      new Date(factory) <= new Date(invoiceRow?.eta)
-        ? '#b7e1cd'
-        : '#f8b0b0'
-  }}
->
-  {new Date(factory) <= new Date(invoiceRow?.eta) ? '도착' : '미도착'}
-            </TableCell>
-          </TableRow>
-        );
-      })}
+  return (
+    <TableRow key={i}>
+      <TableCell align="center">{merged.exporter || '오토텍'}</TableCell>
+
+      {/* INV 클릭 시 PACKING LIST 이동 */}
+      <TableCell
+        align="center"
+        sx={{
+          color: 'blue',
+          cursor: 'pointer',
+          textDecoration: 'underline',
+          fontWeight: 'bold'
+        }}
+        onClick={() => window.location.assign(`/packing-list/${merged.inv}`)}
+      >
+        {merged.inv}
+      </TableCell>
+
+      {/* ✅ 하단 표 데이터 그대로 연동 */}
+      <TableCell align="center">{merged.cont || '-'}</TableCell>
+      <TableCell align="center">{merged.bl || '-'}</TableCell>
+      <TableCell align="center">{etd}</TableCell>
+      <TableCell align="center">{eta}</TableCell>
+      <TableCell align="center">{delayed}</TableCell>
+
+      {/* ✅ 도착 여부 컬럼 */}
+      <TableCell
+        align="center"
+        sx={{
+          fontWeight: 'bold',
+          textAlign: 'center',
+          color: arrived ? '#1b5e20' : '#c62828',
+          bgcolor: arrived ? '#a5d6a7' : '#ffcdd2'
+        }}
+      >
+        {arrived ? '도착' : '미도착'}
+      </TableCell>
+    </TableRow>
+  );
+})}
+
+
     </TableBody>
   </Table>
 ) : (
