@@ -142,8 +142,16 @@ export default function InvoicePage() {
   };
 
   const handleSearch = () => {
-    if (poNumber === '4500001303') setSearchResult(shipment);
-    else setSearchResult(null);
+   const allPacking = JSON.parse(localStorage.getItem("packingListData") || "[]");
+
+  // 입력된 PO번호 포함된 행 필터
+  const result = allPacking.filter((r) => r.po.includes(poNumber));
+
+  if (result.length > 0) {
+    setSearchResult(result);
+  } else {
+    setSearchResult(null);
+  }
   };
 
   const parseDate = (str) => new Date(str);
@@ -303,37 +311,44 @@ useEffect(() => {
             overflowY: 'auto'
           }}
         >
-          {searchResult ? (
-            <Table size="small">
-              <TableHead sx={{ bgcolor: '#f9f9f9' }}>
-                <TableRow>
-                  {['수출자', 'INV#', 'CONT#', 'BL#', 'ETD', 'ETA', '공장도', '도착여부'].map((col) => (
-                    <TableCell key={col} align="center" sx={{ fontWeight: 'bold' }}>
-                      {col}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                <TableRow>
-                  <TableCell align="center">{searchResult.exporter}</TableCell>
-                  <TableCell align="center">{searchResult.inv}</TableCell>
-                  <TableCell align="center">{searchResult.cont}</TableCell>
-                  <TableCell align="center">{searchResult.bl}</TableCell>
-                  <TableCell align="center">{searchResult.etd}</TableCell>
-                  <TableCell align="center">{searchResult.eta}</TableCell>
-                  <TableCell align="center">{searchResult.factory}</TableCell>
-                  <TableCell align="center" sx={{ color: 'red', fontWeight: 'bold' }}>
-                    {searchResult.arrival}
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          ) : (
-            <Typography sx={{ textAlign: 'center', color: '#888' }}>
-              검색 결과가 없습니다.
-            </Typography>
-          )}
+          {searchResult && searchResult.length > 0 ? (
+  <Table size="small">
+    <TableHead sx={{ bgcolor: '#f9f9f9' }}>
+      <TableRow>
+        {['수출자', 'INV#', 'CONT#', 'BL#', 'ETD', 'ETA', '공장도', '도착여부'].map((col) => (
+          <TableCell key={col} align="center" sx={{ fontWeight: 'bold' }}>
+            {col}
+          </TableCell>
+        ))}
+      </TableRow>
+    </TableHead>
+    <TableBody>
+      {searchResult.map((row, i) => {
+        const factory = '공장도착';
+        const arrival = '도착';
+        return (
+          <TableRow key={i}>
+            <TableCell align="center">{row.exporter || '오토텍'}</TableCell>
+            <TableCell align="center">{row.inv}</TableCell>
+            <TableCell align="center">{row.cont || '-'}</TableCell>
+            <TableCell align="center">{row.bl || '-'}</TableCell>
+            <TableCell align="center">{row.etd || '-'}</TableCell>
+            <TableCell align="center">{row.eta || '-'}</TableCell>
+            <TableCell align="center">{factory}</TableCell>
+            <TableCell align="center" sx={{ color: 'green', fontWeight: 'bold' }}>
+              {arrival}
+            </TableCell>
+          </TableRow>
+        );
+      })}
+    </TableBody>
+  </Table>
+) : (
+  <Typography sx={{ textAlign: 'center', color: '#888' }}>
+    검색 결과가 없습니다.
+  </Typography>
+)}
+
         </Box>
 
         {/* 오른쪽 수출자 / 품목 버튼 */}
