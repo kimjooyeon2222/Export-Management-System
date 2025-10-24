@@ -1,77 +1,199 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Box, Typography, Button, Table, TableHead, TableRow, TableCell, TableBody, Paper } from '@mui/material';
+import {
+  Box,
+  Typography,
+  Button,
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
+  Paper
+} from '@mui/material';
 
 export default function PackingList() {
-  const { inv } = useParams(); // URL 파라미터로부터 INV 번호 가져오기
+  const { inv } = useParams();
   const navigate = useNavigate();
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [userRole] = useState('admin'); // ✅ 실제 로그인 로직과 연동 가능
 
-  // ✅ 샘플 데이터 (나중에 DB 연결 시 실제 데이터로 교체)
-  const packingData = {
-    'ATT-SUP-20250707-V1': [
-      { po: '450001', part: 'M5 X 14 BOLT ASSY', qty: 196000 },
-      { po: '450002', part: 'M5 X 16 BOLT ASSY', qty: 120000 }
-    ],
-    'ATT-SUP-20250707-V2': [
-      { po: '450003', part: 'WASHER 10MM', qty: 54000 },
-      { po: '450004', part: 'NUT M5', qty: 76000 }
-    ],
-    'ATT-SUP-20250707-V3': [
-      { po: '450005', part: 'SCREW 8X20', qty: 23000 }
-    ]
+  // ✅ LocalStorage 불러오기 (INV별 저장된 데이터)
+  const savedData = JSON.parse(localStorage.getItem(`packing_${inv}`) || '[]');
+  const [rows, setRows] = useState(
+    savedData.length
+      ? savedData
+      : [
+          {
+            id: 1,
+            po: '450001',
+            vendor: '와이엠',
+            partNo: 'A10U8741',
+            partName: 'M5 X 14 BOLT ASSY',
+            spec: 'Ø110×Ø140(M42×3P)',
+            qty: 196000
+          },
+          {
+            id: 2,
+            po: '45000223',
+            vendor: '와이엠',
+            partNo: 'A10U8742',
+            partName: 'M5 X 16 BOLT ASSY',
+            spec: 'Ø90×Ø140(M60×3P)',
+            qty: 132000
+          }
+        ]
+  );
+
+  // ✅ LocalStorage 자동 저장 (INV별)
+  useEffect(() => {
+    localStorage.setItem(`packing_${inv}`, JSON.stringify(rows));
+
+    // === Invoice Page 연동용 전체 packingListData 갱신 ===
+    const allKeys = Object.keys(localStorage).filter((k) =>
+      k.startsWith('packing_')
+    );
+
+    let allPacking = [];
+    allKeys.forEach((key) => {
+      const invKey = key.replace('packing_', '');
+      const data = JSON.parse(localStorage.getItem(key) || '[]');
+      data.forEach((row) => {
+        allPacking.push({ inv: invKey, po: row.po });
+      });
+    });
+
+    // 전체 데이터 통합 저장 (InvoicePage에서 불러오기용)
+    localStorage.setItem('packingListData', JSON.stringify(allPacking));
+  }, [rows, inv]);
+
+  // ✅ 행 추가
+  const handleAdd = () => {
+    const newRow = {
+      id: rows[rows.length - 1]?.id + 1 || 1,
+      po: '',
+      vendor: '',
+      partNo: '',
+      partName: '',
+      spec: '',
+      qty: 0
+    };
+    setRows([...rows, newRow]);
   };
 
-  // ✅ 해당 INV의 PACKING LIST 데이터 찾기
-  const currentData = packingData[inv] || [];
+  // ✅ 행 수정
+  const handleEdit = (id, field, value) => {
+    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, [field]: value } : r)));
+  };
+
+  // ✅ 행 삭제
+  const handleDelete = (id) => {
+    if (window.confirm('정말 삭제하시겠습니까?')) {
+      setRows((prev) => prev.filter((r) => r.id !== id));
+    }
+  };
 
   return (
     <Box sx={{ bgcolor: '#fff', height: '100vh', p: 3 }}>
-      {/* 상단 타이틀 */}
+      {/* 제목 */}
       <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 2 }}>
         📦 PACKING LIST - {inv}
       </Typography>
 
-      {/* 메인으로 돌아가기 버튼 */}
-      <Button
-        variant="outlined"
-        onClick={() => navigate(-1)}
+      {/* 상단 버튼 */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+        <Button
+          variant="outlined"
+          onClick={() => navigate(-1)}
+          sx={{
+            borderColor: '#b34b00',
+            color: '#b34b00',
+            fontWeight: 'bold',
+            '&:hover': { bgcolor: '#fff2e0' }
+          }}
+        >
+          ← INVOICE로 돌아가기
+        </Button>
+
+        {/* 관리자 전용 버튼 */}
+        {userRole === 'admin' && (
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button variant="contained" color="success" size="small" onClick={handleAdd}>
+              추가
+            </Button>
+            <Button
+              variant="contained"
+              color={isEditMode ? 'secondary' : 'warning'}
+              size="small"
+              onClick={() => {
+                setIsEditMode((prev) => {
+                  const newMode = !prev;
+                  if (newMode) {
+                    alert('🔧 수정 모드가 활성화되었습니다.\n셀을 클릭하면 데이터를 편집할 수 있습니다.');
+                  } else {
+                    alert('✅ 수정 모드가 종료되었습니다.\n표는 다시 읽기 전용이 됩니다.');
+                  }
+                  return newMode;
+                });
+              }}
+            >
+              {isEditMode ? '수정 종료' : '수정 모드'}
+            </Button>
+            <Button
+              variant="contained"
+              color="error"
+              size="small"
+              onClick={() => {
+                const id = prompt('삭제할 ID를 입력하세요:');
+                if (id) handleDelete(Number(id));
+              }}
+            >
+              삭제
+            </Button>
+          </Box>
+        )}
+      </Box>
+
+      {/* 테이블 */}
+      <Paper
+        elevation={2}
         sx={{
-          mb: 2,
-          borderColor: '#b34b00',
-          color: '#b34b00',
-          fontWeight: 'bold',
-          '&:hover': { bgcolor: '#fff2e0' }
+          maxHeight: '65vh',
+          overflowY: 'auto',
+          '&::-webkit-scrollbar': { width: 8 },
+          '&::-webkit-scrollbar-thumb': { backgroundColor: '#ccc', borderRadius: 4 }
         }}
       >
-        ← INVOICE로 돌아가기
-      </Button>
-
-      {/* PACKING LIST 표 */}
-      <Paper elevation={2} sx={{ p: 2 }}>
-        <Table size="small">
-          <TableHead sx={{ bgcolor: '#ffeeba' }}>
+        <Table size="small" stickyHeader>
+          <TableHead sx={{ bgcolor: '#fff3cd' }}>
             <TableRow>
-              <TableCell align="center" sx={{ fontWeight: 'bold' }}>PO 번호</TableCell>
-              <TableCell align="center" sx={{ fontWeight: 'bold' }}>품명</TableCell>
-              <TableCell align="center" sx={{ fontWeight: 'bold' }}>수량</TableCell>
+              {['ID', 'PO 번호', '거래처', '품번', '품명', '규격', '수량(EA)'].map((col) => (
+                <TableCell key={col} align="center" sx={{ fontWeight: 'bold' }}>
+                  {col}
+                </TableCell>
+              ))}
             </TableRow>
           </TableHead>
+
           <TableBody>
-            {currentData.length > 0 ? (
-              currentData.map((item, i) => (
-                <TableRow key={i}>
-                  <TableCell align="center">{item.po}</TableCell>
-                  <TableCell align="center">{item.part}</TableCell>
-                  <TableCell align="center">{item.qty.toLocaleString()}</TableCell>
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell align="center" colSpan={3}>
-                  ❌ 해당 INV에 대한 Packing List 데이터가 없습니다.
-                </TableCell>
+            {rows.map((row, i) => (
+              <TableRow key={row.id} sx={{ bgcolor: i % 2 === 0 ? '#ffffff' : '#f8f8f8' }}>
+                {['id', 'po', 'vendor', 'partNo', 'partName', 'spec', 'qty'].map((field, idx) => (
+                  <TableCell
+                    key={idx}
+                    align="center"
+                    sx={{ cursor: isEditMode && userRole === 'admin' ? 'pointer' : 'default' }}
+                    onClick={() => {
+                      if (!isEditMode || userRole !== 'admin') return;
+                      const value = prompt(`${field} 수정`, String(row[field] || ''));
+                      if (value !== null) handleEdit(row.id, field, value);
+                    }}
+                  >
+                    {field === 'qty' ? Number(row[field]).toLocaleString() : row[field]}
+                  </TableCell>
+                ))}
               </TableRow>
-            )}
+            ))}
           </TableBody>
         </Table>
       </Paper>

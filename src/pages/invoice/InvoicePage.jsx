@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -156,6 +156,39 @@ export default function InvoicePage() {
     );
     return diffETA > 0;
   });
+// ✅ Packing List 연동 자동 업데이트
+useEffect(() => {
+  const updateFromPackingList = () => {
+    const stored = localStorage.getItem('packingListData');
+    if (!stored) return;
+    const list = JSON.parse(stored);
+
+    // INV별로 PO 묶기 + 중복 제거
+    const grouped = list.reduce((acc, cur) => {
+      if (!acc[cur.inv]) acc[cur.inv] = new Set();
+      acc[cur.inv].add(cur.po);
+      return acc;
+    }, {});
+
+    // INV별로 쉼표로 표시된 PO 목록 생성
+    const formatted = Object.entries(grouped).map(([inv, poSet]) => ({
+      inv,
+      poList: Array.from(poSet).join(', ')
+    }));
+
+    // Invoice 행 업데이트
+    setRows((prev) =>
+      prev.map((row) => {
+        const match = formatted.find((f) => f.inv === row.inv);
+        return match ? { ...row, po: match.poList } : row;
+      })
+    );
+  };
+
+  // ✅ 페이지 진입 시마다 최신 데이터 로드
+  updateFromPackingList();
+}, [location.pathname]); // 🔥 경로가 바뀔 때마다 다시 실행됨
+
 
   return (
     <Box sx={{ bgcolor: '#fff', height: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -500,31 +533,25 @@ export default function InvoicePage() {
                            ...(userRole === 'admin' && { cursor: 'pointer' })
                         }}
                         onClick={() => {
-                        // ✅ 만약 INV(4번째 열)이면 Packing List 페이지로 이동
-                        if (idx === 3) {
-                          navigate(`/packing-list/${row.inv}`);
-                          return; // 이동 후 아래 코드 실행하지 않게 종료
+                         // ✅ INV(4번째 열) 클릭 시 — 수정 모드가 아닐 때만 페이지 이동
+                         if (idx === 3) {
+                          if (!isEditMode) {
+                            navigate(`/packing-list/${row.inv}`);
+                          } else {
+                            // 수정 모드일 때는 페이지 이동 대신 수정 가능하도록 함
+                            const value = prompt('INV 값을 수정하세요:', String(val || ''));
+                            if (value !== null) handleEdit(row.id, 'inv', value);
+                          }
+                          return; // 아래 코드 실행 방지
                         }
 
-                        // ✅ 그 외의 셀은 관리자 + 수정 모드일 때만 편집 가능
-                       if (userRole !== 'admin' || !isEditMode) return;
-                       const value = prompt('값 수정', String(val || ''));
-                       if (value !== null) {
-                         const keys = [
-                          'id',
-                          'po',
-                          'exporter',
-                          'inv',
-                          'amount',
-                          'item',
-                          'cont',
-                          'bl',
-                          'etd',
-                          'eta',
-                          'delayed',
-                          'count',
-                          'needsHelp',
-                          'note'
+                        // ✅ 나머지 셀: 관리자 + 수정 모드일 때만 편집 가능
+                        if (userRole !== 'admin' || !isEditMode) return;
+                        const value = prompt('값 수정', String(val || ''));
+                        if (value !== null) {
+                          const keys = [
+                            'id', 'po', 'exporter', 'inv', 'amount', 'item', 'cont', 'bl',
+                            'etd', 'eta', 'delayed', 'count', 'needsHelp', 'note'
                           ];
                           handleEdit(row.id, keys[idx], value);
                          }
