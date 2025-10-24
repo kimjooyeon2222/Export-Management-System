@@ -493,38 +493,42 @@ export default function InvoicePage() {
                       <TableCell
                         key={idx}
                         align="center"
-                        sx={
-                          idx === 10
-                            ? delayedStyle
-                            : idx === 11
-                            ? countStyle
-                            : userRole === 'admin'
-                            ? { cursor: 'pointer' }
-                            : {}
-                        }
-                        onClick={() => {
-                          if (userRole !== 'admin' || !isEditMode) return;
-                          const value = prompt(`값 수정`, String(val || ''));
-                          if (value !== null) {
-                            const keys = [
-                              'id',
-                              'po',
-                              'exporter',
-                              'inv',
-                              'amount',
-                              'item',
-                              'cont',
-                              'bl',
-                              'etd',
-                              'eta',
-                              'delayed',
-                              'count',
-                              'needsHelp',
-                              'note'
-                            ];
-                            handleEdit(row.id, keys[idx], value);
-                          }
+                        sx={{
+                           ...(idx === 3 && { color: 'blue', cursor: 'pointer', textDecoration: 'underline' }), // INV 열만 파란색 + 링크 효과
+                           ...(idx === 10 ? delayedStyle : {}), // delayed 스타일
+                           ...(idx === 11 ? countStyle : {}), // count 스타일
+                           ...(userRole === 'admin' && { cursor: 'pointer' })
                         }}
+                        onClick={() => {
+                        // ✅ 만약 INV(4번째 열)이면 Packing List 페이지로 이동
+                        if (idx === 3) {
+                          navigate(`/packing-list/${row.inv}`);
+                          return; // 이동 후 아래 코드 실행하지 않게 종료
+                        }
+
+                        // ✅ 그 외의 셀은 관리자 + 수정 모드일 때만 편집 가능
+                       if (userRole !== 'admin' || !isEditMode) return;
+                       const value = prompt('값 수정', String(val || ''));
+                       if (value !== null) {
+                         const keys = [
+                          'id',
+                          'po',
+                          'exporter',
+                          'inv',
+                          'amount',
+                          'item',
+                          'cont',
+                          'bl',
+                          'etd',
+                          'eta',
+                          'delayed',
+                          'count',
+                          'needsHelp',
+                          'note'
+                          ];
+                          handleEdit(row.id, keys[idx], value);
+                         }
+                       }}
                       >
                         {val}
                       </TableCell>
