@@ -13,6 +13,27 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 
+// 수출자 - 품목 매핑
+const exporterToItems = {
+  모텍: ['EV-SUB', 'TOOL', '설비'],
+  오토텍: ['EV-SUB', 'TOOL', '건설자재', '설비', '오일'],
+  이엔지: ['TOOL', '단조소재', '설비'],
+  정공: ['TOOL', '건설자재', '설비']
+};
+
+// 품목 - 수출자 매핑 (역방향)
+const itemToExporters = {
+  'EV-SUB': ['모텍', '오토텍'],
+  TOOL: ['모텍', '오토텍', '이엔지', '정공'],
+  건설자재: ['오토텍', '정공'],
+  단조소재: ['이엔지'],
+  설비: ['모텍', '오토텍', '이엔지', '정공'],
+  오일: ['오토텍']
+};
+
+
+
+
 export default function InvoicePage() {
   const navigate = useNavigate();
   const [poNumber, setPoNumber] = useState('');
@@ -21,6 +42,11 @@ export default function InvoicePage() {
   const [userRole] = useState('admin');
 // === 상단에 추가 ===
   const [isEditMode, setIsEditMode] = useState(false);
+
+   // 현재 선택된 수출자 / 품목
+  const [selectedExporter, setSelectedExporter] = useState(null);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [selectionPriority, setSelectionPriority] = useState(null); // ✅ 누가 먼저 눌렸는지 저장
 
   const today = new Date();
   const getDateOffset = (offsetDays) => {
@@ -164,7 +190,16 @@ export default function InvoicePage() {
     );
     return diffETA > 0;
   });
-// ✅ Packing List 연동 자동 업데이트
+
+// 한국시간(ETD용)
+const getKoreaDate = (dateStr) =>
+  new Date(new Date(dateStr).toLocaleString("en-US", { timeZone: "Asia/Seoul" }));
+
+// 미국 앨라배마 시간(ETA, 공장도착일용)
+const getAlabamaDate = (dateStr) =>
+  new Date(new Date(dateStr).toLocaleString("en-US", { timeZone: "America/Chicago" }));
+
+// Packing List 연동 자동 업데이트
 useEffect(() => {
   const updateFromPackingList = () => {
     const stored = localStorage.getItem('packingListData');
@@ -323,8 +358,19 @@ useEffect(() => {
   const eta = merged.eta || '-';
   const delayed = merged.delayed || '-';
 
-  // ✅ 도착 여부 계산
-  const arrived = new Date(delayed) <= new Date();
+  // ✅ 도착 여부 계산 (ETA vs 공장도착일, 둘 다 미국시간 기준)
+  const etaUS = getAlabamaDate(eta);
+  const factoryUS = getAlabamaDate(delayed); // delayed = 공장 도착일
+
+  // ETA == 공장도착일 → 도착
+  // ETA < 공장도착일 → 미도착
+  const arrived =
+    etaUS.toDateString() === factoryUS.toDateString()
+      ? true
+      : etaUS < factoryUS
+      ? false
+      : false;
+
 
   return (
     <TableRow key={i}>
@@ -377,55 +423,125 @@ useEffect(() => {
 )}
 
 
-        </Box>
-
-        {/* 오른쪽 수출자 / 품목 버튼 */}
-        <Box sx={{ flex: 1, display: 'flex', justifyContent: 'space-between', p: 1 }}>
-          <Box sx={{ flex: 1, mr: 1 }}>
-            <Typography sx={{ fontWeight: 'bold', mb: 1, textAlign: 'center' }}>수출자</Typography>
-            {['모텍', '오토텍', '이엔지', '정공'].map((exp) => (
-              <Button
-                key={exp}
-                fullWidth
-                sx={{
-                  mb: 1,
-                  bgcolor: '#f5c374',
-                  color: '#4b2e05',
-                  fontWeight: 'bold',
-                  borderRadius: 2,
-                  textTransform: 'none',
-                  fontSize: '1rem',
-                  '&:hover': { bgcolor: '#e9a43c' }
-                }}
-              >
-                {exp}
-              </Button>
-            ))}
-          </Box>
-
-          <Box sx={{ flex: 1 }}>
-            <Typography sx={{ fontWeight: 'bold', mb: 1, textAlign: 'center' }}>품목구분</Typography>
-            {['EV-SUB', 'TOOL', '건설자재', '단조소재', '설비', '오일'].map((cat) => (
-              <Button
-                key={cat}
-                fullWidth
-                sx={{
-                  mb: 1,
-                  bgcolor: '#66b2b2',
-                  color: 'white',
-                  fontWeight: 'bold',
-                  borderRadius: 2,
-                  textTransform: 'none',
-                  fontSize: '1rem',
-                  '&:hover': { bgcolor: '#559c9c' }
-                }}
-              >
-                {cat}
-              </Button>
-            ))}
-          </Box>
-        </Box>
       </Box>
+
+       {/* ✅ 수출자 & 품목 버튼 그룹 */}
+<Box sx={{ flex: 1, display: 'flex', justifyContent: 'space-between', p: 1 }}>
+  {/* 수출자 버튼 그룹 */}
+  <Box sx={{ flex: 1, mr: 1 }}>
+    <Typography sx={{ fontWeight: 'bold', mb: 1, textAlign: 'center' }}>수출자</Typography>
+    {['모텍', '오토텍', '이엔지', '정공'].map((exp) => {
+      const isSelected = selectedExporter === exp;
+
+      const isActive =
+        selectionPriority === 'item'
+          ? itemToExporters[selectedItem]?.includes(exp) || isSelected
+          : true;
+
+      return (
+        <Button
+          key={exp}
+          fullWidth
+          onClick={() => {
+            if (isSelected) {
+              if (selectionPriority === 'exporter') {
+                // ✅ 수출자가 먼저 눌린 경우 → 전체 초기화
+                setSelectedExporter(null);
+                setSelectedItem(null);
+                setSelectionPriority(null);
+              } else {
+                // ✅ 품목이 먼저 눌린 경우 → 수출자만 해제
+                setSelectedExporter(null);
+              }
+            } else {
+              // ✅ 새 수출자 선택
+              if (selectionPriority === 'exporter' && selectedExporter && selectedExporter !== exp) {
+                setSelectedItem(null);
+              }
+              setSelectedExporter(exp);
+              if (!selectionPriority) setSelectionPriority('exporter');
+            }
+          }}
+          sx={{
+            mb: 1,
+            bgcolor: isSelected ? '#b86b00' : isActive ? '#f5c374' : '#ddd',
+            color: isSelected ? 'white' : isActive ? '#4b2e05' : '#888',
+            fontWeight: 'bold',
+            borderRadius: 2,
+            textTransform: 'none',
+            fontSize: '1rem',
+            boxShadow: isSelected ? '0 3px 6px rgba(0,0,0,0.3)' : 'none',
+            cursor: isActive ? 'pointer' : 'not-allowed',
+            '&:hover': isActive ? { bgcolor: '#a66900' } : {}
+          }}
+          disabled={!isActive}
+        >
+          {exp}
+        </Button>
+      );
+    })}
+  </Box>
+
+  {/* 품목 버튼 그룹 */}
+  <Box sx={{ flex: 1 }}>
+    <Typography sx={{ fontWeight: 'bold', mb: 1, textAlign: 'center' }}>품목구분</Typography>
+    {['EV-SUB', 'TOOL', '건설자재', '단조소재', '설비', '오일'].map((cat) => {
+      const isSelected = selectedItem === cat;
+
+      const isActive =
+        selectionPriority === 'exporter'
+          ? exporterToItems[selectedExporter]?.includes(cat) || isSelected
+          : true;
+
+      return (
+        <Button
+          key={cat}
+          fullWidth
+          onClick={() => {
+            if (isSelected) {
+              if (selectionPriority === 'item') {
+                // ✅ 품목이 먼저 눌린 경우 → 전체 초기화
+                setSelectedItem(null);
+                setSelectedExporter(null);
+                setSelectionPriority(null);
+              } else {
+                // ✅ 수출자가 먼저 눌린 경우 → 품목만 해제
+                setSelectedItem(null);
+              }
+            } else {
+              // ✅ 새 품목 선택
+              if (selectionPriority === 'item' && selectedItem && selectedItem !== cat) {
+                setSelectedExporter(null);
+              }
+              setSelectedItem(cat);
+              if (!selectionPriority) setSelectionPriority('item');
+            }
+          }}
+          sx={{
+            mb: 1,
+            bgcolor: isSelected ? '#007f7f' : isActive ? '#66b2b2' : '#ddd',
+            color: 'white',
+            fontWeight: 'bold',
+            borderRadius: 2,
+            textTransform: 'none',
+            fontSize: '1rem',
+            boxShadow: isSelected ? '0 3px 6px rgba(0,0,0,0.3)' : 'none',
+            cursor: isActive ? 'pointer' : 'not-allowed',
+            '&:hover': isActive ? { bgcolor: '#006666' } : {}
+          }}
+          disabled={!isActive}
+        >
+          {cat}
+        </Button>
+      );
+    })}
+  </Box>
+</Box>
+
+
+</Box>
+
+
 
       {/* 관리자용 버튼 */}
       {userRole === 'admin' && (
@@ -552,8 +668,11 @@ useEffect(() => {
 
             <TableBody>
   {filteredRows.map((row, i) => {
-    const etaDate = parseDate(row.eta);
-    const delayedDate = parseDate(row.delayed);
+    // ✅ ETD는 한국시간, ETA/DELAYED는 미국시간 기준
+    const etdDate = getKoreaDate(row.etd);
+    const etaDate = getAlabamaDate(row.eta);
+    const delayedDate = getAlabamaDate(row.delayed);
+
     const diffDays = Math.floor((delayedDate - etaDate) / (1000 * 60 * 60 * 24)); // ✅ 날짜 차이 계산
 
     const countText = `${diffDays}일`; // ✅ COUNT 컬럼 표시용
