@@ -182,16 +182,16 @@ export default function InvoicePage() {
 
   const parseDate = (str) => new Date(str);
 
-  // ✅ 필터링 로직 (수출자 / 품목 버튼 반영)
+  // 필터링 로직 (수출자 / 품목 버튼 반영)
   const filteredRows = rows.filter((r) => {
-    // 1️⃣ 기본조건: showUpcoming (5일 이내 필터링)
+    // 기본조건: showUpcoming (5일 이내 필터링)
     if (showUpcoming) {
       const etaDate = parseDate(r.eta);
       const diffETA = Math.floor((etaDate - today) / (1000 * 60 * 60 * 24));
       if (diffETA <= 0) return false;
     }
 
-    // 2️⃣ 버튼 조건: 선택된 수출자/품목 기준 필터
+    // 버튼 조건: 선택된 수출자/품목 기준 필터
     if (selectedExporter && selectedItem) {
       // 둘 다 선택됨 → 교집합
       return r.exporter === selectedExporter && r.item === selectedItem;
@@ -623,7 +623,25 @@ useEffect(() => {
               <TableRow>
                 {[
                   'NO',
-                  '발주번호 (PO)',
+                  <TableCell
+  key="poHeader"
+  align="center"
+  sx={{
+    visibilitiy:'hidden',
+    fontSize: '1px',
+    letterSpacing: '-1px', 
+    fontWeight: 'bold',
+    maxWidth:0,
+    minWidth:0,
+    width: 0,
+    padding: 0,
+    border: 'none',
+    color: 'transparent',
+    backgroundColor: 'transparent'
+  }}
+>
+  발주번호 (PO)
+</TableCell>,
                   'EXPORTER',
                   'INV#',
                   'INV 금액',
@@ -733,6 +751,19 @@ useEffect(() => {
             key={idx}
             align="center"
             sx={{
+              ...(idx === 1 && {
+  visibilitiy:'hidden',              
+  fontSize: '1px',
+  letterSpacing: '-1px', // 문자를 거의 0폭으로 압축
+               
+  width: 0,
+  maxWidth:0,
+  minWidth:0,
+  padding: 0,
+  border: 'none',
+  color: 'transparent',
+  backgroundColor: 'transparent'
+}),
               ...(idx === 3 && { color: 'blue', cursor: 'pointer', textDecoration: 'underline' }),
               ...(idx === 10 ? delayedStyle : {}), // delayed 스타일
               ...(idx === 11 ? countStyle : {}), // ✅ count 스타일 적용
