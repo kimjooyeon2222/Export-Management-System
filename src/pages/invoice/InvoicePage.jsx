@@ -182,13 +182,27 @@ export default function InvoicePage() {
 
   const parseDate = (str) => new Date(str);
 
+  // ✅ 필터링 로직 (수출자 / 품목 버튼 반영)
   const filteredRows = rows.filter((r) => {
-    if (!showUpcoming) return true;
-    const etaDate = parseDate(r.eta);
-    const diffETA = Math.floor(
-      (etaDate - today) / (1000 * 60 * 60 * 24)
-    );
-    return diffETA > 0;
+    // 1️⃣ 기본조건: showUpcoming (5일 이내 필터링)
+    if (showUpcoming) {
+      const etaDate = parseDate(r.eta);
+      const diffETA = Math.floor((etaDate - today) / (1000 * 60 * 60 * 24));
+      if (diffETA <= 0) return false;
+    }
+
+    // 2️⃣ 버튼 조건: 선택된 수출자/품목 기준 필터
+    if (selectedExporter && selectedItem) {
+      // 둘 다 선택됨 → 교집합
+      return r.exporter === selectedExporter && r.item === selectedItem;
+    } else if (selectedExporter) {
+      return r.exporter === selectedExporter;
+     } else if (selectedItem) {
+      return r.item === selectedItem;
+    }
+
+    // 아무 것도 선택 안했을 때 전체 표시
+    return true;
   });
 
 // 한국시간(ETD용)
