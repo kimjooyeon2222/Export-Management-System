@@ -53,6 +53,9 @@ export default function InvoicePage() {
   const [userRole] = useState('admin');
 // === 상단에 추가 ===
   const [isEditMode, setIsEditMode] = useState(false);
+  // 🔥 삭제 모드
+  const [deleteMode, setDeleteMode] = useState(false);
+  const [selectedInvs, setSelectedInvs] = useState([]);
 
    // 현재 선택된 수출자 / 품목
   const [selectedExporter, setSelectedExporter] = useState(null);
@@ -613,16 +616,46 @@ const getAlabamaDate = (dateStr) =>
             {isEditMode ? '수정 종료' : '수정 모드'}
           </Button>
           <Button
-            variant="contained"
-            color="error"
-            size="small"
-            onClick={() => {
-              const invNo = prompt('삭제할 INV 번호를 입력하세요:');
-              if (invNo) handleDelete(invNo);
-            }}
-          >
-            삭제
-          </Button>
+  variant="contained"
+  color="error"
+  size="small"
+  onClick={async () => {
+    // 삭제 모드 진입
+    if (!deleteMode) {
+      setDeleteMode(true);
+      alert("🗑 삭제 모드 활성화\n행을 클릭해서 선택하세요.");
+      return;
+    }
+
+    // 삭제 실행
+    if (selectedInvs.length === 0) {
+      alert("삭제할 항목이 없습니다.");
+      setDeleteMode(false);
+      return;
+    }
+
+    if (!window.confirm(`${selectedInvs.length}개 항목을 삭제할까요?`)) {
+      return;
+    }
+
+    // 🔥 실제 삭제
+    for (const inv of selectedInvs) {
+      await fetch(`${API_BASE}/api/invoices/inv/${inv}`, {
+        method: "DELETE"
+      });
+    }
+
+    // 프론트에서도 삭제
+    setRows(prev => prev.filter(r => !selectedInvs.includes(r.inv_no)));
+
+    // 초기화
+    setSelectedInvs([]);
+    setDeleteMode(false);
+  }}
+>
+  {deleteMode ? "삭제 실행" : "삭제"}
+</Button>
+
         </Box>
       )}
 
@@ -746,7 +779,24 @@ if (daysToETA < 0) {
     const rowBg = i % 2 === 0 ? '#fff5e6' : '#ffffff';
 
     return (
-      <TableRow key={row.id} sx={{ bgcolor: rowBg }}>
+      <TableRow
+  key={row.id}
+  onClick={() => {
+    if (!deleteMode) return; // 삭제 모드가 아닐 때는 그냥 무시
+
+    if (selectedInvs.includes(row.inv_no)) {
+      setSelectedInvs(prev => prev.filter(v => v !== row.inv_no));
+    } else {
+      setSelectedInvs(prev => [...prev, row.inv_no]);
+    }
+  }}
+  sx={{
+    bgcolor: selectedInvs.includes(row.inv_no)
+      ? "#ffdddd"   // 선택된 행 색상
+      : rowBg,
+    cursor: deleteMode ? "pointer" : "default"
+  }}
+>
         {[
           row.id,
           row.exporter,
