@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from "uuid";
+import { useRef } from "react";
 
 import {
   Box,
@@ -37,6 +38,13 @@ const itemToExporters = {
 
 
 export default function InvoicePage() {
+  const bottomScrollRef = useRef(null);
+  const scrollToBottom = () => {
+  if (bottomScrollRef.current) {
+    bottomScrollRef.current.scrollTop = bottomScrollRef.current.scrollHeight;
+  }
+};
+
 
   const navigate = useNavigate();
   const [poNumber, setPoNumber] = useState('');
@@ -67,6 +75,12 @@ const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5001";
     .then(data => setRows(data))
     .catch(err => console.error("Invoice API Error:", err));
 }, []);
+
+useEffect(() => {
+  if (!isEditMode) {
+    scrollToBottom();
+  }
+}, [rows, isEditMode]);   // ← isEditMode도 dependency로 추가
 
   // CRUD 기능
 
@@ -211,6 +225,31 @@ const handleAdd = async () => {
     // 아무 것도 선택 안했을 때 전체 표시
     return true;
   });
+  // 미국 앨라배마(Chicago) 시간으로 날짜 변환
+const getUSDate = (dateStr) =>
+  new Date(
+    new Date(dateStr).toLocaleString("en-US", {
+      timeZone: "America/Chicago",
+    })
+  );
+
+// 🔥 한국식 날짜("11월 06일") → YYYY-MM-DD 변환
+const normalizeDate = (str) => {
+  if (!str) return null;
+
+  // 이미 YYYY-MM-DD 형태라 Date.parse 가능하면 그대로 통과
+  if (!isNaN(Date.parse(str))) return str;
+
+  // "11월 06일" 패턴 잡기
+  const match = str.match(/(\d{1,2})월\s*(\d{1,2})일/);
+  if (!match) return null;
+
+  const month = match[1].padStart(2, "0");
+  const day = match[2].padStart(2, "0");
+
+  const year = new Date().getFullYear();
+  return `${year}-${month}-${day}`;
+};
 
 // 한국시간(ETD용)
 const getKoreaDate = (dateStr) =>
@@ -588,7 +627,7 @@ const getAlabamaDate = (dateStr) =>
       )}
 
       {/* 하단 표 */}
-      <Box sx={{ flexGrow: 1, overflowY: 'auto', px: 2, pb: 2 }}>
+      <Box ref={bottomScrollRef} sx={{ flexGrow: 1, overflowY: 'auto', px: 2, pb: 2 }}>
         <Paper elevation={2}>
           <Table size="small" stickyHeader>
             <TableHead sx={{ bgcolor: '#ffda66' }}>
@@ -598,7 +637,10 @@ const getAlabamaDate = (dateStr) =>
                   'EXPORTER',
                   'INV#',
                   'INV 금액',
-                  '품목구분',
+                  <TableCell sx={{ width: '140px', textAlign: 'center', fontWeight: 'bold' }}>
+  <div>품목구분</div>
+</TableCell>
+,
                   'CONT#',
                   'BL#',
                     <Box key="etdHeader" sx={{ textAlign: 'center', whiteSpace: 'pre-line' }}>
@@ -653,32 +695,52 @@ const getAlabamaDate = (dateStr) =>
 
             <TableBody>
   {filteredRows.map((row, i) => {
-    // ETD는 한국시간, ETA/DELAYED는 미국시간 기준
-    const etdDate = getKoreaDate(row.etd);
-    const etaDate = getAlabamaDate(row.eta);
-    const delayedDate = row.delayed_date ? getAlabamaDate(row.delayed_date) : etaDate;
+    // === 날짜 정규화 ===
+const etdDate = getKoreaDate(normalizeDate(row.etd));   // 한국 시간
+const etaDate = getUSDate(normalizeDate(row.eta));      // 미국 시간
+const delayedDate = row.delayed_date
+  ? getUSDate(normalizeDate(row.delayed_date))          // 미국 시간
+  : etaDate;
+
+// === ETA까지 남은 날짜(색상용) ===
+const daysToETA = Math.floor((etaDate - today) / (1000 * 60 * 60 * 24));
+
+// === ETA vs 실제 도착일 차이 ===
+const diffDays = Math.floor((delayedDate - etaDate) / (1000 * 60 * 60 * 24));
+
+// COUNT 표시용
+const countText = `${diffDays}일`;
+const countNum = diffDays;
 
 
-    const diffDays = Math.floor((delayedDate - etaDate) / (1000 * 60 * 60 * 24)); // ✅ 날짜 차이 계산
+    // 🚀 지연(Delayed) 색상 스타일 - ETA 기준
+let delayedStyle = {};
 
-    const countText = `${diffDays}일`; // COUNT 컬럼 표시용
+if (daysToETA < 0) {
+  delayedStyle = { bgcolor: "#d6eaff" }; // 파랑
+} else if (daysToETA === 0) {
+  delayedStyle = {
+    bgcolor: "#ffe0b2",
+    color: "#e65100",
+    fontWeight: "bold",
+  };
+} else if (daysToETA > 0 && daysToETA <= 5) {
+  delayedStyle = {
+    bgcolor: "#ffcccc",
+    color: "#b71c1c",
+    fontWeight: "bold",
+  };
+} else {
+  delayedStyle = { bgcolor: "#ffcccc" };
+}
 
-    // 배경/경고 색상 계산 로직
-    const diffETA = Math.floor((etaDate - today) / (1000 * 60 * 60 * 24));
-    const countNum = diffDays;
 
-    let delayedStyle = {};
-    if (diffETA < 0) delayedStyle = { bgcolor: '#d6eaff' };
-    else if (diffETA === 0)
-      delayedStyle = { bgcolor: '#ffe0b2', color: '#e65100', fontWeight: 'bold' };
-    else if (diffETA > 0 && diffETA <= 5)
-      delayedStyle = { bgcolor: '#ffcccc', color: '#b71c1c', fontWeight: 'bold' };
-    else delayedStyle = { bgcolor: '#ffcccc' };
 
     const countStyle =
   countNum >= 10
-    ? { bgcolor: '#ccf2e0', color: 'red', fontWeight: 'bold' } // 🔥 10일 이상 → 빨강 글씨만 표시
-    : { bgcolor: 'white', color: 'black', fontWeight: 'normal' }; // ⚪ 기본은 흰색
+    ? { bgcolor: "#ccf2e0", color: "red", fontWeight: "bold" }
+    : { bgcolor: "white", color: "black", fontWeight: "normal" };
+
 
 
     const rowBg = i % 2 === 0 ? '#fff5e6' : '#ffffff';

@@ -240,6 +240,32 @@ def debug_invoice(inv_no):
         "inv_no": inv_no,
         "invoice_id": invoice.id if invoice else None
     }
+    # ============================================
+# 🔥 단일 invoice 조회 (React에서 사용하는 API)
+# ============================================
+@app.route("/api/invoice/<string:inv_no>", methods=["GET"])
+def get_invoice_by_inv_no(inv_no):
+    invoice = Invoice.query.filter_by(inv_no=inv_no).first()
+
+    if not invoice:
+        return jsonify({"error": "Invoice not found"}), 404
+
+    return jsonify({
+        "id": invoice.id,
+        "inv_no": invoice.inv_no,
+        "exporter": invoice.exporter,
+        "amount": invoice.amount,
+        "item_type": invoice.item_type,
+        "cont_no": invoice.cont_no,
+        "bl_no": invoice.bl_no,
+        "etd": invoice.etd,
+        "eta": invoice.eta,
+        "delayed_date": invoice.delayed_date,
+        "count_days": invoice.count_days,
+        "needs_help": invoice.needs_help,
+        "remark": invoice.remark,
+    })
+
 # ============================================
 # 서버 실행
 # ============================================

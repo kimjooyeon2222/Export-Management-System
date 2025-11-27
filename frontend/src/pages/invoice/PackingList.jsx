@@ -18,8 +18,21 @@ export default function PackingList() {
   const API = import.meta.env.VITE_API_URL;
 
   const { inv } = useParams();
-    console.log("🔥 inv from URL:", inv);
+  const [invoiceId, setInvoiceId] = useState(null);
+
+// 🔥 invoice 테이블 - invoice_id 가져오기
+useEffect(() => {
+  fetch(`${API}/api/invoice/${inv}`)
+    .then(res => res.json())
+    .then(data => {
+      setInvoiceId(data.id); // invoice.id가 진짜 invoice_id
+    })
+    .catch(err => console.error("Invoice load error:", err));
+}, [inv]);
+console.log("🔥 inv from URL:", inv);
 console.log("🔥 Fetch URL:", `${API}/api/invoice/${inv}/packing`);
+console.log("🔥 URL inv:", JSON.stringify(inv));
+
   const navigate = useNavigate();
   const [isEditMode, setIsEditMode] = useState(false);
   const [userRole] = useState("admin");
@@ -41,6 +54,8 @@ console.log("🔥 Fetch URL:", `${API}/api/invoice/${inv}/packing`);
     fetch(`${API}/api/invoice/${inv}/packing`)
       .then(res => res.json())
       .then(data => {
+        
+
         const converted = data.map(r => ({
           id: r.id,
           invoice_id: r.invoice_id, 
@@ -60,7 +75,7 @@ console.log("🔥 Fetch URL:", `${API}/api/invoice/${inv}/packing`);
   // 행 추가
   const handleAdd = async () => {
     const newRow = {
-      invoice_id: rows.length ? rows[0].invoice_id : null, // 이미 불러온 데이터의 invoice_id 사용
+      invoice_id: invoiceId,
       po_no: "",
       vendor: "",
       part_no: "",
@@ -140,6 +155,11 @@ console.log("🔥 Fetch URL:", `${API}/api/invoice/${inv}/packing`);
   // 엑셀 업로드 (CDN SheetJS)
   
   const handleExcelUpload = async (event) => {
+    if (!invoiceId) {
+  alert("invoice ID 로딩 중입니다. 1초 뒤 다시 시도하세요.");
+  return;
+}
+
     const file = event.target.files[0];
     if (!file) return;
 
@@ -167,8 +187,8 @@ console.log("🔥 Fetch URL:", `${API}/api/invoice/${inv}/packing`);
           part_name: row["품명"] || "",
           spec: row["규격"] || "",
           qty: Number(row["수량(EA)"] || row["수량"] || 0),
-          unit: "EA",
-          invoice_id: rows.length ? rows[0].invoice_id : null,
+          unit: row["UNIT"] || row["Unit"] || row["unit"] || "EA",
+          invoice_id: invoiceId,
         }));
 
         // 2) DB INSERT (여러 개 반복 저장)
