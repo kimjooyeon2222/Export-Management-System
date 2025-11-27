@@ -46,6 +46,7 @@ export default function InvoicePage() {
 };
 
 
+
   const navigate = useNavigate();
   const [poNumber, setPoNumber] = useState('');
   const [searchResult, setSearchResult] = useState(null);
@@ -68,6 +69,7 @@ export default function InvoicePage() {
     d.setDate(d.getDate() + offsetDays);
     return d.toISOString().split('T')[0];
   };
+
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5001";
 
   // 기본 데이터
@@ -88,7 +90,10 @@ useEffect(() => {
   // CRUD 기능
 
 const handleAdd = async () => {
+  const maxId = rows.length > 0 ? Math.max(...rows.map(r => r.id)) : 0;
+
   const newRow = {
+    id: maxId + 1, // 🔥 새 ID 직접 생성
     exporter: "신규",
     inv_no: `INV-${uuidv4().slice(0, 8)}`, // 🔥 유니크 생성
     amount: "$0.00",
@@ -99,8 +104,8 @@ const handleAdd = async () => {
     eta: getDateOffset(2),
     delayed_date: getDateOffset(2),
     count_days: "0일",
-    needs_help: "-",
-    remark: "신규 데이터"
+    needs_help: "X",
+    remark: "신규"
   };
 
   const res = await fetch(`${API_BASE}/api/invoices`, {
@@ -210,10 +215,13 @@ const handleAdd = async () => {
 
     // 기본조건: showUpcoming (5일 이내 필터링)
     if (showUpcoming) {
-      const etaDate = parseDate(r.eta);
-      const diffETA = Math.floor((etaDate - today) / (1000 * 60 * 60 * 24));
-      if (diffETA <= 0) return false;
-    }
+  const etaDate = parseDate(r.eta);
+  const daysToETA = Math.floor((etaDate - today) / (1000 * 60 * 60 * 24));
+
+  // 🔥 빨간색 조건 외 모두 제외
+  if (!(daysToETA > 0)) return false;
+}
+
 
     // 버튼 조건: 선택된 수출자/품목 기준 필터
     if (selectedExporter && selectedItem) {
@@ -228,6 +236,7 @@ const handleAdd = async () => {
     // 아무 것도 선택 안했을 때 전체 표시
     return true;
   });
+  
   // 미국 앨라배마(Chicago) 시간으로 날짜 변환
 const getUSDate = (dateStr) =>
   new Date(
@@ -576,24 +585,36 @@ const getAlabamaDate = (dateStr) =>
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, px: 3, pb: 1 }}>
                   {/* 우측 필터 버튼 */}
         <Button
-          onClick={() => setShowUpcoming((prev) => !prev)}
-          sx={{
-            bgcolor: showUpcoming ? '#ffd6d6' : '#ffecec',
-            color: '#d32f2f',
-            fontWeight: 'bold',
-            px: 3,
-            borderRadius: 2,
-            fontSize: '0.95rem',
-            '&:hover': { bgcolor: '#ffcccc' }
-          }}
-        >
-          <Typography component="span" sx={{ color: 'black', fontWeight: 'bold' }}>
-            금일 이후 도착분
-          </Typography>
-          <Typography component="span" sx={{ color: '#d32f2f', fontWeight: 'bold' }}>
-            (5일전)
-          </Typography>
-        </Button>
+  onClick={() => {
+    setShowUpcoming((prev) => {
+      const newState = !prev;
+
+      // 🔥 prev === true → 비활성화(OFF) 되는 순간만 스크롤 다운
+      if (prev === true && newState === false) {
+        setTimeout(scrollToBottom, 10);
+      }
+
+      return newState;
+    });
+  }}
+  sx={{
+    bgcolor: showUpcoming ? '#ffd6d6' : '#ffecec',
+    color: '#d32f2f',
+    fontWeight: 'bold',
+    px: 3,
+    borderRadius: 2,
+    fontSize: '0.95rem',
+    '&:hover': { bgcolor: '#ffcccc' }
+  }}
+>
+  <Typography component="span" sx={{ color: 'black', fontWeight: 'bold' }}>
+    금일 이후 도착분
+  </Typography>
+  <Typography component="span" sx={{ color: '#d32f2f', fontWeight: 'bold', ml: 0.7 }}>
+    (5일전)
+  </Typography>
+</Button>
+
           <Button variant="contained" color="success" size="small" onClick={handleAdd}>
             추가
           </Button>
@@ -663,10 +684,10 @@ const getAlabamaDate = (dateStr) =>
       <Box ref={bottomScrollRef} sx={{ flexGrow: 1, overflowY: 'auto', px: 2, pb: 2 }}>
         <Paper elevation={2}>
           <Table size="small" stickyHeader>
-            <TableHead sx={{ bgcolor: '#ffda66' }}>
+            <TableHead sx={{ bgcolor: '#ffda66','& th': { fontSize: '0.9rem', fontWeight: 700 } }}>
               <TableRow>
                 {[
-                  'NO',
+                  'ID',
                   'EXPORTER',
                   'INV#',
                   'INV 금액',
@@ -677,7 +698,7 @@ const getAlabamaDate = (dateStr) =>
                   'CONT#',
                   'BL#',
                     <Box key="etdHeader" sx={{ textAlign: 'center', whiteSpace: 'pre-line' }}>
-                      ETD<br />(출발 예정일)
+                      ETD<br />(출발<br></br>예정일)
                     </Box>,
                     <Box key="etaHeader" sx={{ textAlign: 'center', whiteSpace: 'pre-line' }}>
                       ETA<br />(공장 도착 예정일)
@@ -816,7 +837,12 @@ if (daysToETA < 0) {
             key={idx}
             align="center"
             sx={{
-              
+              fontSize: '1rem',
+           //   fontSize:
+      //[5].includes(idx)
+        //</TableRow>? '0.75rem' // 🔥 특정 컬럼만 작게
+        //: '1rem',   // 나머지는 원래 크기
+
               ...(idx === 2 && { color: 'blue', cursor: 'pointer', textDecoration: 'underline' }),
               ...(idx === 9 ? delayedStyle : {}), // delayed 스타일
               ...(idx === 10 ? countStyle : {}), // count 스타일 적용

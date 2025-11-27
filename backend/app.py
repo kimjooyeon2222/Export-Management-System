@@ -265,6 +265,12 @@ def get_invoice_by_inv_no(inv_no):
         "needs_help": invoice.needs_help,
         "remark": invoice.remark,
     })
+@app.route("/api/packing/max-id", methods=["GET"])
+def get_packing_max_id():
+    max_id = db.session.query(db.func.max(PackingList.id)).scalar()
+    if max_id is None:
+        max_id = 0
+    return jsonify({"max_id": max_id})
 
 # ============================================
 # 서버 실행

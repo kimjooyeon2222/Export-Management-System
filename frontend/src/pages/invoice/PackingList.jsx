@@ -19,6 +19,8 @@ export default function PackingList() {
 
   const { inv } = useParams();
   const [invoiceId, setInvoiceId] = useState(null);
+const [deleteMode, setDeleteMode] = useState(false);
+const [selectedRows, setSelectedRows] = useState([]);
 
 // 🔥 invoice 테이블 - invoice_id 가져오기
 useEffect(() => {
@@ -74,41 +76,50 @@ console.log("🔥 URL inv:", JSON.stringify(inv));
 
   // 행 추가
   const handleAdd = async () => {
-    const newRow = {
-      invoice_id: invoiceId,
-      po_no: "",
-      vendor: "",
-      part_no: "",
-      part_name: "",
-      spec: "",
-      qty: 0,
-      unit: "EA"
-    };
+  // 1) DB에서 packing_list의 max(id) 가져오기
+  const maxRes = await fetch(`${API}/api/packing/max-id`);
+  const maxData = await maxRes.json();
+  const nextId = (maxData.max_id || 0) + 1;
 
-    const res = await fetch(`${API}/api/packing`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newRow)
-    });
-
-    const created = await res.json();
-
-    // 화면에도 추가
-    setRows(prev => [
-      ...prev,
-      {
-        id: created.id,
-        invoice_id: newRow.invoice_id,
-        po: newRow.po_no,
-        vendor: newRow.vendor,
-        partNo: newRow.part_no,
-        partName: newRow.part_name,
-        spec: newRow.spec,
-        qty: newRow.qty,
-        unit: newRow.unit
-      }
-    ]); 
+  // 2) 새 row 생성
+  const newRow = {
+    id: nextId,
+    invoice_id: invoiceId,
+    po_no: "",
+    vendor: "",
+    part_no: "",
+    part_name: "",
+    spec: "",
+    qty: 0,
+    unit: "EA"
   };
+
+  // 3) DB INSERT
+  const res = await fetch(`${API}/api/packing`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(newRow)
+  });
+
+  const created = await res.json();
+
+  // 4) 화면 반영
+  setRows(prev => [
+    ...prev,
+    {
+      id: newRow.id,
+      invoice_id: newRow.invoice_id,
+      po: newRow.po_no,
+      vendor: newRow.vendor,
+      partNo: newRow.part_no,
+      partName: newRow.part_name,
+      spec: newRow.spec,
+      qty: newRow.qty,
+      unit: newRow.unit
+    }
+  ]);
+};
+
 
 
   // 행 수정
@@ -290,16 +301,44 @@ console.log("🔥 URL inv:", JSON.stringify(inv));
             </Button>
 
             <Button
-              variant="contained"
-              color="error"
-              size="small"
-              onClick={() => {
-                const id = prompt("삭제할 ID를 입력하세요:");
-                if (id) handleDelete(Number(id));
-              }}
-            >
-              삭제
-            </Button>
+  variant="contained"
+  color="error"
+  size="small"
+  onClick={async () => {
+    // 삭제 모드 진입
+    if (!deleteMode) {
+      setDeleteMode(true);
+      alert("🗑 삭제 모드 활성화\n행을 클릭해서 선택하세요.");
+      return;
+    }
+
+    // 삭제할 항목 없으면 삭제 모드 종료
+    if (selectedRows.length === 0) {
+      alert("삭제할 항목이 없습니다.");
+      setDeleteMode(false);
+      return;
+    }
+
+    if (!window.confirm(`${selectedRows.length}개 항목을 삭제할까요?`)) {
+      return;
+    }
+
+    // 🔥 선택된 모든 row 삭제
+    for (const id of selectedRows) {
+      await fetch(`${API}/api/packing/${id}`, { method: "DELETE" });
+    }
+
+    // 화면에서도 제거
+    setRows(prev => prev.filter(r => !selectedRows.includes(r.id)));
+
+    // 초기화
+    setSelectedRows([]);
+    setDeleteMode(false);
+  }}
+>
+  {deleteMode ? "삭제 실행" : "삭제"}
+</Button>
+
           </Box>
         )}
       </Box>
@@ -327,7 +366,27 @@ console.log("🔥 URL inv:", JSON.stringify(inv));
 
           <TableBody>
             {rows.map((row, i) => (
-              <TableRow key={row.id} sx={{ bgcolor: i % 2 === 0 ? "#ffffff" : "#f8f8f8" }}>
+              <TableRow
+  key={row.id}
+  sx={{
+    bgcolor: selectedRows.includes(row.id)
+      ? "#ffdddd"
+      : i % 2 === 0
+      ? "#ffffff"
+      : "#f8f8f8",
+    cursor: deleteMode ? "pointer" : "default"
+  }}
+  onClick={() => {
+    if (!deleteMode) return;
+
+    if (selectedRows.includes(row.id)) {
+      setSelectedRows(prev => prev.filter(id => id !== row.id));
+    } else {
+      setSelectedRows(prev => [...prev, row.id]);
+    }
+  }}
+>
+
                 {["id", "po", "vendor", "partNo", "partName", "spec", "qty","unit"].map(
                   (field, idx) => (
                     <TableCell
