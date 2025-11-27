@@ -12,7 +12,9 @@ import {
   TableRow,
   TableCell,
   TableBody,
-  Paper
+  Paper,
+  Select,
+  MenuItem
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 
@@ -403,13 +405,14 @@ const getAlabamaDate = (dateStr) =>
 
 // delayed_date 또는 ETA 중 실제 도착일 적용
 const delayedDate2 = merged.delayed_date
-  ? getAlabamaDate(normalizeDate(merged.delayed_date))
-  : getAlabamaDate(normalizeDate(merged.eta));
+  ? getAlabamaDate(merged.delayed_date)
+  : getAlabamaDate(merged.eta);
 
+// 오늘 미국(앨라배마) 기준 날짜
 const todayUS = getAlabamaDate(new Date());
 
+// 🔥 최종 도착 여부 규칙
 const arrived = delayedDate2 < todayUS;
-
 
 
 
@@ -466,118 +469,116 @@ const arrived = delayedDate2 < todayUS;
 
       </Box>
 
-       {/* 수출자 & 품목 버튼 그룹 */}
-<Box sx={{ flex: 1, display: 'flex', justifyContent: 'space-between', p: 1 }}>
-  {/* 수출자 버튼 그룹 */}
-  <Box sx={{ flex: 1, mr: 1 }}>
+  {/* 수출자 & 품목 콤보박스 그룹 */}
+<Box sx={{ flex: 1, display: 'flex', gap: 2, alignItems: 'flex-start', p: 2 }}>
+
+  {/* 수출자 콤보박스 */}
+  <Box sx={{ flex: 1 }}>
     <Typography sx={{ fontWeight: 'bold', mb: 1, textAlign: 'center' }}>수출자</Typography>
-    {['모텍', '오토텍', '이엔지', '정공'].map((exp) => {
-      const isSelected = selectedExporter === exp;
 
-      const isActive =
-        selectionPriority === 'item'
-          ? itemToExporters[selectedItem]?.includes(exp) || isSelected
-          : true;
+    <Select
+      fullWidth
+      value={selectedExporter || ""}
+      onChange={(e) => {
+        const value = e.target.value;
 
-      return (
-        <Button
-          key={exp}
-          fullWidth
-          onClick={() => {
-            if (isSelected) {
-              if (selectionPriority === 'exporter') {
-                // 수출자가 먼저 눌린 경우 → 전체 초기화
-                setSelectedExporter(null);
-                setSelectedItem(null);
-                setSelectionPriority(null);
-              } else {
-                // 품목이 먼저 눌린 경우 → 수출자만 해제
-                setSelectedExporter(null);
-              }
-            } else {
-              // 새 수출자 선택
-              if (selectionPriority === 'exporter' && selectedExporter && selectedExporter !== exp) {
-                setSelectedItem(null);
-              }
-              setSelectedExporter(exp);
-              if (!selectionPriority) setSelectionPriority('exporter');
-            }
-          }}
-          sx={{
-            mb: 1,
-            bgcolor: isSelected ? '#b86b00' : isActive ? '#f5c374' : '#ddd',
-            color: isSelected ? 'white' : isActive ? '#4b2e05' : '#888',
-            fontWeight: 'bold',
-            borderRadius: 2,
-            textTransform: 'none',
-            fontSize: '1rem',
-            boxShadow: isSelected ? '0 3px 6px rgba(0,0,0,0.3)' : 'none',
-            cursor: isActive ? 'pointer' : 'not-allowed',
-            '&:hover': isActive ? { bgcolor: '#a66900' } : {}
-          }}
-          disabled={!isActive}
-        >
+        // 선택 해제
+        if (value === "") {
+          setSelectedExporter(null);
+          setSelectedItem(null);
+          setSelectionPriority(null);
+          return;
+        }
+
+        setSelectedExporter(value);
+
+        if (!selectionPriority) setSelectionPriority("exporter");
+
+        // 수출자가 먼저 선택된 경우 → 품목 필터링
+        if (selectionPriority === "exporter") {
+          if (selectedItem && !exporterToItems[value]?.includes(selectedItem)) {
+            setSelectedItem(null);
+          }
+        }
+      }}
+      displayEmpty
+      sx={{ bgcolor: "#fff", borderRadius: 1,fontSize: "0.8rem", fontWeight: "bold", 
+          "& .MuiSelect-select": {   // 🔥 콤보박스 안 텍스트 스타일
+    fontSize: "0.8rem",
+    fontWeight: 700,
+    color: "#333",
+    padding: "10px 14px"
+  }
+        }}
+    >
+      <MenuItem value=""
+       sx={{ fontSize: "0.9rem", fontWeight: 700, color: "#222" }}>
+        <em>전체</em>
+      </MenuItem>
+      {["모텍", "오토텍", "이엔지", "정공"].map((exp) => (
+        <MenuItem key={exp} value={exp}
+         sx={{
+     fontSize: "0.9rem", fontWeight: 600, fontFamily: "Arial", color: "#222" 
+  }}>
           {exp}
-        </Button>
-      );
-    })}
+        </MenuItem>
+      ))}
+    </Select>
   </Box>
 
-  {/* 품목 버튼 그룹 */}
+  {/* 품목 콤보박스 */}
   <Box sx={{ flex: 1 }}>
     <Typography sx={{ fontWeight: 'bold', mb: 1, textAlign: 'center' }}>품목구분</Typography>
-    {['EV-SUB', 'TOOL', '건설자재', '단조소재', '설비', '오일'].map((cat) => {
-      const isSelected = selectedItem === cat;
 
-      const isActive =
-        selectionPriority === 'exporter'
-          ? exporterToItems[selectedExporter]?.includes(cat) || isSelected
-          : true;
+    <Select
+      fullWidth
+      value={selectedItem || ""}
+      onChange={(e) => {
+        const value = e.target.value;
 
-      return (
-        <Button
-          key={cat}
-          fullWidth
-          onClick={() => {
-            if (isSelected) {
-              if (selectionPriority === 'item') {
-                // 품목이 먼저 눌린 경우 → 전체 초기화
-                setSelectedItem(null);
-                setSelectedExporter(null);
-                setSelectionPriority(null);
-              } else {
-                // 수출자가 먼저 눌린 경우 → 품목만 해제
-                setSelectedItem(null);
-              }
-            } else {
-              // 새 품목 선택
-              if (selectionPriority === 'item' && selectedItem && selectedItem !== cat) {
-                setSelectedExporter(null);
-              }
-              setSelectedItem(cat);
-              if (!selectionPriority) setSelectionPriority('item');
-            }
-          }}
-          sx={{
-            mb: 1,
-            bgcolor: isSelected ? '#007f7f' : isActive ? '#66b2b2' : '#ddd',
-            color: 'white',
-            fontWeight: 'bold',
-            borderRadius: 2,
-            textTransform: 'none',
-            fontSize: '1rem',
-            boxShadow: isSelected ? '0 3px 6px rgba(0,0,0,0.3)' : 'none',
-            cursor: isActive ? 'pointer' : 'not-allowed',
-            '&:hover': isActive ? { bgcolor: '#006666' } : {}
-          }}
-          disabled={!isActive}
-        >
+        if (value === "") {
+          setSelectedItem(null);
+          setSelectedExporter(null);
+          setSelectionPriority(null);
+          return;
+        }
+
+        setSelectedItem(value);
+
+        if (!selectionPriority) setSelectionPriority("item");
+
+        // 품목이 먼저 선택된 경우 → 수출자 필터링
+        if (selectionPriority === "item") {
+          if (selectedExporter && !itemToExporters[value]?.includes(selectedExporter)) {
+            setSelectedExporter(null);
+          }
+        }
+      }}
+      displayEmpty
+      sx={{ bgcolor: "#fff", borderRadius: 1,fontSize: "0.8rem", fontWeight: "bold",
+        "& .MuiSelect-select": {   // 🔥 콤보박스 안 텍스트 스타일
+    fontSize: "0.8rem",
+    fontWeight: 700,
+    color: "#333",
+    padding: "10px 14px"
+  }
+       }}
+    >
+      <MenuItem value=""
+       sx={{ fontSize: "0.9rem", fontWeight: 700, color: "#222" }}>
+        <em>전체</em>
+      </MenuItem>
+      {["EV-SUB", "TOOL", "건설자재", "단조소재", "설비", "오일"].map((cat) => (
+        <MenuItem key={cat} value={cat}
+        sx={{ fontSize: "0.9rem", fontWeight: 600, fontFamily: "Arial", color: "#222" }}>
           {cat}
-        </Button>
-      );
-    })}
+        </MenuItem>
+      ))}
+    </Select>
   </Box>
+
 </Box>
+
 
 
 </Box>
