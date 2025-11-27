@@ -108,3 +108,72 @@ dist
 
 # wincompare file
 .bak
+
+
+# ============================================
+# 🔥 FRONTEND (Vite / React)
+# ============================================
+.vite/
+.env
+.env.*
+!.env.example
+vite.config.js.timestamp*
+
+# Local dev files
+*.local
+
+# ============================================
+# 🔥 BACKEND (Python / Flask)
+# ============================================
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pyd
+*.pdb
+
+# Flask venv
+venv/
+env/
+ENV/
+.venv/
+
+# Flask instance folder
+instance/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# SQLite files (혹시 사용한다면)
+*.sqlite
+*.sqlite3
+*.db
+*.db-shm
+*.db-wal
+
+# Migrations (옵션, 필요 없으면 유지)
+migrations/
+
+# Gunicorn logs
+gunicorn-error.log
+
+# ============================================
+# 🔥 EDITOR / IDE
+# ============================================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ============================================
+# 🔥 OS SYSTEM FILES
+# ============================================
+.DS_Store
+Thumbs.db
+
+# ============================================
+# 🔥 DOCKER
+# ============================================
+*.pid
+docker-data/
