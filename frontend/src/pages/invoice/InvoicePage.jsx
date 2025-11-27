@@ -399,14 +399,18 @@ const getAlabamaDate = (dateStr) =>
   ? getAlabamaDate(merged.delayed_date)
   : etaUS;
 
-  // ETA == 공장도착일 → 도착
-  // ETA < 공장도착일 → 미도착
-  const arrived =
-    etaUS.toDateString() === factoryUS.toDateString()
-      ? true
-      : etaUS < factoryUS
-      ? false
-      : false;
+// === 도착 여부: delayed_date가 오늘 이전이면 무조건 도착 ===
+
+// delayed_date 또는 ETA 중 실제 도착일 적용
+const delayedDate2 = merged.delayed_date
+  ? getAlabamaDate(normalizeDate(merged.delayed_date))
+  : getAlabamaDate(normalizeDate(merged.eta));
+
+const todayUS = getAlabamaDate(new Date());
+
+const arrived = delayedDate2 < todayUS;
+
+
 
 
   return (
@@ -749,6 +753,7 @@ const getAlabamaDate = (dateStr) =>
 
             <TableBody>
   {filteredRows.map((row, i) => {
+    
     // === 날짜 정규화 ===
 const etdDate = getKoreaDate(normalizeDate(row.etd));   // 한국 시간
 const etaDate = getUSDate(normalizeDate(row.eta));      // 미국 시간
