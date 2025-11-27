@@ -305,7 +305,7 @@ const getAlabamaDate = (dateStr) =>
       </Box>
 
       {/* 검색결과 + 수출자/품목 버튼 */}
-      <Box sx={{ flex: '0 0 37%', display: 'flex', p: 2, gap: 2 }}>
+      <Box sx={{ flex: '0 0 30%', display: 'flex', p: 2, gap: 2 }}>
         {/* 왼쪽 검색결과 */}
         <Box
           sx={{
