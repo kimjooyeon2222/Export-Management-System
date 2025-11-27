@@ -1,4 +1,16 @@
-Flask
-Flask-Cors
-Flask-SQLAlchemy
-PyMySQL
+Flask==2.3.2
+Flask-Cors==4.0.0
+Flask-SQLAlchemy==3.1.1
+SQLAlchemy==2.0.23
+
+PyMySQL==1.1.0
+pymysql[rsa]
+
+python-dotenv==1.0.0
+Werkzeug==2.3.7
+itsdangerous==2.1.2
+Jinja2==3.1.2
+
+# Optional but recommended
+cryptography==41.0.3
+requests==2.31.0
