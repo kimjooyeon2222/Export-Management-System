@@ -47,6 +47,8 @@ export default function InvoicePage() {
   }
 };
 
+const [etdStart, setEtdStart] = useState("");
+const [etaEnd, setEtaEnd] = useState("");
 
 
   const navigate = useNavigate();
@@ -224,6 +226,20 @@ const handleAdd = async () => {
   if (!(daysToETA > 0)) return false;
 }
 
+ // --- 날짜 필터링 정확한 버전 ---
+// ETD 시작 필터
+if (etdStart) {
+  if (!r.etd || r.etd.trim() === "") return false;
+  if (r.etd < etdStart) return false;
+}
+
+// ETA 종료 필터
+if (etaEnd) {
+  if (!r.eta || r.eta.trim() === "") return false;
+  if (r.eta > etaEnd) return false;
+}
+
+
 
     // 버튼 조건: 선택된 수출자/품목 기준 필터
     if (selectedExporter && selectedItem) {
@@ -362,12 +378,13 @@ const getAlabamaDate = (dateStr) =>
         {/* 왼쪽 검색결과 */}
         <Box
           sx={{
-            flex: 3,
-            border: '1px solid #ccc',
-            borderRadius: 1,
-            p: 2,
-            overflowY: 'auto',
-            maxHeight: '330px' // 검색결과 영역 고정 높이 (스크롤 전용)
+                flex: '0 0 1400px',   // 높이 완전 고정
+                flexShrink: 0,       // ❗ 절대로 줄어들지 않음
+                 border: '1px solid #ccc',
+                 borderRadius: 1,
+                 p: 2,
+                 overflowY: 'auto',
+                 maxHeight: '340px'
 
           }}
         >
@@ -468,12 +485,34 @@ const arrived = delayedDate2 < todayUS;
 
 
       </Box>
+ <Box
+    sx={{
+      flex: 1,
+      display: "flex",
+      flexDirection: "column",   // ⭐ 추가!
+
+      justifyContent: "center",
+      alignItems: "center",
+    }}
+  >
 
   {/* 수출자 & 품목 콤보박스 그룹 */}
-<Box sx={{ flex: 1, display: 'flex', gap: 2, alignItems: 'flex-start', p: 2 }}>
+<Box     sx={{
+    minHeight: "100px",
+    height: "auto",
+    flexShrink: 0,
+    display: 'flex',
+    flexDirection: 'column',   // ⭐ 핵심!
+    gap: 3,
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    p: 2
+  }}>
 
+  {/* 🔹 첫 번째 줄: 수출자 + 품목 */}
+  <Box sx={{ display: "flex", gap: 5, mb:1 }}>
   {/* 수출자 콤보박스 */}
-  <Box sx={{ flex: 1 }}>
+  <Box sx={{ width:"100px"}}>
     <Typography sx={{ fontWeight: 'bold', mb: 1, textAlign: 'center' }}>수출자</Typography>
 
     <Select
@@ -487,6 +526,8 @@ const arrived = delayedDate2 < todayUS;
           setSelectedExporter(null);
           setSelectedItem(null);
           setSelectionPriority(null);
+          // 🔥 전체 선택하면 자동 스크롤 다운
+          setTimeout(scrollToBottom, 10);
           return;
         }
 
@@ -527,7 +568,7 @@ const arrived = delayedDate2 < todayUS;
   </Box>
 
   {/* 품목 콤보박스 */}
-  <Box sx={{ flex: 1 }}>
+  <Box sx={{  width:"100px" }}>
     <Typography sx={{ fontWeight: 'bold', mb: 1, textAlign: 'center' }}>품목구분</Typography>
 
     <Select
@@ -576,14 +617,36 @@ const arrived = delayedDate2 < todayUS;
       ))}
     </Select>
   </Box>
+</Box>
+<Box sx={{ textAlign: "center" }}>
+    <Typography sx={{ fontWeight: "bold", mb: 1 }}>기간 (ETD ~ ETA)</Typography>
 
+    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+      <TextField
+  type="date"
+  value={etdStart}
+  onChange={(e) => setEtdStart(e.target.value)}
+  size="small"
+  sx={{ width: 170 }}
+/>
+
+<Typography>~</Typography>
+
+<TextField
+  type="date"
+  value={etaEnd}
+  onChange={(e) => setEtaEnd(e.target.value)}
+  size="small"
+  sx={{ width: 170 }}
+/>
+
+    </Box>
 </Box>
 
-
-
+  
 </Box>
-
-
+</Box>
+</Box>
 
       {/* 관리자용 버튼 */}
       {userRole === 'admin' && (
