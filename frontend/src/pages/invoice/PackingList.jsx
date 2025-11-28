@@ -390,22 +390,94 @@ console.log("🔥 URL inv:", JSON.stringify(inv));
                 {["id", "po", "vendor", "partNo", "partName", "spec", "qty","unit"].map(
                   (field, idx) => (
                     <TableCell
-                      key={idx}
-                      align="center"
-                      sx={{
-                        cursor:
-                          isEditMode && userRole === "admin" ? "pointer" : "default",
-                      }}
-                      onClick={() => {
-                        if (!isEditMode || userRole !== "admin") return;
-                        const value = prompt(`${field} 수정`, String(row[field] || ""));
-                        if (value !== null) handleEdit(row.id, field, value);
-                      }}
-                    >
-                      {field === "qty"
-                        ? Number(row[field]).toLocaleString()
-                        : row[field]}
-                    </TableCell>
+  key={idx}
+  align="center"
+  sx={{
+    cursor: isEditMode && userRole === "admin" ? "pointer" : "default",
+  }}
+  onClick={() => {
+    // 수정 모드 아닐 때 → 아무것도 안 함
+    if (!isEditMode || userRole !== "admin") return;
+
+    // UNIT 은 클릭 시 prompt 금지 → select 로만 수정
+    if (field === "unit") return;
+
+    // 기본 prompt 방식 유지
+    const value = prompt(`${field} 수정`, String(row[field] || ""));
+    if (value !== null) handleEdit(row.id, field, value);
+  }}
+>
+
+  {/* 🔥 UNIT만 드롭다운 + 직접입력 적용 */}
+  {isEditMode && userRole === "admin" && field === "unit" ? (
+    row.unit === "__custom__" ? (
+      // 🔸 직접 입력 모드 (input)
+      <input
+        autoFocus
+        defaultValue=""
+        placeholder="직접입력"
+        onBlur={(e) => {
+          const val = e.target.value.trim();
+          handleEdit(row.id, "unit", val || "EA");
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            const val = e.target.value.trim();
+            handleEdit(row.id, "unit", val || "EA");
+          }
+        }}
+        style={{
+          width: "80px",
+          padding: "4px 6px",
+          border: "1px solid #aaa",
+          borderRadius: "4px",
+        }}
+      />
+    ) : (
+      // 🔸 기본 드롭다운 모드
+      <select
+        value={row.unit}
+        onChange={(e) => {
+          if (e.target.value === "직접입력") {
+            handleEdit(row.id, "unit", "__custom__");
+          } else {
+            handleEdit(row.id, "unit", e.target.value);
+          }
+        }}
+        style={{
+          padding: "4px 6px",
+          borderRadius: "4px",
+          border: "1px solid #ccc",
+          fontSize: "0.9rem",
+        }}
+      >
+        {[
+          "드럼",
+          "벌",
+          "말",
+          "RL",
+          "EA",
+          "BOX",
+          "SET",
+          "KG",
+          "통",
+          "리터",
+          "직접입력",
+        ].map((u) => (
+          <option key={u} value={u}>
+            {u}
+          </option>
+        ))}
+      </select>
+    )
+  ) : (
+    // 🔥 기본 표시 (기존 로직 100% 유지)
+    field === "qty"
+      ? Number(row[field]).toLocaleString()
+      : row[field]
+  )}
+</TableCell>
+
                   )
                 )}
               </TableRow>
