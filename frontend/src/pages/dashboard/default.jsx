@@ -123,7 +123,11 @@ export default function DashboardDefault() {
                 onClick={() => {
                  if (btn.label === 'INVOICE TRK') {
                    navigate('/invoice'); // invoice 페이지로 이동
-                 } else {
+                 } 
+                  else if (btn.label === '단조품') {
+                     navigate('/forging');   // 🔥 단조품 페이지로 이동
+                 } 
+                 else {
                    alert(`${btn.label} 페이지는 준비 중입니다.`);
                  }
                }}

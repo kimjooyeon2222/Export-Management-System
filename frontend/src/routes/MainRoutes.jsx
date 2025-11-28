@@ -18,6 +18,7 @@ const SamplePage = Loadable(lazy(() => import('pages/extra-pages/sample-page')))
 // render - Invoice Page, Packing List (추가)
 const InvoicePage = Loadable(lazy(() => import('pages/invoice/InvoicePage')));
 const PackingList = Loadable(lazy(() => import('pages/invoice/PackingList'))); // ✅ 추가
+const ForgingPage = Loadable(lazy(() => import('pages/forging/ForgingPage')));
 
 // ==============================|| MAIN ROUTING ||============================== //
 
@@ -61,7 +62,11 @@ const MainRoutes = {
     {
       path: 'packing-list/:inv', 
       element: <PackingList />
+    },
+    {
+       path: 'forging', element: <ForgingPage /> 
     }
+
   ]
 };
 
