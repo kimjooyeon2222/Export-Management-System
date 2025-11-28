@@ -100,20 +100,28 @@ export default function ForgingPage() {
 
       {/* 적정재고 기준 */}
       <Paper sx={{ p: 2, mb: 3, borderLeft: "5px solid #ff9800" }}>
-        <Typography sx={{ fontWeight: "bold", mb: 1 }}>적정재고 기준</Typography>
+        <Typography sx={{ fontWeight: "bold", mb: 1, fontSize:"18px" }}>적정재고 기준</Typography>
         <TextField
           label="적정재고 수량"
           type="number"
           value={targetStock}
           onChange={(e) => setTargetStock(Number(e.target.value))}
           size="small"
-          sx={{ width: 200 }}
+          sx={{ width: 200,
+            "& .MuiInputBase-input": {
+      fontSize: "19x",   // ⭐ 입력 글씨 크기
+      fontWeight: "bold"
+    },
+            "& .MuiInputLabel-root": {
+      fontSize: "17px",     // ← ⭐ 라벨 글씨 크기
+      fontWeight: "bold"
+    } }}
         />
       </Paper>
 
       {/* 과부족 상태 패널 (T 제외 → 4개만 출력) */}
       <Paper sx={{ p: 2, mb: 4,border: "2px solid #777" }}>
-        <Typography sx={{ fontWeight: "bold", mb: 2 }}>※ 과부족 상태 ※</Typography>
+        <Typography sx={{ fontWeight: "bold", mb: 2, fontSize:"16px" }}>※ 과부족 상태 ※</Typography>
 
         <Table size="small">
           <TableHead>
@@ -213,12 +221,18 @@ export default function ForgingPage() {
                       pIdx === idx ? { ...p, overStock: v } : p
                     )
                   );
+                  
                 }}
                 sx={{
+                  // ⬇⬇ 라벨 글씨 키우기
+    "& .MuiInputLabel-root": {
+      fontSize: "18px",  
+      fontWeight: "bold",
+    },
                   width: 120,
                   "& input": {
                     textAlign: "center",
-                    fontSize: 16,
+                    fontSize: 18,
                     color: "#1155cc",
                     fontWeight: "bold",
                   }
@@ -227,7 +241,7 @@ export default function ForgingPage() {
             </Box>
 
             {/* 단위 */}
-            <Box sx={{ fontSize: 12, color: "#444", mt: 1 }}>
+            <Box sx={{ fontSize: 14, color: "#444", mt: 1 }}>
               단위 : {it.unit.toLocaleString()}
             </Box>
           </TableCell>
@@ -256,7 +270,8 @@ export default function ForgingPage() {
             adjust > 0 ? "#1155cc" :   // 양수 → 파란색
             adjust < 0 ? "#d32f2f" :   // 음수 → 빨간색
             "#000",                    // 0 → 검정
-          fontWeight: "bold"
+          fontWeight: "bold",
+          fontSize: "16px"   // ⭐ 글자 크기 키움
         }}
       >
         선적가감필요횟수: {adjust}
@@ -314,7 +329,7 @@ export default function ForgingPage() {
           "선적월",
           "도착월",
         ].map((h) => (
-          <TableCell key={h} align="center" sx={{ fontWeight: "bold" }}>
+          <TableCell key={h} align="center" sx={{ fontWeight: "bold", fontSize: "14px" }}>
             {h}
           </TableCell>
         ))}
