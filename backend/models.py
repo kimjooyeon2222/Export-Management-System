@@ -10,6 +10,8 @@ class Invoice(db.Model):
     __tablename__ = "invoice"
 
     id = db.Column(db.Integer, primary_key=True)   # PK
+    sort_order = db.Column(db.Integer, nullable=False, default=999999)  # ⭐ 추가
+
     exporter = db.Column(db.String(100))
     inv_no = db.Column(db.String(100), unique=True, nullable=False)
     amount = db.Column(db.String(50))

@@ -33,6 +33,7 @@ def get_invoices():
     return jsonify([
         {
             "id": i.id,
+            "sort_order":i.sort_order,
             "inv_no": i.inv_no,
             "exporter": i.exporter,
             "amount": i.amount,
@@ -271,6 +272,18 @@ def get_packing_max_id():
     if max_id is None:
         max_id = 0
     return jsonify({"max_id": max_id})
+
+@app.route("/api/invoices/sort", methods=["PUT"])
+def update_sort_order():
+    data = request.json  # [{id:1, sort_order:1}, ...]
+
+    for item in data:
+        db.session.query(Invoice).filter_by(id=item["id"]).update({
+            "sort_order": item["sort_order"]
+        })
+
+    db.session.commit()
+    return jsonify({"message": "sort_order updated"})
 
 # ============================================
 # 서버 실행

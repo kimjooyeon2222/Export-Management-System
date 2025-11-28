@@ -17,6 +17,23 @@ import {
   MenuItem
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors
+} from "@dnd-kit/core";
+
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  arrayMove,
+  useSortable
+} from "@dnd-kit/sortable";
+
+import { CSS } from "@dnd-kit/utilities";
+
 
 // 수출자 - 품목 매핑
 const exporterToItems = {
@@ -40,12 +57,71 @@ const itemToExporters = {
 
 
 export default function InvoicePage() {
+const [sortMode, setSortMode] = useState(false);
+
+  // 👉 드래그 시작 감지 센서
+const sensors = useSensors(
+  useSensor(PointerSensor, {
+    activationConstraint: { distance: 5 }
+  })
+);
+
+// 👉 드래그 종료 시 순서 변경 함수
+// ⭐ 행 정렬 저장 handleDragEnd (DB 업데이트 버전)
+const handleDragEnd = async (event) => {
+  const { active, over } = event;
+  if (!over || active.id === over.id) return;
+
+  // 🔥 전체 rows 기준으로 index 찾아야 반영됨
+  const oldIndex = rows.findIndex((r) => r.id === active.id);
+  const newIndex = rows.findIndex((r) => r.id === over.id);
+
+  const newRows = arrayMove([...rows], oldIndex, newIndex);
+
+  // sort_order 재배치
+  const updatedSort = newRows.map((row, idx) => ({
+    id: row.id,
+    sort_order: idx + 1
+  }));
+
+  // 화면 업데이트
+  setRows(newRows);
+
+  // DB 저장
+  await fetch(`${API_BASE}/api/invoices/sort`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(updatedSort),
+  });
+};
+
+
+
+
   const bottomScrollRef = useRef(null);
   const scrollToBottom = () => {
   if (bottomScrollRef.current) {
     bottomScrollRef.current.scrollTop = bottomScrollRef.current.scrollHeight;
   }
 };
+function SortableRow({ row, children, rowBg, sortMode }) {
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useSortable({ id: row.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform), 
+    transition,
+    backgroundColor: rowBg,
+    cursor: sortMode ? "grab" : "default"
+  };
+
+  return (
+    <TableRow ref={setNodeRef} style={style} {...(sortMode ? attributes : {})}
+      {...(sortMode ? listeners : {})}>
+      {children}
+    </TableRow>
+  );
+}
 
 const [etdStart, setEtdStart] = useState("");
 const [etaEnd, setEtaEnd] = useState("");
@@ -81,9 +157,13 @@ const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5001";
   useEffect(() => {
   fetch(`${API_BASE}/api/invoices`)
     .then(res => res.json())
-    .then(data => setRows(data))
+    .then(data => {
+      const sorted = [...data].sort((a, b) => a.sort_order - b.sort_order);
+      setRows(sorted);
+    })
     .catch(err => console.error("Invoice API Error:", err));
 }, []);
+
 
 useEffect(() => {
   if (!isEditMode) {
@@ -253,7 +333,10 @@ if (etaEnd) {
 
     // 아무 것도 선택 안했을 때 전체 표시
     return true;
-  });
+  })
+   .sort((a, b) => 0);
+
+
   
   // 미국 앨라배마(Chicago) 시간으로 날짜 변환
 const getUSDate = (dateStr) =>
@@ -682,6 +765,21 @@ const arrived = delayedDate2 < todayUS;
     (5일전)
   </Typography>
 </Button>
+<Button
+  variant="contained"
+  color={sortMode ? "secondary" : "info"}
+  size="small"
+  onClick={() => {
+    setSortMode(prev => !prev);
+    if (!sortMode) {
+      alert("🔧 행 정렬 모드가 활성화되었습니다.\n드래그해서 순서를 변경하세요.");
+    } else {
+      alert("✔ 행 정렬 모드 종료");
+    }
+  }}
+>
+  {sortMode ? "정렬 종료" : "행 정렬"}
+</Button>
 
           <Button variant="contained" color="success" size="small" onClick={handleAdd}>
             추가
@@ -760,7 +858,7 @@ const arrived = delayedDate2 < todayUS;
                   'INV#',
                   'INV 금액',
                   <TableCell sx={{ width: '140px', textAlign: 'center', fontWeight: 'bold' }}>
-  <div>품목구분</div>
+  <div>품목<br></br>구분</div>
 </TableCell>
 ,
                   'CONT#',
@@ -815,142 +913,145 @@ const arrived = delayedDate2 < todayUS;
               </TableRow>
             </TableHead>
 
-            <TableBody>
-  {filteredRows.map((row, i) => {
-    
-    // === 날짜 정규화 ===
-const etdDate = getKoreaDate(normalizeDate(row.etd));   // 한국 시간
-const etaDate = getUSDate(normalizeDate(row.eta));      // 미국 시간
-const delayedDate = row.delayed_date
-  ? getUSDate(normalizeDate(row.delayed_date))          // 미국 시간
-  : etaDate;
-
-// === ETA까지 남은 날짜(색상용) ===
-const daysToETA = Math.floor((etaDate - today) / (1000 * 60 * 60 * 24));
-
-// === ETA vs 실제 도착일 차이 ===
-const diffDays = Math.floor((delayedDate - etaDate) / (1000 * 60 * 60 * 24));
-
-// COUNT 표시용
-const countText = `${diffDays}일`;
-const countNum = diffDays;
-
-
-    // 🚀 지연(Delayed) 색상 스타일 - ETA 기준
-let delayedStyle = {};
-
-if (daysToETA < 0) {
-  delayedStyle = { bgcolor: "#d6eaff" }; // 파랑
-} else if (daysToETA === 0) {
-  delayedStyle = {
-    bgcolor: "#ffe0b2",
-    color: "#e65100",
-    fontWeight: "bold",
-  };
-} else if (daysToETA > 0 && daysToETA <= 5) {
-  delayedStyle = {
-    bgcolor: "#ffcccc",
-    color: "#b71c1c",
-    fontWeight: "bold",
-  };
-} else {
-  delayedStyle = { bgcolor: "#ffcccc" };
-}
-
-
-
-    const countStyle =
-  countNum >= 10
-    ? { bgcolor: "#ccf2e0", color: "red", fontWeight: "bold" }
-    : { bgcolor: "white", color: "black", fontWeight: "normal" };
-
-
-
-    const rowBg = i % 2 === 0 ? '#fff5e6' : '#ffffff';
-
-    return (
-      <TableRow
-  key={row.id}
-  onClick={() => {
-    if (!deleteMode) return; // 삭제 모드가 아닐 때는 그냥 무시
-
-    if (selectedInvs.includes(row.inv_no)) {
-      setSelectedInvs(prev => prev.filter(v => v !== row.inv_no));
-    } else {
-      setSelectedInvs(prev => [...prev, row.inv_no]);
-    }
-  }}
-  sx={{
-    bgcolor: selectedInvs.includes(row.inv_no)
-      ? "#ffdddd"   // 선택된 행 색상
-      : rowBg,
-    cursor: deleteMode ? "pointer" : "default"
-  }}
+            <DndContext
+  sensors={sensors}
+  collisionDetection={closestCenter}
+  onDragEnd={handleDragEnd}
 >
-        {[
-          row.id,
-          row.exporter,
-          row.inv_no,
-          row.amount,
-          row.item_type,
-          row.cont_no,
-          row.bl_no,
-          row.etd,
-          row.eta,
-          row.delayed_date,
-          countText, // 여기서 계산된 값 표시
-          row.needs_help,
-          row.remark
-        ].map((val, idx) => (
-          <TableCell
-            key={idx}
-            align="center"
-            sx={{
-              fontSize: '1rem',
-           //   fontSize:
-      //[5].includes(idx)
-        //</TableRow>? '0.75rem' // 🔥 특정 컬럼만 작게
-        //: '1rem',   // 나머지는 원래 크기
+  <SortableContext
+    items={filteredRows.map((r) => r.id)}
+    strategy={verticalListSortingStrategy}
+  >
+    <TableBody>
+      {filteredRows.map((row, i) => {
+        // === 날짜 정규화 ===
+        const etdDate = getKoreaDate(normalizeDate(row.etd));   // 한국 시간
+        const etaDate = getUSDate(normalizeDate(row.eta));      // 미국 시간
+        const delayedDate = row.delayed_date
+          ? getUSDate(normalizeDate(row.delayed_date))          // 미국 시간
+          : etaDate;
 
-              ...(idx === 2 && { color: 'blue', cursor: 'pointer', textDecoration: 'underline' }),
-              ...(idx === 9 ? delayedStyle : {}), // delayed 스타일
-              ...(idx === 10 ? countStyle : {}), // count 스타일 적용
-              ...(userRole === 'admin' && { cursor: 'pointer' })
-            }}
-            onClick={() => {
-              // INV 클릭 시 링크 이동
-              if (idx === 2 && !isEditMode) return navigate(`/packing-list/${row.inv_no}`);
+        // === ETA까지 남은 날짜(색상용) ===
+        const daysToETA = Math.floor((etaDate - today) / (1000 * 60 * 60 * 24));
 
-              if (userRole === 'admin' && isEditMode) {
-                const value = prompt('값 수정', String(val || ''));
-                if (value !== null) {
-                  const keys = [
-                    'id',
-                    'exporter',
-                    'inv_no',
-                    'amount',
-                    'item_type',
-                    'cont_no',
-                    'bl_no',
-                    'etd',
-                    'eta',
-                    'delayed_date',
-                    'count_days',
-                    'needs_help',
-                    'remark'
-                  ];
-                  handleEdit(row.id, keys[idx], value);
-                }
-              }
-            }}
-          >
-            {val}
-          </TableCell>
-        ))}
-      </TableRow>
-    );
-  })}
-</TableBody>
+        // === ETA vs 실제 도착일 차이 ===
+        const diffDays = Math.floor((delayedDate - etaDate) / (1000 * 60 * 60 * 24));
+
+        // COUNT 표시용
+        const countText = `${diffDays}일`;
+        const countNum = diffDays;
+
+        // 🚀 지연(Delayed) 색상 스타일 - ETA 기준
+        let delayedStyle = {};
+        if (daysToETA < 0) {
+          delayedStyle = { bgcolor: "#d6eaff" }; // 도착 완료
+        } else if (daysToETA === 0) {
+          delayedStyle = {
+            bgcolor: "#ffe0b2",
+            color: "#e65100",
+            fontWeight: "bold",
+          };
+        } else if (daysToETA > 0 && daysToETA <= 5) {
+          delayedStyle = {
+            bgcolor: "#ffcccc",
+            color: "#b71c1c",
+            fontWeight: "bold",
+          };
+        } else {
+          delayedStyle = { bgcolor: "#ffcccc" };
+        }
+
+        const countStyle =
+          countNum >= 10
+            ? { bgcolor: "#ccf2e0", color: "red", fontWeight: "bold" }
+            : { bgcolor: "white", color: "black", fontWeight: "normal" };
+
+        const rowBg = i % 2 === 0 ? "#fff5e6" : "#ffffff";
+
+        return (
+          <SortableRow key={row.id} row={row} rowBg={rowBg} sortMode={sortMode}>
+          
+            {[
+              row.id,
+              row.exporter,
+              row.inv_no,
+              row.amount,
+              row.item_type,
+              row.cont_no,
+              row.bl_no,
+              row.etd,
+              row.eta,
+              row.delayed_date,
+              countText,
+              row.needs_help,
+              row.remark
+            ].map((val, idx) => (
+              <TableCell
+                key={idx}
+                align="center"
+                sx={{
+                  fontSize: "1rem",
+                   // 🚀 삭제 모드에서 선택된 행 → 색상 강조
+    ...(deleteMode && selectedInvs.includes(row.inv_no) && {
+      bgcolor: "#ffcccc !important",
+      color: "black",
+      fontWeight: "bold",
+    }),
+                  ...(idx === 2 && { color: "blue", cursor: "pointer", textDecoration: "underline" }),
+                  ...(idx === 9 ? delayedStyle : {}),   // delayed 색상
+                  ...(idx === 10 ? countStyle : {}),     // count 색상
+                  ...(userRole === "admin" && { cursor: "pointer" })
+                }}
+                onClick={() => {
+                  if (deleteMode) {
+                    // 삭제모드에서 클릭 시 선택
+                    if (selectedInvs.includes(row.inv_no)) {
+                      setSelectedInvs(prev => prev.filter(v => v !== row.inv_no));
+                    } else {
+                      setSelectedInvs(prev => [...prev, row.inv_no]);
+                    }
+                    return;
+                  }
+
+                  // INV 클릭 → PACKING LIST 이동
+                  if (idx === 2 && !isEditMode) {
+                    return navigate(`/packing-list/${row.inv_no}`);
+                  }
+
+                  // 관리자 & 수정 모드
+                  if (userRole === "admin" && isEditMode) {
+                    const value = prompt("값 수정", String(val || ""));
+                    if (value !== null) {
+                      const keys = [
+                        "id",
+                        "exporter",
+                        "inv_no",
+                        "amount",
+                        "item_type",
+                        "cont_no",
+                        "bl_no",
+                        "etd",
+                        "eta",
+                        "delayed_date",
+                        "count_days",
+                        "needs_help",
+                        "remark"
+                      ];
+                      handleEdit(row.id, keys[idx], value);
+                    }
+                  }
+                }}
+              >
+                {val}
+              </TableCell>
+            ))}
+          </SortableRow>
+        );
+      })}
+    </TableBody>
+  </SortableContext>
+</DndContext>
+
 
           </Table>
         </Paper>
