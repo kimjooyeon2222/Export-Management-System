@@ -418,36 +418,69 @@ const getStatusStyle = (status) => {
 
 {/* 작성자 + 북미 날짜 */}
 <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 1 }}>
+
+  {/* 작성자 */}
   <TextField
     label="작성자"
-    InputProps={{ readOnly: !editMode }}
+    InputProps={{
+      readOnly: !editMode,
+      sx: {
+        "& input": {
+          fontSize: "14px",        // 입력 글자 크기
+          fontWeight: "bold",      // 입력 Bold
+        }
+      }
+    }}
+    InputLabelProps={{
+      shrink: true,
+      sx: {
+        fontSize: "15px",          // 라벨 크기
+        fontWeight: "bold"         // 라벨 Bold
+      }
+    }}
     size="small"
     value={writer}
     onChange={(e) => {
-  if (!editMode) return;
-  setWriter(e.target.value);
-}}
-    sx={{ width: 150 }}
+      if (!editMode) return;
+      setWriter(e.target.value);
+    }}
+    sx={{ width: 160 }}
   />
+
+  {/* 북미 날짜 */}
   <TextField
     label="북미 기준 날짜 (YYYY-MM-DD)"
     size="small"
     placeholder="2025-11-03"
     value={usDate}
-    InputProps={{ readOnly: !editMode }}
+    InputProps={{
+      readOnly: !editMode,
+      sx: {
+        "& input": {
+          fontSize: "14px",        // 입력 글씨 크기
+          fontWeight: "bold",      // Bold
+        }
+      }
+    }}
+    InputLabelProps={{
+      shrink: true,
+      sx: {
+        fontSize: "15px",          // 라벨 글씨 크기
+        fontWeight: "bold"         // Bold
+      }
+    }}
     onChange={(e) => {
-  if (!editMode) return;
-  setUsDate(e.target.value);
-}}
-
-    sx={{ width: 180 }}
-    InputLabelProps={{ shrink: true }}
+      if (!editMode) return;
+      setUsDate(e.target.value);
+    }}
+    sx={{ width: 200 }}
   />
-  
+
 </Box>
 
+
       {/* 제목 */}
-      <Typography variant="h5" sx={{ fontWeight: "bold", mb: 3 }}>
+      <Typography variant="h5" sx={{  fontSize:17, fontWeight: "bold", mb: 3 }}>
   원소재 재고 파악 및 운송일정 관리 
   ({usDate ? getPeriod(usDate) : "작성일자"})
 
@@ -456,7 +489,7 @@ const getStatusStyle = (status) => {
 
 
 
-      {/* 적정재고 기준 */}
+      
       {/* 적정재고 기준 */}
 <Paper sx={{ p: 2, mb: 3, borderLeft: "5px solid #ff9800" }}>
   <Typography sx={{ fontWeight: "bold", mb: 1, fontSize: "18px" }}>
@@ -522,11 +555,27 @@ const status = judgeStatus(normal, targetStock);
 
               return (
                 <TableRow key={idx}>
-                  <TableCell align="center">{it.fullName}</TableCell>
-                  <TableCell align="center">{fmt(targetStock)}</TableCell>
-                  <TableCell align="center">{fmt(it.running)}</TableCell>
-                  <TableCell align="center">{fmt(normal)}</TableCell>
-                  <TableCell align="center">{fmt(after)}</TableCell>
+                 {/* 🔥 품목명 Bold */}
+        <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px"  }}>
+          {it.fullName}
+        </TableCell>
+
+        {/* 🔥 숫자 전체 Bold */}
+        <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px"  }}>
+          {fmt(targetStock)}
+        </TableCell>
+
+        <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px"  }}>
+          {fmt(it.running)}
+        </TableCell>
+
+        <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px"  }}>
+          {fmt(normal)}
+        </TableCell>
+
+        <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px"  }}>
+          {fmt(after)}
+        </TableCell>
 
                   <TableCell
                     align="center"
@@ -588,7 +637,7 @@ const status = judgeStatus(normal, targetStock);
             {/* 품목명 */}
             <Box sx={{ fontWeight: "bold", fontSize: 14 }}>{it.name}</Box>
             
-            {/* 실사자료 입력 */}
+            
             {/* 실사자료 입력 */}
 <Box sx={{ mt: 1 }}>
   {editMode ? (
@@ -619,7 +668,7 @@ const status = judgeStatus(normal, targetStock);
         width: 120,
         "& input": {
           textAlign: "center",
-          fontSize: 18,
+          fontSize: "18px",
           color: "#1155cc",
           fontWeight: "bold"
         }
@@ -630,7 +679,7 @@ const status = judgeStatus(normal, targetStock);
       {/* 🔥 흐리지 않게 원본 라벨 색상 적용 */}
       <Typography
         sx={{
-          fontSize: "12px",
+          fontSize: "15px",
           fontWeight: "bold",
           color: "rgba(0, 0, 0, 0.6)",   // ⭐ TextField 라벨과 동일
         }}
@@ -640,7 +689,7 @@ const status = judgeStatus(normal, targetStock);
 
       <Typography
         sx={{
-          fontSize: 18,
+          fontSize: 20,
           color: "#1155cc",
           fontWeight: "bold",
           mt: 0.5
@@ -697,7 +746,7 @@ const status = judgeStatus(normal, targetStock);
       {/* 🔥 라벨 (TextField 라벨 색과 동일) */}
       <Typography
         sx={{
-          fontSize: 12,
+          fontSize: 15,
           color: "rgba(0,0,0,0.6)",
           fontWeight: "bold",
         }}
@@ -793,7 +842,7 @@ const status = judgeStatus(normal, targetStock);
     variant="contained"
     color="error"
     size="small"
-    disabled={!editMode}   // ⭐ 추가
+    disabled={!editMode}  
 
     onClick={() =>
       setRows((prev) => {
@@ -1017,7 +1066,7 @@ const status = judgeStatus(normal, targetStock);
         // =============================
         <Typography
           sx={{
-            fontSize: "14px",
+            fontSize: "16px",
             fontWeight: "bold",
             textAlign: "center",
             color: "#333",
@@ -1033,7 +1082,7 @@ const status = judgeStatus(normal, targetStock);
 
           {/* 🔹 ETD (입력칸 제거, 자동 표시만) */}
           <TableCell align="center">
-  <Typography sx={{ fontWeight: "bold", fontSize: "14px" }}>
+  <Typography sx={{ fontWeight: "bold", fontSize: "15px" }}>
     {row.etd}
   </Typography>
 </TableCell>
@@ -1044,6 +1093,8 @@ const status = judgeStatus(normal, targetStock);
     sx={{
       display: "inline-block",
       ...getEtaStyle(row.status),
+      fontWeight:"bold",
+      fontSize: "15px",
     }}
   >
     {row.eta}
@@ -1051,9 +1102,16 @@ const status = judgeStatus(normal, targetStock);
 </TableCell>
 
 
+          
           {/* 🔹 선적월 & 도착월 */}
-          <TableCell align="center">{row.month_depart}</TableCell>
-          <TableCell align="center">{row.month_arrive}</TableCell>
+<TableCell align="center" sx={{ fontWeight: "bold" }}>
+  {row.month_depart}
+</TableCell>
+
+<TableCell align="center" sx={{ fontWeight: "bold" }}>
+  {row.month_arrive}
+</TableCell>
+
           
         </TableRow>
       ))}
