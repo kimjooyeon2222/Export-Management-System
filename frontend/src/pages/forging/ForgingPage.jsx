@@ -507,7 +507,7 @@ const status = judgeStatus(normal, targetStock);
               return (
                 <TableRow key={idx}>
                   <TableCell align="center">{it.fullName}</TableCell>
-                  <TableCell align="center">{targetStock}</TableCell>
+                  <TableCell align="center">{fmt(targetStock)}</TableCell>
                   <TableCell align="center">{fmt(it.running)}</TableCell>
                   <TableCell align="center">{fmt(normal)}</TableCell>
                   <TableCell align="center">{fmt(after)}</TableCell>
