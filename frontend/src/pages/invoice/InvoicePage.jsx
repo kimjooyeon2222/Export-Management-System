@@ -57,6 +57,8 @@ const itemToExporters = {
 
 
 export default function InvoicePage() {
+  const [searchType, setSearchType] = useState("po");
+
 const [sortMode, setSortMode] = useState(false);
 
   // 👉 드래그 시작 감지 센서
@@ -249,22 +251,42 @@ const handleAdd = async () => {
   const allInvoice = await fetch(`${API_BASE}/api/invoices`).then(r => r.json());
 
   if (!poNumber.trim()) {
-    alert("PO 번호를 입력하세요.");
+    alert("검색어를 입력하세요.");
     return;
   }
 
   // 🔹 입력값 정규화
   const input = poNumber.trim().replace(/[^0-9A-Za-z]/g, "").toLowerCase();
 
-  // 🔹 PO 완전 일치 or 부분 포함 둘 다 허용
-  const matchedPacking = allPacking.filter((r) => {
-    const poValue = String(r.po_no || "")
-      .trim()
-      .replace(/[^0-9A-Za-z]/g, "")
-      .toLowerCase();
-    return poValue === input || poValue.includes(input);
-  });
+  let matchedPacking = [];
 
+  // ===================================================
+  // 🔥 1) PO 검색
+  // ===================================================
+  if (searchType === "po") {
+    matchedPacking = allPacking.filter((r) => {
+      const poValue = String(r.po_no || "")
+        .trim()
+        .replace(/[^0-9A-Za-z]/g, "")
+        .toLowerCase();
+      return poValue === input || poValue.includes(input);
+    });
+  }
+
+  // ===================================================
+  // 🔥 2) 품번 검색 (part_no 기준)
+  // ===================================================
+  else if (searchType === "part") {
+    matchedPacking = allPacking.filter((r) => {
+      const partValue = String(r.part_no || "")
+        .trim()
+        .replace(/[^0-9A-Za-z]/g, "")
+        .toLowerCase();
+      return partValue === input || partValue.includes(input);
+    });
+  }
+
+  // 검색 결과 없으면 처리
   if (matchedPacking.length === 0) {
     alert("❌ 검색 결과가 없습니다.");
     setSearchResult(null);
@@ -283,10 +305,8 @@ const handleAdd = async () => {
   );
 
   setSearchResult(uniqueByInv);
-
-
-
 };
+
 
 
 
@@ -422,15 +442,45 @@ const getAlabamaDate = (dateStr) =>
             gap: 1
           }}
         >
-          <Typography sx={{ fontWeight: 'bold', color: 'white', fontSize: '1.1rem' }}>
-            SHINHWA | PO 검색
-          </Typography>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+  <Typography
+    sx={{
+      fontWeight: "bold",
+      color: "white",
+      fontSize: "1.1rem"
+    }}
+  >
+    SHINHWA |
+  </Typography>
+
+  <Select
+    value={searchType}
+    onChange={(e) => setSearchType(e.target.value)}
+    size="small"
+    sx={{
+      bgcolor: "white",
+      borderRadius: 1,
+      height: "32px",
+      fontWeight: "bold",
+      '& .MuiSelect-select': {
+        padding: "4px 10px",
+        fontSize: "0.95rem",
+        fontWeight: "bold",
+        color: "#333"
+      }
+    }}
+  >
+    <MenuItem value="po">PO</MenuItem>
+    <MenuItem value="part">품번</MenuItem>
+  </Select>
+</Box>
+
           <TextField
             variant="outlined"
             size="small"
             value={poNumber}
             onChange={(e) => setPoNumber(e.target.value)}
-            placeholder="4500001303"
+            placeholder={searchType === "po" ? "4500001303" : "품번 입력"}
             sx={{
               bgcolor: 'white',
               borderRadius: 1,
@@ -992,6 +1042,7 @@ const arrived = delayedDate2 < todayUS;
                 align="center"
                 sx={{
                   fontSize: "1rem",
+                   
                    // 🚀 삭제 모드에서 선택된 행 → 색상 강조
     ...(deleteMode && selectedInvs.includes(row.inv_no) && {
       bgcolor: "#ffcccc !important",

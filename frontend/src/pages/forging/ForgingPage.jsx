@@ -457,30 +457,46 @@ const getStatusStyle = (status) => {
 
 
       {/* 적정재고 기준 */}
-      <Paper sx={{ p: 2, mb: 3, borderLeft: "5px solid #ff9800" }}>
-        <Typography sx={{ fontWeight: "bold", mb: 1, fontSize:"18px" }}>적정재고 기준</Typography>
-        <TextField
-          InputProps={{ readOnly: !editMode }}
-          label="적정재고 수량"
-          type="number"
-          value={targetStock}
-          onChange={(e) => {
-  if (!editMode) return;
-  setTargetStock(Number(e.target.value));
-}}
+      {/* 적정재고 기준 */}
+<Paper sx={{ p: 2, mb: 3, borderLeft: "5px solid #ff9800" }}>
+  <Typography sx={{ fontWeight: "bold", mb: 1, fontSize: "18px" }}>
+    적정재고 기준
+  </Typography>
 
-          size="small"
-          sx={{ width: 200,
-            "& .MuiInputBase-input": {
-      fontSize: "19x",   // ⭐ 입력 글씨 크기
-      fontWeight: "bold"
-    },
-            "& .MuiInputLabel-root": {
-      fontSize: "17px",     // ← ⭐ 라벨 글씨 크기
-      fontWeight: "bold"
-    } }}
-        />
-      </Paper>
+  {editMode ? (
+    <TextField
+      label="적정재고 수량"
+      type="number"
+      value={targetStock}
+      onChange={(e) => setTargetStock(Number(e.target.value))}
+      size="small"
+      sx={{
+        width: 200,
+        "& .MuiInputBase-input": {
+          fontSize: "19px",
+          fontWeight: "bold"
+        },
+        "& .MuiInputLabel-root": {
+          fontSize: "17px",
+          fontWeight: "bold"
+        }
+      }}
+    />
+  ) : (
+    <Typography
+      sx={{
+        width: 200,
+        fontSize: "17px",
+        fontWeight: "bold",
+        mt: 1,
+        ml: 0.5
+      }}
+    >
+      {fmt(targetStock)}
+    </Typography>
+  )}
+</Paper>
+
 
       {/* 과부족 상태 패널 (T 제외 → 4개만 출력) */}
       <Paper sx={{ p: 2, mb: 4,border: "2px solid #777" }}>
@@ -573,70 +589,95 @@ const status = judgeStatus(normal, targetStock);
             <Box sx={{ fontWeight: "bold", fontSize: 14 }}>{it.name}</Box>
             
             {/* 실사자료 입력 */}
-            <Box sx={{ mt: 1 }}>
-              <TextField
-                InputProps={{ readOnly: !editMode }}
-
-                label={getKoreanMonthLabel(usDate)}
-
-                type="number"
-                size="small"
-                variant="standard"
-                value={it.overStock}
-                onChange={(e) => {
-                   if (!editMode) return;
-  const v = Number(e.target.value);
-
-  setItems((prev) => {
-    const newItems = prev.map((p, pIdx) =>
-      pIdx === idx ? { ...p, overStock: v } : p
-    );
-    return newItems;
-  });
-
-  updateNormalStock();   // ⭐ 정상재고 즉시 업데이트
-}}
-
-                sx={{
-                  
-                  // ⬇⬇ 라벨 글씨 키우기
-    "& .MuiInputLabel-root": {
-      fontSize: "18px",  
-      fontWeight: "bold",
-    },
-                  width: 120,
-                  "& input": {
-                    textAlign: "center",
-                    fontSize: 18,
-                    color: "#1155cc",
-                    fontWeight: "bold",
-                  }
-                }}
-              />
-            </Box>
-
-            {/* 🔥 불량 및 발청소재 입력칸 추가 */}
-  <Box sx={{ mt: 1 }}>
+            {/* 실사자료 입력 */}
+<Box sx={{ mt: 1 }}>
+  {editMode ? (
     <TextField
-      InputProps={{ readOnly: !editMode }}
+      label={getKoreanMonthLabel(usDate)}
+      type="number"
+      size="small"
+      variant="standard"
+      value={it.overStock}
+      onChange={(e) => {
+        if (!editMode) return;
+        const v = Number(e.target.value);
 
+        setItems((prev) => {
+          const newItems = prev.map((p, pIdx) =>
+            pIdx === idx ? { ...p, overStock: v } : p
+          );
+          return newItems;
+        });
+
+        updateNormalStock();
+      }}
+      sx={{
+        "& .MuiInputLabel-root": {
+          fontSize: "18px",
+          fontWeight: "bold"
+        },
+        width: 120,
+        "& input": {
+          textAlign: "center",
+          fontSize: 18,
+          color: "#1155cc",
+          fontWeight: "bold"
+        }
+      }}
+    />
+  ) : (
+    <Box sx={{ textAlign: "center" }}>
+      {/* 🔥 흐리지 않게 원본 라벨 색상 적용 */}
+      <Typography
+        sx={{
+          fontSize: "12px",
+          fontWeight: "bold",
+          color: "rgba(0, 0, 0, 0.6)",   // ⭐ TextField 라벨과 동일
+        }}
+      >
+        {getKoreanMonthLabel(usDate)}
+      </Typography>
+
+      <Typography
+        sx={{
+          fontSize: 18,
+          color: "#1155cc",
+          fontWeight: "bold",
+          mt: 0.5
+        }}
+      >
+        {fmt(it.overStock)}
+      </Typography>
+    </Box>
+  )}
+</Box>
+
+
+
+           {/* 🔥 불량 및 발청소재 입력칸 추가 */}
+<Box sx={{ mt: 1 }}>
+  {editMode ? (
+    // =========================
+    // ✏️ 편집 모드(TextField)
+    // =========================
+    <TextField
       label="불량/발청소재"
       size="small"
       variant="standard"
+      value={it.defect}
       onChange={(e) => {
-         if (!editMode) return;
-  const v = Number(e.target.value);
+        if (!editMode) return;
+        const v = Number(e.target.value);
 
-  setItems((prev) => {
-    const newItems = prev.map((p, pIdx) =>
-      pIdx === idx ? { ...p, defect: v } : p
-    );
-    return newItems;
-  });
+        setItems((prev) => {
+          const newItems = prev.map((p, pIdx) =>
+            pIdx === idx ? { ...p, defect: v } : p
+          );
+          return newItems;
+        });
 
-  updateNormalStock();   // ⭐ 정상재고 즉시 반영
-}}
-
+        updateNormalStock();
+      }}
       sx={{
         width: 140,
         "& input": {
@@ -648,7 +689,36 @@ const status = judgeStatus(normal, targetStock);
         },
       }}
     />
-  </Box>
+  ) : (
+    // =========================
+    // 👀 출력 모드(Typography)
+    // =========================
+    <Box sx={{ textAlign: "center" }}>
+      {/* 🔥 라벨 (TextField 라벨 색과 동일) */}
+      <Typography
+        sx={{
+          fontSize: 12,
+          color: "rgba(0,0,0,0.6)",
+          fontWeight: "bold",
+        }}
+      >
+        불량/발청소재
+      </Typography>
+
+      {/* 🔥 fmt 처리된 값 */}
+      <Typography
+        sx={{
+          fontSize: 15,
+          fontWeight: "bold",
+          mt: 0.5,
+        }}
+      >
+        {fmt(it.defect)}
+      </Typography>
+    </Box>
+  )}
+</Box>
+
           </TableCell>
         ))}
       </TableRow>
@@ -860,6 +930,7 @@ const status = judgeStatus(normal, targetStock);
       textOverflow: "ellipsis",     // 🔥 너무 길면 … 처리
       "& .MuiInputBase-input": {
     fontSize: "14px",
+    fontWeight:"bold",
     textAlign: "center"   // ⭐ 이 위치가 가장 정확함!
   }
     }}
@@ -884,6 +955,7 @@ const status = judgeStatus(normal, targetStock);
               sx={{ width: 70,
                 "& .MuiInputBase-input": {
     fontSize: "14px",
+    fontWeight:"bold",
     textAlign: "center"   // ⭐ 이 위치가 가장 정확함!
   }
                 
@@ -905,40 +977,66 @@ const status = judgeStatus(normal, targetStock);
 
 
           {/* 🔹 품목별 수량 입력 */}
-          {items.map((it) => (
-            <TableCell key={it.name} align="center">
-              <TextField
-               InputProps={{ readOnly: !editMode }}
-                type="number"
-                variant="standard"
-                value={row[FIELD_MAP[it.name]] || ""}
+{items.map((it) => {
+  const field = FIELD_MAP[it.name];
+  const value = row[field];
 
-                onChange={(e) => {
-                   if (!editMode) return;
-  const value = e.target.value;
+  return (
+    <TableCell key={it.name} align="center">
+      {editMode ? (
+        // =============================
+        // ✏️ 편집 모드
+        // =============================
+        <TextField
+          type="number"
+          variant="standard"
+          value={value || ""}
+          onChange={(e) => {
+            if (!editMode) return;
+            const v = e.target.value;
 
-  setRows((prev) => {
-    const newRows = prev.map((r) =>
-      r.id === row.id ? { ...r, [FIELD_MAP[it.name]]: value }: r
-    );
+            setRows((prev) => {
+              const newRows = prev.map((r) =>
+                r.id === row.id ? { ...r, [field]: v } : r
+              );
+              updateRunningTotals(newRows);
+              return newRows;
+            });
+          }}
+          sx={{
+            width: 60,
+            "& .MuiInputBase-input": {
+              fontSize: "14px",
+              textAlign: "center",
+            },
+          }}
+        />
+      ) : (
+        // =============================
+        // 👀 출력 모드 (fmt로 보기 좋게)
+        // =============================
+        <Typography
+          sx={{
+            fontSize: "14px",
+            fontWeight: "bold",
+            textAlign: "center",
+            color: "#333",
+          }}
+        >
+          {value ? Number(value).toLocaleString("en-US") : ""}
+        </Typography>
+      )}
+    </TableCell>
+  );
+})}
 
-    updateRunningTotals(newRows);  // ⭐ 자동 반영
-    return newRows;
-  });
-}}
-
-                sx={{ width: 60,
-                  "& .MuiInputBase-input": {
-    fontSize: "14px",
-    textAlign: "center"   // ⭐ 이 위치가 가장 정확함!
-  }
-                 }}
-              />
-            </TableCell>
-          ))}
 
           {/* 🔹 ETD (입력칸 제거, 자동 표시만) */}
-          <TableCell align="center">{row.etd}</TableCell>
+          <TableCell align="center">
+  <Typography sx={{ fontWeight: "bold", fontSize: "14px" }}>
+    {row.etd}
+  </Typography>
+</TableCell>
 
           {/* 🔹 ETA (입력칸 제거, 자동 표시만) */}
           <TableCell align="center">
