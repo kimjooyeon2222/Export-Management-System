@@ -186,10 +186,13 @@ const getKoreanMonthLabel = (dateStr) => {
 const updateRunningTotals = (rows) => {
   setItems(prev =>
     prev.map(item => {
+      const field = FIELD_MAP[item.name];   // ⭐ 올바른 필드 매핑
+
       const total = rows.reduce((sum, r) => {
         // 🚀 STATUS가 '운항중'인 행만 합산
         if (r.status === "운항중") {
-          const val = Number(r[item.name] || 0);
+          const val = Number(r[field] || 0);   // ⭐ 여기만 고치면 해결
+
           return sum + val;
         }
         return sum;
