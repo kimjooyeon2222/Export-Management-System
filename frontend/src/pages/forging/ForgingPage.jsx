@@ -19,6 +19,19 @@ import { useNavigate } from "react-router-dom";
 
 
 export default function ForgingPage() {
+  // 숫자 → "1,234" 변환
+const formatNumber = (value) => {
+  if (value === null || value === undefined || value === "") return "";
+  return Number(value).toLocaleString("en-US");
+};
+
+// "1,234" → 1234 숫자로 변환
+const parseNumber = (value) => {
+  if (!value) return null;
+  return Number(String(value).replace(/,/g, ""));
+};
+
+
   function normalizeRow(row) {
   return {
     ...row,
@@ -407,7 +420,7 @@ const getStatusStyle = (status) => {
 <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 1 }}>
   <TextField
     label="작성자"
-    disabled={!editMode}
+    InputProps={{ readOnly: !editMode }}
     size="small"
     value={writer}
     onChange={(e) => {
@@ -421,7 +434,7 @@ const getStatusStyle = (status) => {
     size="small"
     placeholder="2025-11-03"
     value={usDate}
-    disabled={!editMode}
+    InputProps={{ readOnly: !editMode }}
     onChange={(e) => {
   if (!editMode) return;
   setUsDate(e.target.value);
@@ -447,7 +460,7 @@ const getStatusStyle = (status) => {
       <Paper sx={{ p: 2, mb: 3, borderLeft: "5px solid #ff9800" }}>
         <Typography sx={{ fontWeight: "bold", mb: 1, fontSize:"18px" }}>적정재고 기준</Typography>
         <TextField
-          disabled={!editMode}
+          InputProps={{ readOnly: !editMode }}
           label="적정재고 수량"
           type="number"
           value={targetStock}
@@ -495,9 +508,10 @@ const status = judgeStatus(normal, targetStock);
                 <TableRow key={idx}>
                   <TableCell align="center">{it.fullName}</TableCell>
                   <TableCell align="center">{targetStock}</TableCell>
-                  <TableCell align="center">{it.running}</TableCell>
-                  <TableCell align="center">{normal}</TableCell>
-                  <TableCell align="center">{after}</TableCell>
+                  <TableCell align="center">{fmt(it.running)}</TableCell>
+                  <TableCell align="center">{fmt(normal)}</TableCell>
+                  <TableCell align="center">{fmt(after)}</TableCell>
+
                   <TableCell
                     align="center"
                     sx={{
