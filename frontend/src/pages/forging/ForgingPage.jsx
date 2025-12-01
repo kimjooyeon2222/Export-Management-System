@@ -17,13 +17,64 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 
+
 export default function ForgingPage() {
+  function normalizeRow(row) {
+  return {
+    ...row,
+
+    mq4_gear:
+      row.mq4_gear === "" ||
+      row.mq4_gear === null ||
+      row.mq4_gear === undefined
+        ? null
+        : Number(row.mq4_gear),
+
+    mq4_pinion:
+      row.mq4_pinion === "" ||
+      row.mq4_pinion === null ||
+      row.mq4_pinion === undefined
+        ? null
+        : Number(row.mq4_pinion),
+
+    nx4_gear:
+      row.nx4_gear === "" ||
+      row.nx4_gear === null ||
+      row.nx4_gear === undefined
+        ? null
+        : Number(row.nx4_gear),
+
+    nx4_pinion:
+      row.nx4_pinion === "" ||
+      row.nx4_pinion === null ||
+      row.nx4_pinion === undefined
+        ? null
+        : Number(row.nx4_pinion),
+  };
+}
+
+
+
   const FIELD_MAP = {
   "MQ4 GEAR-DRIVEN": "mq4_gear",
   "MQ4 PINION-DRIVE": "mq4_pinion",
   "NX4 GEAR-DRIVEN": "nx4_gear",
   "NX4 PINION-DRIVE": "nx4_pinion",
 };
+
+const getEtaStyle = (status) => {
+  if (status === "운항중") {
+    return {
+      bgcolor: "#ffe6f1",   // 분홍 배경
+      color: "#c41d7f",     // 빨간 글씨
+      fontWeight: "bold",
+      borderRadius: "6px",
+      px: 1
+    };
+  }
+  return {};
+};
+
 
 const [editMode, setEditMode] = useState(false);
 const API_BASE = import.meta.env.VITE_API_URL;
@@ -230,7 +281,38 @@ const updateNormalStock = () => {
   /* ===============================
       🔶 month 자동 계산
   =============================== */
-  
+  // 숫자에 콤마( , ) 붙여서 예쁘게 보여주는 함수
+const fmt = (n) => {
+  if (n === null || n === undefined || n === "") return "";
+  return Number(n).toLocaleString("en-US");
+};
+
+// 운항여부 스타일 함수
+const getStatusStyle = (status) => {
+  if (status === "입고완료") {
+    return {
+      bgcolor: "#d9f7be",   // 연두배경
+      color: "#237804",     // 초록글씨
+      fontWeight: "bold",
+      borderRadius: "6px",
+      px: 1
+    };
+  }
+
+  if (status === "운항중") {
+    return {
+      bgcolor: "#ffe6f1",   // 분홍배경
+      color: "#c41d7f",     // 빨간글씨
+      fontWeight: "bold",
+      borderRadius: "6px",
+      px: 1
+    };
+  }
+
+  return {};
+};
+
+
 
   return (
     
@@ -296,12 +378,14 @@ const updateNormalStock = () => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(items)
         });
+        
+        const cleanRows = rows.map(normalizeRow);
 
         // 3) schedule_rows 저장 ← 여기 핵심!!
         await fetch(`${API_BASE}/api/schedule-row/bulk`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(rows)
+         body: JSON.stringify(cleanRows)
         });
 
         alert("저장 완료되었습니다!");
@@ -752,10 +836,16 @@ const status = judgeStatus(normal, targetStock);
     console.error("INV fetch error", error);
   }
 }}
-
-
-
-              sx={{ width: 150 }}
+  sx={{
+      width: 160,                   // 🔥 넓혀서 잘림 방지
+      whiteSpace: "nowrap",
+      overflow: "hidden",
+      textOverflow: "ellipsis",     // 🔥 너무 길면 … 처리
+      "& .MuiInputBase-input": {
+    fontSize: "14px",
+    textAlign: "center"   // ⭐ 이 위치가 가장 정확함!
+  }
+    }}
             />
           </TableCell>
 
@@ -774,12 +864,28 @@ const status = judgeStatus(normal, targetStock);
                   )
                 );
               }}
-              sx={{ width: 120 }}
+              sx={{ width: 70,
+                "& .MuiInputBase-input": {
+    fontSize: "14px",
+    textAlign: "center"   // ⭐ 이 위치가 가장 정확함!
+  }
+                
+               }}
             />
           </TableCell>
 
           {/* 🔹 운행여부 (자동만) */}
-          <TableCell align="center">{row.status}</TableCell>
+          <TableCell align="center">
+  <Box
+    sx={{
+      display: "inline-block",
+      ...getStatusStyle(row.status),
+    }}
+  >
+    {row.status}
+  </Box>
+</TableCell>
+
 
           {/* 🔹 품목별 수량 입력 */}
           {items.map((it) => (
@@ -804,7 +910,12 @@ const status = judgeStatus(normal, targetStock);
   });
 }}
 
-                sx={{ width: 90 }}
+                sx={{ width: 60,
+                  "& .MuiInputBase-input": {
+    fontSize: "14px",
+    textAlign: "center"   // ⭐ 이 위치가 가장 정확함!
+  }
+                 }}
               />
             </TableCell>
           ))}
@@ -813,7 +924,17 @@ const status = judgeStatus(normal, targetStock);
           <TableCell align="center">{row.etd}</TableCell>
 
           {/* 🔹 ETA (입력칸 제거, 자동 표시만) */}
-          <TableCell align="center">{row.eta}</TableCell>
+          <TableCell align="center">
+  <Box
+    sx={{
+      display: "inline-block",
+      ...getEtaStyle(row.status),
+    }}
+  >
+    {row.eta}
+  </Box>
+</TableCell>
+
 
           {/* 🔹 선적월 & 도착월 */}
           <TableCell align="center">{row.month_depart}</TableCell>

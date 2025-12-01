@@ -490,12 +490,11 @@ def save_stock_items():
 
     db.session.commit()
     return jsonify({"message": "saved"})
-
 @app.route("/api/schedule-row/bulk", methods=["POST"])
 def save_schedule_rows():
     rows = request.json  # 리스트
 
-    # 기존 모두 삭제 후 다시 저장 (단순하고 오류 없음)
+    # 기존 데이터 삭제
     ScheduleRow.query.delete()
 
     for row in rows:
@@ -507,15 +506,19 @@ def save_schedule_rows():
             eta=row.get("eta"),
             month_depart=row.get("month_depart"),
             month_arrive=row.get("month_arrive"),
-            mq4_gear=row.get("MQ4 GEAR-DRIVEN", 0),
-            mq4_pinion=row.get("MQ4 PINION-DRIVE", 0),
-            nx4_gear=row.get("NX4 GEAR-DRIVEN", 0),
-            nx4_pinion=row.get("NX4 PINION-DRIVE", 0),
+
+            # ⭐ React가 보내는 key랑 맞춰줌
+            mq4_gear = int(row.get("mq4_gear", 0)),
+            mq4_pinion = int(row.get("mq4_pinion", 0)),
+            nx4_gear = int(row.get("nx4_gear", 0)),
+            nx4_pinion = int(row.get("nx4_pinion", 0)),
         )
+
         db.session.add(db_row)
 
     db.session.commit()
     return jsonify({"message": "saved"})
+
 
 
 
