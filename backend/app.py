@@ -18,6 +18,28 @@ app.config.from_object(Config)
 CORS(app)
 db.init_app(app)
 
+from datetime import datetime
+
+def calc_status(etd, eta):
+    today = datetime.today().date()
+
+    # ETA 값 없음
+    if not eta or eta == "일정 없음":
+        return "부산항 미입고"
+
+    try:
+        etd_date = datetime.strptime(etd, "%Y-%m-%d").date() if etd else None
+        eta_date = datetime.strptime(eta, "%Y-%m-%d").date() if eta else None
+    except:
+        return ""
+
+    if eta_date < today:
+        return "입고완료"
+    if etd_date and etd_date > today:
+        return "선적대기중"
+
+    return "운항중"
+
 
 @app.route("/")
 def home():
@@ -250,7 +272,7 @@ def get_invoice_by_inv_no(inv_no):
 
     if not invoice:
         return jsonify({"error": "Invoice not found"}), 404
-
+    status = calc_status(invoice.etd, invoice.eta)
     return jsonify({
         "id": invoice.id,
         "inv_no": invoice.inv_no,
@@ -261,6 +283,7 @@ def get_invoice_by_inv_no(inv_no):
         "bl_no": invoice.bl_no,
         "etd": invoice.etd,
         "eta": invoice.eta,
+        "status": status,      # ⭐⭐⭐⭐ 추가된 줄
         "delayed_date": invoice.delayed_date,
         "count_days": invoice.count_days,
         "needs_help": invoice.needs_help,

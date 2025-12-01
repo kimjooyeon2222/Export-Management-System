@@ -13,19 +13,109 @@ import {
 } from "@mui/material";
 
 export default function ForgingPage() {
+const API_BASE = import.meta.env.VITE_API_URL;
+
+const [writer, setWriter] = useState("");
+const [usDate, setUsDate] = useState("");  // YYYY-MM-DD
+const getPeriod = (dateStr) => {
+  if (!dateStr) return "";
+
+  const date = new Date(dateStr);
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+
+  let period = "";
+
+  if (day <= 10) period = "초";
+  else if (day <= 20) period = "중순";
+  else period = "말";
+
+  return `${month}월 ${period}`;
+};
+
+const getKoreanMonthLabel = (dateStr) => {
+  if (!dateStr) return "실사자료"; // 날짜 없으면 기본값
+  const d = new Date(dateStr);
+  const year = d.getFullYear() % 100;
+  const month = d.getMonth() + 1;
+  return `${year}년 ${month}월 실사자료`;
+};
+
+
 
   /* ===============================
       🔶 상태값
   =============================== */
   const [targetStock, setTargetStock] = useState(30000);
+// 🔹 1) 운항중 합계 자동 계산
+const updateRunningTotals = (rows) => {
+  setItems(prev =>
+    prev.map(item => {
+      const total = rows.reduce((sum, r) => {
+        // 🚀 STATUS가 '운항중'인 행만 합산
+        if (r.status === "운항중") {
+          const val = Number(r[item.name] || 0);
+          return sum + val;
+        }
+        return sum;
+      }, 0);
+
+      return { ...item, running: total };
+    })
+  );
+};
+
+// 🔹 2) 정상재고 자동 계산 (기존재고 - 불량)
+const updateNormalStock = () => {
+  setItems(prev =>
+    prev.map(it => ({
+      ...it,
+      normalStock: Number(it.overStock) - Number(it.defect || 0)
+    }))
+  );
+};
 
   // 품목 데이터
-  const [items] = useState([
-    { name: "MQ4 GEAR-DRIVEN", running: 5000, overStock: 61000, unit: 7500 },
-    { name: "MQ4 PINION-DRIVE", running: 12000, overStock: 23500, unit: 4000 },
-    { name: "NX4 GEAR-DRIVEN", running: 12000, overStock: 38500, unit: 4000 },
-    { name: "NX4 PINION-DRIVE", running: 4000, overStock: 51500, unit: 4000 },
-  ]);
+  const [items, setItems] = useState([
+  {
+    name: "MQ4 GEAR-DRIVEN",
+    fullName: "MQ4 GEAR-DRIVEN (G53212-T0770E)",
+    running: 0,
+    overStock: 61000,
+    defect: 0,
+    normalStock: 61000,
+    unit: 7500
+  },
+  {
+    name: "MQ4 PINION-DRIVE",
+    fullName: "MQ4 PINION-DRIVE (G53211-T08280Y)",
+    running: 0,
+    overStock: 23500,
+    defect: 0,
+    normalStock: 23500,
+    unit: 4000
+  },
+  {
+    name: "NX4 GEAR-DRIVEN",
+    fullName: "NX4 GEAR-DRIVEN (53032-4G25B)",
+    running: 0,
+    overStock: 38500,
+    defect: 0,
+    normalStock: 38500,
+    unit: 4000
+  },
+  {
+    name: "NX4 PINION-DRIVE",
+    fullName: "NX4 PINION-DRIVE (53031-4G25B)",
+    running: 0,
+    overStock: 51500,
+    defect: 0,
+    normalStock: 51500,
+    unit: 4000
+  }
+]);
+
+
 
   /* ===============================
       🔶 엑셀 과부족 판정 수식 그대로 (D6 = 기준재고초과)
@@ -51,50 +141,41 @@ export default function ForgingPage() {
   =============================== */
   const [rows, setRows] = useState([]);
 
-  const handleAddRow = () => {
-    setRows(prev => [
-      ...prev,
-      {
-        id: prev.length + 1,
-        inv_no: "",
-        no: "",
-        status: "",
-        item: "",
-        cont: "",
-        bl: "",
-        etd: "",
-        eta: "",
-        month_depart: "",
-        month_arrive: ""
-      }
-    ]);
-  };
+  
 
   /* ===============================
       🔶 month 자동 계산
   =============================== */
-  const updateMonth = (value, field, id) => {
-    let updated = { [field]: value };
-
-    if (field === "etd") {
-      updated.month_depart = value ? `${new Date(value).getMonth() + 1}월` : "";
-    }
-    if (field === "eta") {
-      updated.month_arrive = value ? `${new Date(value).getMonth() + 1}월` : "";
-    }
-
-    setRows(prev =>
-      prev.map(r => (r.id === id ? { ...r, ...updated } : r))
-    );
-  };
+  
 
   return (
+    
     <Box sx={{ p: 3 }}>
-
+{/* 작성자 + 북미 날짜 */}
+<Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 1 }}>
+  <TextField
+    label="작성자"
+    size="small"
+    value={writer}
+    onChange={(e) => setWriter(e.target.value)}
+    sx={{ width: 150 }}
+  />
+  <TextField
+    label="북미 기준 날짜 (YYYY-MM-DD)"
+    size="small"
+    placeholder="2025-11-03"
+    value={usDate}
+    onChange={(e) => setUsDate(e.target.value)}
+    sx={{ width: 180 }}
+  />
+</Box>
       {/* 제목 */}
       <Typography variant="h5" sx={{ fontWeight: "bold", mb: 3 }}>
-  원소재 재고 파악 및 운송일정 관리  (한국 날짜: {new Date().toLocaleDateString("ko-KR")})
+  원소재 재고 파악 및 운송일정 관리 
+  ({usDate ? getPeriod(usDate) : "작성일자"})
+
 </Typography>
+
 
 
 
@@ -126,8 +207,8 @@ export default function ForgingPage() {
         <Table size="small">
           <TableHead>
             <TableRow>
-              {["품목","적정재고","운행중","기준재고초과(D6)","도착후재고","판정"].map(h => (
-                <TableCell key={h} align="center" sx={{ fontWeight: "bold" }}>
+              {["품목","적정재고","운항중","기존재고-불량","운항중+정상재고","판정"].map(h => (
+                <TableCell key={h} align="center" sx={{ fontWeight: "bold", fontSize:14 }}>
                   {h}
                 </TableCell>
               ))}
@@ -136,20 +217,22 @@ export default function ForgingPage() {
 
           <TableBody>
             {items.slice(0, 4).map((it, idx) => {
-              const d6 = it.overStock;
-              const after = it.running + it.overStock;
-              const status = judgeStatus(d6, targetStock);
+            const normal = it.normalStock;          // 기존재고 - 불량 자동 반영됨
+const after = it.running + normal;      // 운항중 + 정상재고
+const status = judgeStatus(normal, targetStock);
+
 
               return (
                 <TableRow key={idx}>
-                  <TableCell align="center">{it.name}</TableCell>
+                  <TableCell align="center">{it.fullName}</TableCell>
                   <TableCell align="center">{targetStock}</TableCell>
                   <TableCell align="center">{it.running}</TableCell>
-                  <TableCell align="center">{d6}</TableCell>
+                  <TableCell align="center">{normal}</TableCell>
                   <TableCell align="center">{after}</TableCell>
                   <TableCell
                     align="center"
                     sx={{
+                      fontSize:16,
                       fontWeight: "bold",
                       color:
                         status === "초과" ? "purple" :
@@ -193,7 +276,7 @@ export default function ForgingPage() {
   <Table size="small" sx={{ borderCollapse: "collapse" }}>
     <TableHead>
       <TableRow sx={{ bgcolor: "#d9ead3", borderBottom: "2px solid #000" }}>
-        {items.map((it, idx) => (
+        {items.slice(0, 4).map((it, idx) => (
           <TableCell
             key={it.name}
             align="center"
@@ -205,24 +288,29 @@ export default function ForgingPage() {
           >
             {/* 품목명 */}
             <Box sx={{ fontWeight: "bold", fontSize: 14 }}>{it.name}</Box>
-
+            
             {/* 실사자료 입력 */}
             <Box sx={{ mt: 1 }}>
               <TextField
-                label="실사자료"
+                label={getKoreanMonthLabel(usDate)}
+
                 type="number"
                 size="small"
                 variant="standard"
                 value={it.overStock}
                 onChange={(e) => {
-                  const v = Number(e.target.value);
-                  setItems((prev) =>
-                    prev.map((p, pIdx) =>
-                      pIdx === idx ? { ...p, overStock: v } : p
-                    )
-                  );
-                  
-                }}
+  const v = Number(e.target.value);
+
+  setItems((prev) => {
+    const newItems = prev.map((p, pIdx) =>
+      pIdx === idx ? { ...p, overStock: v } : p
+    );
+    return newItems;
+  });
+
+  updateNormalStock();   // ⭐ 정상재고 즉시 업데이트
+}}
+
                 sx={{
                   // ⬇⬇ 라벨 글씨 키우기
     "& .MuiInputLabel-root": {
@@ -240,17 +328,44 @@ export default function ForgingPage() {
               />
             </Box>
 
-            {/* 단위 */}
-            <Box sx={{ fontSize: 14, color: "#444", mt: 1 }}>
-              단위 : {it.unit.toLocaleString()}
-            </Box>
+            {/* 🔥 불량 및 발청소재 입력칸 추가 */}
+  <Box sx={{ mt: 1 }}>
+    <TextField
+      label="불량/발청소재"
+      size="small"
+      variant="standard"
+      onChange={(e) => {
+  const v = Number(e.target.value);
+
+  setItems((prev) => {
+    const newItems = prev.map((p, pIdx) =>
+      pIdx === idx ? { ...p, defect: v } : p
+    );
+    return newItems;
+  });
+
+  updateNormalStock();   // ⭐ 정상재고 즉시 반영
+}}
+
+      sx={{
+        width: 140,
+        "& input": {
+          textAlign: "center",
+          fontSize: 15,
+        },
+        "& .MuiInputLabel-root": {
+          fontSize: 13,
+        },
+      }}
+    />
+  </Box>
           </TableCell>
         ))}
       </TableRow>
 
       {/* 🔹 2단: 선적가감필요횟수 */}
       <TableRow sx={{ borderBottom: "2px dotted #777" }}>
-        {items.map((it) => {
+        {items.slice(0, 4).map((it) => {
   const adjust = window.calcAdjustExcel(it.overStock, targetStock, it.unit);
 
   return (
@@ -288,7 +403,7 @@ export default function ForgingPage() {
   {/* ===============================  
       🔶 행추가 버튼  
   =============================== */}
-  <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2, mb: 1 }}>
+  <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2, mb: 1, gap:1 }}>
     <Button
       variant="contained"
       color="success"
@@ -309,8 +424,29 @@ export default function ForgingPage() {
         ])
       }
     >
-      + 행추가
+      + 행추가         
     </Button>
+    
+    {/* 🔥 행삭제(마지막 행 삭제 버튼) */}
+  <Button
+    variant="contained"
+    color="error"
+    size="small"
+    onClick={() =>
+      setRows((prev) => {
+        if (prev.length === 0) return prev;
+
+        const newRows = prev.slice(0, -1);
+
+        // ⭐ 삭제 후 running 재계산
+        updateRunningTotals(newRows);
+
+        return newRows;
+      })
+    }
+  >
+    - 행삭제
+  </Button>
   </Box>
 
   {/* ===============================  
@@ -345,48 +481,50 @@ export default function ForgingPage() {
             <TextField
               variant="standard"
               value={row.inv_no || ""}
-              onChange={(e) => {
-                const inv = e.target.value;
+              onChange={async (e) => {
+  const inv = e.target.value;
 
-                // 샘플 자동 매핑
-                const auto = {
-                  "ENG-MAT-20251013-V1": {
-                    no: "31ENG",
-                    status: "운행완료",
-                    etd: "2025-10-27",
-                    eta: "2025-11-26",
-                  },
-                  "ENG-MAT-20251020-V1": {
-                    no: "32ENG",
-                    status: "운행완료",
-                    etd: "2025-10-27",
-                    eta: "2025-11-26",
-                  },
-                };
+  // 🔥 1) DB에서 INV 검색
+  const res = await fetch(`${API_BASE}/api/invoice/${inv}`);
+  const data = await res.json();
 
-                const found = auto[inv];
+  // 🔥 2) 운행여부 계산
+  let status = "";
+  const today = new Date();  
+  const etd = data?.etd ? new Date(data.etd) : null;
+  const eta = data?.eta ? new Date(data.eta) : null;
 
-                setRows((prev) =>
-                  prev.map((r) =>
-                    r.id === row.id
-                      ? {
-                          ...r,
-                          inv_no: inv,
-                          no: found?.no || "",
-                          status: found?.status || "",
-                          etd: found?.etd || "",
-                          eta: found?.eta || "",
-                          month_depart: found?.etd
-                            ? `${new Date(found.etd).getMonth() + 1}월`
-                            : "",
-                          month_arrive: found?.eta
-                            ? `${new Date(found.eta).getMonth() + 1}월`
-                            : "",
-                        }
-                      : r
-                  )
-                );
-              }}
+  if (!data?.eta || data.eta === "일정 없음") status = "부산항 미입고";
+  else if (eta < today) status = "입고완료";
+  else if (etd > today) status = "선적대기중";
+  else status = "운항중";
+
+  // 🔥 3) rows 갱신
+  setRows((prev) =>
+    prev.map((r) =>
+      r.id === row.id
+        ? {
+            ...r,
+            inv_no: inv,
+            no: data?.no || "",
+            status,
+            etd: data?.etd || "",
+            eta: data?.eta || "",
+            month_depart: data?.etd
+              ? `${new Date(data.etd).getMonth() + 1}월`
+              : "",
+            month_arrive: data?.eta
+              ? `${new Date(data.eta).getMonth() + 1}월`
+              : "",
+          }
+        : r
+    )
+  );
+    updateRunningTotals(newRows); // ⭐⭐⭐⭐ 중요! 이걸 추가해야 running 값이 제대로 나옴
+    return newRows;
+
+}}
+
               sx={{ width: 150 }}
             />
           </TableCell>
@@ -418,13 +556,19 @@ export default function ForgingPage() {
                 type="number"
                 variant="standard"
                 value={row[it.name] || ""}
-                onChange={(e) =>
-                  setRows((prev) =>
-                    prev.map((r) =>
-                      r.id === row.id ? { ...r, [it.name]: e.target.value } : r
-                    )
-                  )
-                }
+                onChange={(e) => {
+  const value = e.target.value;
+
+  setRows((prev) => {
+    const newRows = prev.map((r) =>
+      r.id === row.id ? { ...r, [it.name]: value } : r
+    );
+
+    updateRunningTotals(newRows);  // ⭐ 자동 반영
+    return newRows;
+  });
+}}
+
                 sx={{ width: 90 }}
               />
             </TableCell>
@@ -439,7 +583,7 @@ export default function ForgingPage() {
           {/* 🔹 선적월 & 도착월 */}
           <TableCell align="center">{row.month_depart}</TableCell>
           <TableCell align="center">{row.month_arrive}</TableCell>
-
+          
         </TableRow>
       ))}
     </TableBody>

@@ -703,7 +703,7 @@ const arrived = delayedDate2 < todayUS;
   </Box>
 </Box>
 <Box sx={{ textAlign: "center" }}>
-    <Typography sx={{ fontWeight: "bold", mb: 1 }}>기간 (ETD ~ ETA)</Typography>
+    <Typography sx={{ fontWeight: "bold", mb: 1 }}>기간 (ETD.KR ~ ETA.US)</Typography>
 
     <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
       <TextField
