@@ -19,6 +19,9 @@ const SamplePage = Loadable(lazy(() => import('pages/extra-pages/sample-page')))
 const InvoicePage = Loadable(lazy(() => import('pages/invoice/InvoicePage')));
 const PackingList = Loadable(lazy(() => import('pages/invoice/PackingList'))); // ✅ 추가
 const ForgingPage = Loadable(lazy(() => import('pages/forging/ForgingPage')));
+const OilShipmentSchedule = Loadable(
+  lazy(() => import('pages/OilShipment/OilShipmentSchedule'))
+);
 
 // ==============================|| MAIN ROUTING ||============================== //
 
@@ -65,7 +68,12 @@ const MainRoutes = {
     },
     {
        path: 'forging', element: <ForgingPage /> 
+    },
+    {
+       path: 'oil-schedule',
+       element: <OilShipmentSchedule />
     }
+
 
   ]
 };

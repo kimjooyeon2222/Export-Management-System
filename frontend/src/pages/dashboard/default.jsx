@@ -119,14 +119,17 @@ export default function DashboardDefault() {
             <Grid item xs={6} sm={3} md={3} lg={1.5} key={i}>
               <Button
                 variant="contained"
-                fullWidth // ✅ 버튼이 Grid 셀 비율에 맞게 자동 확장
+                fullWidth //  버튼이 Grid 셀 비율에 맞게 자동 확장
                 onClick={() => {
                  if (btn.label === 'INVOICE TRK') {
                    navigate('/invoice'); // invoice 페이지로 이동
                  } 
                   else if (btn.label === '단조품') {
-                     navigate('/forging');   // 🔥 단조품 페이지로 이동
+                     navigate('/forging');   //  단조품 페이지로 이동
                  } 
+                  else if (btn.label === '오일') {
+                     navigate('/oil-schedule');   // 오일 운송일정 페이지로 이동
+                 }
                  else {
                    alert(`${btn.label} 페이지는 준비 중입니다.`);
                  }
