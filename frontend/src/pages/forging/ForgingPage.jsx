@@ -11,9 +11,93 @@ import {
   TableBody,
   Paper
 } from "@mui/material";
+import { v4 as uuidv4 } from "uuid";
+
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+
 
 export default function ForgingPage() {
+  const FIELD_MAP = {
+  "MQ4 GEAR-DRIVEN": "mq4_gear",
+  "MQ4 PINION-DRIVE": "mq4_pinion",
+  "NX4 GEAR-DRIVEN": "nx4_gear",
+  "NX4 PINION-DRIVE": "nx4_pinion",
+};
+
+const [editMode, setEditMode] = useState(false);
 const API_BASE = import.meta.env.VITE_API_URL;
+const navigate = useNavigate();
+
+//  stock-setting 불러오기
+useEffect(() => {
+  async function loadStockSetting() {
+    try {
+      const res = await fetch(`${API_BASE}/api/stock-setting`);
+      const data = await res.json();
+
+      if (data) {
+        setTargetStock(data.target_stock || 30000);
+        setWriter(data.writer || "");
+
+        // 날짜를 YYYY-MM-DD로 변환
+        if (data.us_date) {
+          const onlyDate = new Date(data.us_date).toISOString().split("T")[0];
+          setUsDate(onlyDate);
+        } else {
+          setUsDate("");
+        }
+      }
+    } catch (err) {
+      console.error("stock-setting load error", err);
+    }
+  }
+
+  loadStockSetting();
+}, []);
+
+
+
+  useEffect(() => {
+  async function loadItems() {
+    const res = await fetch(`${API_BASE}/api/stock-items`);
+    const dbItems = await res.json();
+
+    if (Array.isArray(dbItems)) {
+      setItems(prev =>
+        prev.map(p => {
+          const found = dbItems.find(d => d.item_name === p.name);
+          if (!found) return p;
+
+          return {
+            ...p,
+            overStock: found.over_stock,
+            defect: found.defect,
+            normalStock: found.normal_stock
+          };
+        })
+      );
+    }
+  }
+
+  loadItems();
+}, []);
+
+useEffect(() => {
+  async function loadRows() {
+    const res = await fetch(`${API_BASE}/api/schedule-rows`);
+    const dbRows = await res.json();
+
+    setRows(dbRows);
+
+    // 로딩 후 running 자동계산
+    updateRunningTotals(dbRows);
+  }
+
+  loadRows();
+}, []);
+
+
 
 const [writer, setWriter] = useState("");
 const [usDate, setUsDate] = useState("");  // YYYY-MM-DD
@@ -151,13 +235,98 @@ const updateNormalStock = () => {
   return (
     
     <Box sx={{ p: 3 }}>
+      {/* ← 메인으로 버튼 */}
+<Box sx={{ mb: -4 }}>
+  <Button
+    variant="outlined"
+    onClick={() => navigate("/")}
+    sx={{
+      borderColor: "#0069a6ff",     // 갈색 테두리
+      color: "#0056a6ff",           // 텍스트 색
+      backgroundColor: "#ffffff", // 흰색 배경
+      fontWeight: "bold",
+      "&:hover": {
+        backgroundColor: "#ecfeffff",
+        borderColor: "#0069a6ff",
+        color: "#0085a6ff",
+      },
+    }}
+  >
+    ← 메인으로
+  </Button>
+</Box>
+
+  {/* 🔥 저장 버튼 (DB 저장) */}
+
+<Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2, gap:1 }}>
+    {/* 🔧 수정모드 버튼 */}
+  <Button
+    variant="outlined"
+    onClick={() => setEditMode(!editMode)}
+    sx={{
+      borderColor: editMode ? "#d32f2f" : "#1976d2",
+      color: editMode ? "#d32f2f" : "#1976d2",
+      fontWeight: "bold"
+    }}
+  >
+    {editMode ? "수정모드 종료" : "수정모드 활성화"}
+  </Button> 
+  <Button
+    variant="contained"
+    color="primary"
+    disabled={!editMode}
+    onClick={async () => {
+      const formattedUsDate = usDate ? new Date(usDate).toISOString().split("T")[0] : null;
+
+      try {
+        // 1) stock_setting 저장
+        await fetch(`${API_BASE}/api/stock-setting`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            target_stock: targetStock,
+            writer,
+            us_date:formattedUsDate
+          })
+        });
+
+        // 2) stock_items 저장
+        await fetch(`${API_BASE}/api/stock-item/bulk`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(items)
+        });
+
+        // 3) schedule_rows 저장 ← 여기 핵심!!
+        await fetch(`${API_BASE}/api/schedule-row/bulk`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(rows)
+        });
+
+        alert("저장 완료되었습니다!");
+      } catch (e) {
+        console.error(e);
+        alert("저장 실패!");
+      }
+    }}
+  >
+    저장
+  </Button>
+</Box>
+
+
 {/* 작성자 + 북미 날짜 */}
 <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 1 }}>
   <TextField
     label="작성자"
+    disabled={!editMode}
     size="small"
     value={writer}
-    onChange={(e) => setWriter(e.target.value)}
+    onChange={(e) => {
+  if (!editMode) return;
+  setWriter(e.target.value);
+}}
     sx={{ width: 150 }}
   />
   <TextField
@@ -165,10 +334,18 @@ const updateNormalStock = () => {
     size="small"
     placeholder="2025-11-03"
     value={usDate}
-    onChange={(e) => setUsDate(e.target.value)}
+    disabled={!editMode}
+    onChange={(e) => {
+  if (!editMode) return;
+  setUsDate(e.target.value);
+}}
+
     sx={{ width: 180 }}
+    InputLabelProps={{ shrink: true }}
   />
+  
 </Box>
+
       {/* 제목 */}
       <Typography variant="h5" sx={{ fontWeight: "bold", mb: 3 }}>
   원소재 재고 파악 및 운송일정 관리 
@@ -183,10 +360,15 @@ const updateNormalStock = () => {
       <Paper sx={{ p: 2, mb: 3, borderLeft: "5px solid #ff9800" }}>
         <Typography sx={{ fontWeight: "bold", mb: 1, fontSize:"18px" }}>적정재고 기준</Typography>
         <TextField
+          disabled={!editMode}
           label="적정재고 수량"
           type="number"
           value={targetStock}
-          onChange={(e) => setTargetStock(Number(e.target.value))}
+          onChange={(e) => {
+  if (!editMode) return;
+  setTargetStock(Number(e.target.value));
+}}
+
           size="small"
           sx={{ width: 200,
             "& .MuiInputBase-input": {
@@ -292,6 +474,8 @@ const status = judgeStatus(normal, targetStock);
             {/* 실사자료 입력 */}
             <Box sx={{ mt: 1 }}>
               <TextField
+                InputProps={{ readOnly: !editMode }}
+
                 label={getKoreanMonthLabel(usDate)}
 
                 type="number"
@@ -299,6 +483,7 @@ const status = judgeStatus(normal, targetStock);
                 variant="standard"
                 value={it.overStock}
                 onChange={(e) => {
+                   if (!editMode) return;
   const v = Number(e.target.value);
 
   setItems((prev) => {
@@ -312,6 +497,7 @@ const status = judgeStatus(normal, targetStock);
 }}
 
                 sx={{
+                  
                   // ⬇⬇ 라벨 글씨 키우기
     "& .MuiInputLabel-root": {
       fontSize: "18px",  
@@ -331,10 +517,13 @@ const status = judgeStatus(normal, targetStock);
             {/* 🔥 불량 및 발청소재 입력칸 추가 */}
   <Box sx={{ mt: 1 }}>
     <TextField
+      InputProps={{ readOnly: !editMode }}
+
       label="불량/발청소재"
       size="small"
       variant="standard"
       onChange={(e) => {
+         if (!editMode) return;
   const v = Number(e.target.value);
 
   setItems((prev) => {
@@ -408,11 +597,12 @@ const status = judgeStatus(normal, targetStock);
       variant="contained"
       color="success"
       size="small"
+      disabled={!editMode}   // ⭐ 추가
       onClick={() =>
         setRows((prev) => [
           ...prev,
           {
-            id: prev.length + 1,
+            id:uuidv4(),
             inv_no: "",
             no: "",
             status: "",
@@ -432,6 +622,8 @@ const status = judgeStatus(normal, targetStock);
     variant="contained"
     color="error"
     size="small"
+    disabled={!editMode}   // ⭐ 추가
+
     onClick={() =>
       setRows((prev) => {
         if (prev.length === 0) return prev;
@@ -458,7 +650,7 @@ const status = judgeStatus(normal, targetStock);
         {[
           "INV#",
           "NO",
-          "운행여부",
+          "운항여부",
           ...items.map((it) => it.name),
           "ETD",
           "ETA",
@@ -479,51 +671,89 @@ const status = judgeStatus(normal, targetStock);
           {/* 🔹 INV 입력 → 자동 매핑 */}
           <TableCell align="center">
             <TextField
+             InputProps={{ readOnly: !editMode }}
               variant="standard"
               value={row.inv_no || ""}
               onChange={async (e) => {
+  if (!editMode) return;
+
   const inv = e.target.value;
 
-  // 🔥 1) DB에서 INV 검색
-  const res = await fetch(`${API_BASE}/api/invoice/${inv}`);
-  const data = await res.json();
-
-  // 🔥 2) 운행여부 계산
-  let status = "";
-  const today = new Date();  
-  const etd = data?.etd ? new Date(data.etd) : null;
-  const eta = data?.eta ? new Date(data.eta) : null;
-
-  if (!data?.eta || data.eta === "일정 없음") status = "부산항 미입고";
-  else if (eta < today) status = "입고완료";
-  else if (etd > today) status = "선적대기중";
-  else status = "운항중";
-
-  // 🔥 3) rows 갱신
-  setRows((prev) =>
-    prev.map((r) =>
-      r.id === row.id
-        ? {
-            ...r,
-            inv_no: inv,
-            no: data?.no || "",
-            status,
-            etd: data?.etd || "",
-            eta: data?.eta || "",
-            month_depart: data?.etd
-              ? `${new Date(data.etd).getMonth() + 1}월`
-              : "",
-            month_arrive: data?.eta
-              ? `${new Date(data.eta).getMonth() + 1}월`
-              : "",
-          }
-        : r
+  // 1️⃣ 입력 즉시 반영 (지울 때도 포함)
+  setRows(prev =>
+    prev.map(r =>
+      r.id === row.id ? { ...r, inv_no: inv } : r
     )
   );
-    updateRunningTotals(newRows); // ⭐⭐⭐⭐ 중요! 이걸 추가해야 running 값이 제대로 나옴
-    return newRows;
 
+  // 2️⃣ inv가 비었으면 아래 로직 중단 (API 호출 X)
+  if (inv.trim() === "") {
+    // 상태도 초기화
+    setRows(prev =>
+      prev.map(r =>
+        r.id === row.id
+          ? {
+              ...r,
+              no: "",
+              status: "",
+              etd: "",
+              eta: "",
+              month_depart: "",
+              month_arrive: "",
+            }
+          : r
+      )
+    );
+
+    updateRunningTotals(rows);
+    return;
+  }
+
+  // 3️⃣ 정상 입력일 때만 API 호출
+  try {
+    const res = await fetch(`${API_BASE}/api/invoice/${inv}`);
+    const data = await res.json();
+
+    const today = new Date();
+    const etd = data?.etd ? new Date(data.etd) : null;
+    const eta = data?.eta ? new Date(data.eta) : null;
+
+    let status = "";
+
+    if (!data?.eta || data.eta === "일정 없음") status = "부산항 미입고";
+    else if (eta < today) status = "입고완료";
+    else if (etd > today) status = "선적대기중";
+    else status = "운항중";
+
+    // 4️⃣ 입력된 INV에 대한 데이터 반영
+    setRows(prev => {
+      const newRows = prev.map(r =>
+        r.id === row.id
+          ? {
+              ...r,
+              no: data?.no || "",
+              status,
+              etd: data?.etd || "",
+              eta: data?.eta || "",
+              month_depart: data?.etd
+                ? `${new Date(data.etd).getMonth() + 1}월`
+                : "",
+              month_arrive: data?.eta
+                ? `${new Date(data.eta).getMonth() + 1}월`
+                : "",
+            }
+          : r
+      );
+
+      updateRunningTotals(newRows);
+      return newRows;
+    });
+  } catch (error) {
+    console.error("INV fetch error", error);
+  }
 }}
+
+
 
               sx={{ width: 150 }}
             />
@@ -532,9 +762,11 @@ const status = judgeStatus(normal, targetStock);
           {/* 🔹 NO → 직접 입력 가능 */}
           <TableCell align="center">
             <TextField
+             InputProps={{ readOnly: !editMode }}
               variant="standard"
               value={row.no}
               onChange={(e) => {
+                 if (!editMode) return;
                 const v = e.target.value;
                 setRows((prev) =>
                   prev.map((r) =>
@@ -553,15 +785,18 @@ const status = judgeStatus(normal, targetStock);
           {items.map((it) => (
             <TableCell key={it.name} align="center">
               <TextField
+               InputProps={{ readOnly: !editMode }}
                 type="number"
                 variant="standard"
-                value={row[it.name] || ""}
+                value={row[FIELD_MAP[it.name]] || ""}
+
                 onChange={(e) => {
+                   if (!editMode) return;
   const value = e.target.value;
 
   setRows((prev) => {
     const newRows = prev.map((r) =>
-      r.id === row.id ? { ...r, [it.name]: value } : r
+      r.id === row.id ? { ...r, [FIELD_MAP[it.name]]: value }: r
     );
 
     updateRunningTotals(newRows);  // ⭐ 자동 반영

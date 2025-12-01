@@ -7,7 +7,7 @@ os.environ.pop("JAWSDB_URL", None)
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from config import Config
-from models import db, Invoice, PackingList
+from models import db, Invoice, PackingList, StockSetting, StockItem, ScheduleRow
 from config import Config
 from sqlalchemy import text
 print("🔥 Flask 실제 연결 DB:", Config.SQLALCHEMY_DATABASE_URI)
@@ -307,6 +307,218 @@ def update_sort_order():
 
     db.session.commit()
     return jsonify({"message": "sort_order updated"})
+
+
+# ============================================
+# 🔥 STOCK SETTING API
+# ============================================
+
+@app.route("/api/stock-setting", methods=["GET"])
+def get_stock_setting():
+    row = StockSetting.query.order_by(StockSetting.id.desc()).first()
+    if not row:
+        return jsonify({})
+
+    return jsonify({
+        "id": row.id,
+        "target_stock": row.target_stock,
+        "writer": row.writer,
+        "us_date": row.us_date.strftime("%Y-%m-%d") if row.us_date else None,
+        "updated_at": row.updated_at.strftime("%Y-%m-%d %H:%M:%S")
+    })
+
+
+
+
+@app.route("/api/stock-setting/<int:id>", methods=["PUT"])
+def update_stock_setting(id):
+    row = StockSetting.query.get_or_404(id)
+    data = request.json
+    for k, v in data.items():
+        setattr(row, k, v)
+    db.session.commit()
+    return jsonify({"message": "updated"})
+
+
+@app.route("/api/stock-setting/<int:id>", methods=["DELETE"])
+def delete_stock_setting(id):
+    row = StockSetting.query.get_or_404(id)
+    db.session.delete(row)
+    db.session.commit()
+    return jsonify({"message": "deleted"})
+
+
+# ============================================
+# 🔥 STOCK ITEM API
+# ============================================
+
+@app.route("/api/stock-items", methods=["GET"])
+def get_stock_items():
+    rows = StockItem.query.all()
+    return jsonify([
+        {
+            "id": r.id,
+            "item_name": r.item_name,
+            "over_stock": r.over_stock,
+            "defect": r.defect,
+            "normal_stock": r.normal_stock,
+            "updated_at": r.updated_at
+        }
+        for r in rows
+    ])
+
+
+@app.route("/api/stock-items", methods=["POST"])
+def create_stock_item():
+    data = request.json
+    row = StockItem(**data)
+    db.session.add(row)
+    db.session.commit()
+    return jsonify({"id": row.id}), 201
+
+
+@app.route("/api/stock-items/<int:id>", methods=["PUT"])
+def update_stock_item(id):
+    row = StockItem.query.get_or_404(id)
+    data = request.json
+    for k, v in data.items():
+        setattr(row, k, v)
+    db.session.commit()
+    return jsonify({"message": "updated"})
+
+
+@app.route("/api/stock-items/<int:id>", methods=["DELETE"])
+def delete_stock_item(id):
+    row = StockItem.query.get_or_404(id)
+    db.session.delete(row)
+    db.session.commit()
+    return jsonify({"message": "deleted"})
+
+
+# ============================================
+# 🔥 SCHEDULE ROW API
+# ============================================
+
+@app.route("/api/schedule-rows", methods=["GET"])
+def get_schedule_rows():
+    rows = ScheduleRow.query.all()
+    return jsonify([
+        {
+            "id": r.id,
+            "inv_no": r.inv_no,
+            "no": r.no,
+            "status": r.status,
+            "etd": r.etd,
+            "eta": r.eta,
+            "month_depart": r.month_depart,
+            "month_arrive": r.month_arrive,
+            "mq4_gear": r.mq4_gear,
+            "mq4_pinion": r.mq4_pinion,
+            "nx4_gear": r.nx4_gear,
+            "nx4_pinion": r.nx4_pinion,
+            "created_at": r.created_at,
+            "updated_at": r.updated_at,
+        }
+        for r in rows
+    ])
+
+
+@app.route("/api/schedule-rows", methods=["POST"])
+def create_schedule_row():
+    data = request.json
+    row = ScheduleRow(**data)
+    db.session.add(row)
+    db.session.commit()
+    return jsonify({"id": row.id}), 201
+
+
+@app.route("/api/schedule-rows/<int:id>", methods=["PUT"])
+def update_schedule_row(id):
+    row = ScheduleRow.query.get_or_404(id)
+    data = request.json
+    for k, v in data.items():
+        setattr(row, k, v)
+    db.session.commit()
+    return jsonify({"message": "updated"})
+
+
+@app.route("/api/schedule-rows/<int:id>", methods=["DELETE"])
+def delete_schedule_row(id):
+    row = ScheduleRow.query.get_or_404(id)
+    db.session.delete(row)
+    db.session.commit()
+    return jsonify({"message": "deleted"})
+
+
+
+@app.route("/api/stock-setting", methods=["POST"])
+def save_stock_setting():
+    data = request.json
+
+    setting = StockSetting.query.first()
+    if not setting:
+        setting = StockSetting()
+
+    setting.target_stock = data.get("target_stock")
+    setting.writer = data.get("writer")
+
+    us_date_str = data.get("us_date")
+    if us_date_str:
+        setting.us_date = datetime.strptime(us_date_str, "%Y-%m-%d").date()
+
+    db.session.add(setting)
+    db.session.commit()
+
+    return jsonify({"message": "saved"})
+
+
+@app.route("/api/stock-item/bulk", methods=["POST"])
+def save_stock_items():
+    items = request.json  # 리스트
+
+    for item in items:
+        db_item = StockItem.query.filter_by(item_name=item["name"]).first()
+
+        if not db_item:
+            db_item = StockItem(item_name=item["name"])
+
+        db_item.over_stock = item["overStock"]
+        db_item.defect = item["defect"]
+        db_item.normal_stock = item["normalStock"]
+
+        db.session.add(db_item)
+
+    db.session.commit()
+    return jsonify({"message": "saved"})
+
+@app.route("/api/schedule-row/bulk", methods=["POST"])
+def save_schedule_rows():
+    rows = request.json  # 리스트
+
+    # 기존 모두 삭제 후 다시 저장 (단순하고 오류 없음)
+    ScheduleRow.query.delete()
+
+    for row in rows:
+        db_row = ScheduleRow(
+            inv_no=row.get("inv_no"),
+            no=row.get("no"),
+            status=row.get("status"),
+            etd=row.get("etd"),
+            eta=row.get("eta"),
+            month_depart=row.get("month_depart"),
+            month_arrive=row.get("month_arrive"),
+            mq4_gear=row.get("MQ4 GEAR-DRIVEN", 0),
+            mq4_pinion=row.get("MQ4 PINION-DRIVE", 0),
+            nx4_gear=row.get("NX4 GEAR-DRIVEN", 0),
+            nx4_pinion=row.get("NX4 PINION-DRIVE", 0),
+        )
+        db.session.add(db_row)
+
+    db.session.commit()
+    return jsonify({"message": "saved"})
+
+
+
 
 # ============================================
 # 서버 실행

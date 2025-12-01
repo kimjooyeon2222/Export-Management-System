@@ -61,3 +61,55 @@ class PackingList(db.Model):
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+# =============================
+# STOCK SETTING (적정재고 + 날짜 + 작성자)
+# =============================
+class StockSetting(db.Model):
+    __tablename__ = "stock_setting"
+
+    id = db.Column(db.Integer, primary_key=True)
+    target_stock = db.Column(db.Integer)
+    writer = db.Column(db.String(50))
+    us_date = db.Column(db.Date)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+# =============================
+# STOCK ITEM (실사자료 + 불량 + 정상재고)
+# =============================
+class StockItem(db.Model):
+    __tablename__ = "stock_item"
+
+    id = db.Column(db.Integer, primary_key=True)
+    item_name = db.Column(db.String(100))
+    over_stock = db.Column(db.Integer)
+    defect = db.Column(db.Integer)
+    normal_stock = db.Column(db.Integer)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+# =============================
+# SCHEDULE ROW (행추가로 입력되는 스케줄)
+# =============================
+class ScheduleRow(db.Model):
+    __tablename__ = "schedule_row"
+
+    id = db.Column(db.Integer, primary_key=True)
+    inv_no = db.Column(db.String(50))
+    no = db.Column(db.String(50))
+    status = db.Column(db.String(50))
+    etd = db.Column(db.String(20))
+    eta = db.Column(db.String(20))
+    month_depart = db.Column(db.String(20))
+    month_arrive = db.Column(db.String(20))
+
+    mq4_gear = db.Column(db.Integer, default=0)
+    mq4_pinion = db.Column(db.Integer, default=0)
+    nx4_gear = db.Column(db.Integer, default=0)
+    nx4_pinion = db.Column(db.Integer, default=0)
+
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
