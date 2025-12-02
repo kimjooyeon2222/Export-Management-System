@@ -1,6 +1,7 @@
 import OilInvoiceTimeline from "./OilInvoiceTimeline";
 import React, { useState, useEffect } from "react";
 import { v4 as uuidv4 } from "uuid";
+import { useNavigate } from "react-router-dom";
 
 
 import {
@@ -19,6 +20,8 @@ import {
 
 
 export default function OilShipmentSchedule() {
+const navigate = useNavigate();
+
 // HEADER 수정 (inv, po, etd, eta)
 const updateHeader = async (invKey, field, value) => {
   const dbFieldMap = {
@@ -280,7 +283,23 @@ scheduleRows.forEach((r) => {
       <Typography variant="h5" fontWeight="bold" mb={3}>
         오일 운송일정 관리 (Oil Shipment Schedule)
       </Typography>
-
+  <Button
+      variant="outlined"
+      onClick={() => navigate("/")}
+      sx={{
+        borderColor: "#0069a6ff",     // 갈색 테두리
+        color: "#0056a6ff",           // 텍스트 색
+        backgroundColor: "#ffffff", // 흰색 배경
+        fontWeight: "bold",
+        "&:hover": {
+          backgroundColor: "#ecfeffff",
+          borderColor: "#0069a6ff",
+          color: "#0085a6ff",
+        },
+      }}
+    >
+      ← 메인으로
+    </Button>
    
       <Box sx={{ mt: 3 }}>
         {/* === 수정/입력 영역 === */}
@@ -327,26 +346,43 @@ scheduleRows.forEach((r) => {
   </Button>
 </Box>
 
+  <Paper sx={{ p: 2 , mb:3}}>
+<Table size="small">
+  <TableHead>
+    <TableRow sx={{ backgroundColor: "#e8f5e9" }}>
+      <TableCell align="center">INV#</TableCell>
+      <TableCell align="center">PO#</TableCell>
+      <TableCell align="center">ETD</TableCell>
+      <TableCell align="center">ETA</TableCell>
 
+      {Array.from({ length: 38 }).map((_, i) => (
+        <TableCell key={i} align="center">{i + 1}</TableCell>
+      ))}
+    </TableRow>
+  </TableHead>
 
+  <TableBody>
+    {Object.values(grouped).map((inv) => (
+      <OilInvoiceTimeline
+        key={inv.inv}
+        invoiceInfo={{
+          inv: inv.inv,
+          po: inv.po,
+          etd: inv.etd,
+          eta: inv.eta,
+        }}
+        items={inv.items}
+        editMode={editMode}
+        onUpdateHeader={(field, value) => updateHeader(inv.inv, field, value)}
+        onUpdateSeq={(seq, value) => updateSeq(inv.inv, seq, value)}
+      />
+    ))}
+  </TableBody>
+</Table>
+</Paper>
       
 
-   {Object.values(grouped).map((inv) => (
-  <OilInvoiceTimeline
-    key={inv.inv}
-    invoiceInfo={{
-      inv: inv.inv,
-      po: inv.po,
-      etd: inv.etd,
-      eta: inv.eta,
-    }}
-    items={inv.items}
-    editMode={editMode}
-    onUpdateHeader={(field, value) => updateHeader(inv.inv, field, value)}
-    onUpdateSeq={(seq, value) => updateSeq(inv.inv, seq, value)}
-  />
-))}
-
+   
 
 
       </Box>
@@ -357,7 +393,12 @@ scheduleRows.forEach((r) => {
         <Typography variant="subtitle1" fontWeight="bold" mb={2}>
           📘 오일 관리 리스트
         </Typography>
-
+ <Box sx={{ display: "flex", gap: 1 }}>
+      <Button variant="contained">+ 행 추가</Button>
+      <Button variant="outlined" color="error">행 삭제</Button>
+      <Button variant="outlined" color="primary">수정 모드</Button>
+      <Button variant="contained" color="success">저장하기</Button>
+    </Box>
         <Table size="small">
           <TableHead>
             <TableRow>
