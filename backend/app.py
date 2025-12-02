@@ -4,6 +4,7 @@ os.environ.pop("DATABASE_URL", None)
 os.environ.pop("MYSQL_URL", None)
 os.environ.pop("JAWSDB_URL", None)
 
+from models import OilScheduleRow
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from config import Config
@@ -519,8 +520,96 @@ def save_schedule_rows():
     db.session.commit()
     return jsonify({"message": "saved"})
 
+# oil_schedule_row 전체 불러오기 API
+# GET /api/oil-schedule
+@app.route("/api/oil-schedule", methods=["GET"])
+def get_oil_schedule():
+    rows = OilScheduleRow.query.order_by(OilScheduleRow.id.asc()).all()
 
+    result = []
+    for r in rows:
+        result.append({
+            "id": r.id,
+            "inv_no": r.inv_no,
+            "po_no": r.po_no,
+            "etd": r.etd,
+            "eta": r.eta,
+            "seq": r.seq,
+            "qty": r.qty
+        })
 
+    return jsonify(result)
+
+#oil_schedule_row 저장 (bulk 저장) API
+
+# POST /api/oil-schedule/bulk
+@app.route("/api/oil-schedule/bulk", methods=["POST"])
+def save_oil_schedule_bulk():
+    data = request.get_json()
+
+    # 기존 전체 삭제 후 새로 저장
+    OilScheduleRow.query.delete()
+
+    for r in data:
+        row = OilScheduleRow(
+            inv_no=r.get("inv_no"),
+            po_no=r.get("po_no"),
+            etd=r.get("etd"),
+            eta=r.get("eta"),
+            seq=r.get("seq"),
+            qty=r.get("qty")
+        )
+        db.session.add(row)
+
+    db.session.commit()
+    return jsonify({"message": "saved"})
+
+#특정 INV 입력 시 자동로드 API 
+
+# GET /api/oil-invoice/<inv_no>
+@app.route("/api/oil-invoice/<inv_no>", methods=["GET"])
+def get_oil_invoice(inv_no):
+    # 1) invoice 테이블에서 inv_no 조회
+    inv = Invoice.query.filter_by(inv_no=inv_no).first()
+
+    if not inv:
+        return jsonify({"error": "Invoice not found"}), 404
+
+    # 2) packing_list에서 invoice_id 로 PO 번호 조회
+    packing = PackingList.query.filter_by(invoice_id=inv.id).first()
+
+    po_no = packing.po_no if packing else None
+
+    # 3) invoice + packing_list 데이터 함께 반환
+    return jsonify({
+        "inv_no": inv.inv_no,
+        "po_no": po_no,
+        "etd": inv.etd,
+        "eta": inv.eta
+    })
+
+# 저장하기  (POST) 라우트
+@app.route("/api/oil-schedule/bulk", methods=["POST"])
+def bulk_save_oil_schedule():
+    rows = request.json
+
+    # 기존 INV_NO 데이터 삭제 후 다시 insert 할 수도 있고,
+    # 중복 체크하면서 update/insert 해도 되고 너 선택 가능.
+
+    for r in rows:
+        row = OilScheduleRow(
+            inv_no=r["inv_no"],
+            po_no=r["po_no"],
+            etd=r["etd"],
+            eta=r["eta"],
+            seq=r["seq"],
+            qty=r["qty"]
+        )
+        db.session.add(row)
+
+    db.session.commit()
+
+    return jsonify({"message": "saved"})
 
 
 # ============================================

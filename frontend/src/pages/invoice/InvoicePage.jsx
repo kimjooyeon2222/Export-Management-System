@@ -57,6 +57,10 @@ const itemToExporters = {
 
 
 export default function InvoicePage() {
+  const todayUS = new Date(
+  new Date().toLocaleString("en-US", { timeZone: "America/Chicago" })
+);
+
   const [searchType, setSearchType] = useState("po");
 
 const [sortMode, setSortMode] = useState(false);
@@ -320,7 +324,7 @@ const handleAdd = async () => {
     // 기본조건: showUpcoming (5일 이내 필터링)
     if (showUpcoming) {
   const etaDate = parseDate(r.eta);
-  const daysToETA = Math.floor((etaDate - today) / (1000 * 60 * 60 * 24));
+  const daysToETA = Math.floor((etaDate - todayUS) / (1000 * 60 * 60 * 24));
 
   // 🔥 빨간색 조건 외 모두 제외
   if (!(daysToETA > 0)) return false;
@@ -560,7 +564,10 @@ const delayedDate2 = merged.delayed_date
   : getAlabamaDate(merged.eta);
 
 // 오늘 미국(앨라배마) 기준 날짜
-const todayUS = getAlabamaDate(new Date());
+const todayUS = new Date(
+  new Date().toLocaleString("en-US", { timeZone: "America/Chicago" })
+);
+
 
 // 🔥 최종 도착 여부 규칙
 const arrived = delayedDate2 < todayUS;
@@ -983,7 +990,7 @@ const arrived = delayedDate2 < todayUS;
           : etaDate;
 
         // === ETA까지 남은 날짜(색상용) ===
-        const daysToETA = Math.floor((etaDate - today) / (1000 * 60 * 60 * 24));
+        const daysToETA = Math.floor((etaDate - todayUS) / (1000 * 60 * 60 * 24));
 
         // === ETA vs 실제 도착일 차이 ===
         const diffDays = Math.floor((delayedDate - etaDate) / (1000 * 60 * 60 * 24));

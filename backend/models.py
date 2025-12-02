@@ -113,3 +113,34 @@ class ScheduleRow(db.Model):
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+# ============================================================
+# OIL SCHEDULE ROW (OIL SHIPMENT 전용 스케줄)
+# ============================================================
+class OilScheduleRow(db.Model):
+    __tablename__ = "oil_schedule_row"
+
+    id = db.Column(db.Integer, primary_key=True)
+    inv_no = db.Column(db.String(100))
+    po_no = db.Column(db.String(100))
+
+    etd = db.Column(db.String(20))
+    eta = db.Column(db.String(20))
+
+    seq = db.Column(db.Integer)          # 1~38
+    qty = db.Column(db.String(50))       # "1벌", "2DR", "1PL"
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "inv_no": self.inv_no,
+            "po_no": self.po_no,
+            "etd": self.etd,
+            "eta": self.eta,
+            "seq": self.seq,
+            "qty": self.qty,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+        }

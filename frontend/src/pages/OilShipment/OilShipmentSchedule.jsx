@@ -1,5 +1,7 @@
-import React from "react";
 import OilInvoiceTimeline from "./OilInvoiceTimeline";
+import React, { useState, useEffect } from "react";
+import { v4 as uuidv4 } from "uuid";
+
 
 import {
   Box,
@@ -10,51 +12,213 @@ import {
   TableCell,
   TableBody,
   Paper,
+  TextField,
+  Button,
 } from "@mui/material";
 
+
+
 export default function OilShipmentSchedule() {
-    const timelineData = {
-  "ATT-OIL-20251022-V1": [
-    { seq: 2, qty: "1벌" },
-    { seq: 4, qty: "5벌" },
-    { seq: 26, qty: "1PL" }
-  ],
-  "ATT-OIL-20251027-V1": [
-    { seq: 9, qty: "2 DR" },
-    { seq: 12, qty: "1 DR" }
-  ],
-  "ATT-OIL-20251118-V1": [
-    { seq: 17, qty: "8 DR" },
-    { seq: 33, qty: "1 DR" }
-  ]
+// HEADER 수정 (inv, po, etd, eta)
+const updateHeader = async (invKey, field, value) => {
+  const dbFieldMap = {
+    inv: "inv_no",
+    po: "po_no",
+    etd: "etd",
+    eta: "eta",
+  };
+
+  const dbField = dbFieldMap[field];
+
+  setScheduleRows((prev) =>
+    prev.map((row) => {
+      if (row.inv_no === invKey || row.id === invKey) {
+
+        // 🔥 inv# 입력 시 inv_no 자체도 바꿔주기
+        const updatedRow = { ...row, [dbField]: value };
+        if (field === "inv") {
+          updatedRow.inv_no = value;
+        }
+        return updatedRow;
+      }
+      return row;
+    })
+  );
+
+  // 🔥 INV 입력 시 자동 invoice 정보를 채움
+  if (field === "inv") {
+    const res = await fetch(`${API_BASE}/api/oil-invoice/${value}`);
+    const data = await res.json();
+
+    if (!data.error) {
+      setScheduleRows((prev) =>
+        prev.map((row) =>
+          row.inv_no === value
+            ? {
+                ...row,
+                po_no: data.po_no || "",
+                etd: data.etd || "",
+                eta: data.eta || "",
+              }
+            : row
+        )
+      );
+    }
+  }
 };
 
-  // ============================
-  // 1) 운송 일정 Header 데이터
-  // ============================
-  const shipmentList = [
-    {
-      id: 1,
-      item: "ATT-OIL-20251022-V1",
-      po: "4500001334",
-      etd: "2025-10-27",
-      eta: "2025-11-26",
-    },
-    {
-      id: 2,
-      item: "ATT-OIL-20251027-V1",
-      po: "4500001362",
-      etd: "2025-11-05",
-      eta: "2025-11-30",
-    },
-    {
-      id: 3,
-      item: "ATT-OIL-20251118-V1",
-      po: "4500001414",
-      etd: "2025-11-24",
-      eta: "2026-01-04",
-    },
-  ];
+
+
+// SEQ/QTY 수정
+const updateSeq = (invKey, seq, value) => {
+  setScheduleRows((prev) =>
+    prev.map((row) =>
+      row.inv_no === invKey && Number(row.seq) === Number(seq)
+        ? { ...row, qty: value }
+        : row
+    )
+  );
+};
+
+
+const API_BASE = import.meta.env.VITE_API_URL;
+
+
+//DB 로딩 함수
+const loadOilSchedule = async () => {
+  const res = await fetch(`${API_BASE}/api/oil-schedule`);
+  const data = await res.json();
+  setScheduleRows(data);
+};
+  const [editMode, setEditMode] = useState(false);    // ← 반드시 여기에!
+
+
+  // 전체 스케줄 rows (DB → React)
+const [scheduleRows, setScheduleRows] = useState([]);
+const [inv, setInv] = useState("");
+const [po, setPo] = useState("");
+const [etd, setEtd] = useState("");
+const [eta, setEta] = useState("");
+// 새 행 추가
+const addRow = () => {
+  const tempId = uuidv4();
+  const newRows = [];
+
+  for (let i = 1; i <= 38; i++) {
+    newRows.push({
+      id: uuidv4(),
+      inv_no: tempId,
+      po_no: "",
+      etd: "",
+      eta: "",
+      seq: i,
+      qty: "",
+    });
+  }
+
+  setScheduleRows(prev => [...prev, ...newRows]);
+};
+
+
+
+
+// 행 수정
+const updateRow = async (index, field, value) => {
+  const newRows = [...scheduleRows];
+  newRows[index][field] = value;
+
+  // 👉 INV# 입력 시 자동 invoice 불러오기
+  if (field === "inv_no") {
+    const res = await fetch(`${API_BASE}/api/oil-invoice/${value}`);
+    const data = await res.json();
+
+    if (!data.error) {
+      newRows[index].po_no = data.po_no;
+      newRows[index].etd = data.etd;
+      newRows[index].eta = data.eta;
+    }
+  }
+
+  setScheduleRows(newRows);
+};
+
+
+// 전체 저장(BULK)
+const saveAll = async () => {
+  const res = await fetch(`${API_BASE}/api/oil-schedule/bulk`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(scheduleRows),
+  });
+
+  const data = await res.json();
+
+  if (data.error) {
+    alert("저장 실패: " + data.error);
+    return;
+  }
+
+  alert("저장 완료!");
+  loadOilSchedule();
+};
+
+
+
+  // 1) 초기 로딩 — oil_schedule_row 전체 불러오기
+  useEffect(() => {
+    loadOilSchedule();
+  }, []);
+const loadInvoiceInfo = async () => {
+  if (!inv) return;
+
+  const res = await fetch(`${API_BASE}/api/oil-invoice/${inv}`);
+  const data = await res.json();
+
+  if (!data.error) {
+    setPo(data.po_no || "");
+    setEtd(data.etd || "");
+    setEta(data.eta || "");
+  }
+};
+
+
+const grouped = {};
+
+scheduleRows.forEach(r => {
+  if (!grouped[r.inv_no]) {
+    grouped[r.inv_no] = {
+      inv: r.inv_no,
+      po: r.po_no,
+      etd: r.etd,
+      eta: r.eta,
+      items: [],
+    };
+  }
+
+  grouped[r.inv_no].items.push({
+    seq: r.seq,
+    qty: r.qty,
+  });
+});
+
+
+// invoice header grouping
+const invoiceHeader = {};
+
+scheduleRows.forEach((r) => {
+  const key = r.inv_no || "";
+
+  if (!invoiceHeader[key]) {
+    invoiceHeader[key] = {
+      inv: r.inv_no || "",
+      po: r.po_no || "",
+      etd: r.etd || "",
+      eta: r.eta || "",
+    };
+  }
+});
+
+
 
   // ============================
   // 2) 오일 관리 리스트 (1~42)
@@ -119,19 +283,72 @@ export default function OilShipmentSchedule() {
 
    
       <Box sx={{ mt: 3 }}>
-        {shipmentList.map((row) => (
-          <OilInvoiceTimeline
-  key={row.id}
-  invoiceInfo={{
-    inv: row.item,
-    po: row.po,
-    etd: row.etd,
-    eta: row.eta
+        {/* === 수정/입력 영역 === */}
+<Box 
+  sx={{ 
+    display: "flex", 
+    gap: 2, 
+    mb: 3, 
+    justifyContent: "flex-end"  // 🔥 우측 정렬
   }}
-  items={timelineData[row.item] || []}
-/>
+>
+  <Button variant="contained" onClick={addRow}>
+    + 행 추가
+  </Button>
 
-        ))}
+  <Button
+    variant="outlined"
+    color="error"
+    onClick={() => {
+  const groups = Object.keys(grouped);
+  if (groups.length === 0) return;
+
+  const lastInv = groups[groups.length - 1]; // 마지막 INV 그룹
+
+  setScheduleRows(prev =>
+    prev.filter(r => r.inv_no !== lastInv)  // ⬅️ 그룹 전체 row 삭제
+  );
+}}
+
+  >
+    행 삭제
+  </Button>
+
+  <Button
+    variant="outlined"
+    color={editMode ? "error" : "primary"}
+    onClick={() => setEditMode(!editMode)}
+  >
+    {editMode ? "수정 종료" : "수정 모드"}
+  </Button>
+
+  <Button variant="contained" color="success" onClick={saveAll}>
+    저장하기
+  </Button>
+</Box>
+
+
+
+      
+
+   {Object.values(grouped).map((inv) => (
+  <OilInvoiceTimeline
+    key={inv.inv}
+    invoiceInfo={{
+      inv: inv.inv,
+      po: inv.po,
+      etd: inv.etd,
+      eta: inv.eta,
+    }}
+    items={inv.items}
+    editMode={editMode}
+    onUpdateHeader={(field, value) => updateHeader(inv.inv, field, value)}
+    onUpdateSeq={(seq, value) => updateSeq(inv.inv, seq, value)}
+  />
+))}
+
+
+
       </Box>
       {/* ================================ */}
       {/* 오일 관리 리스트 (1~42) */}

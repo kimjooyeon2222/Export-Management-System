@@ -19,17 +19,27 @@ import { useNavigate } from "react-router-dom";
 
 
 export default function ForgingPage() {
-  // 숫자 → "1,234" 변환
-const formatNumber = (value) => {
-  if (value === null || value === undefined || value === "") return "";
-  return Number(value).toLocaleString("en-US");
-};
+// 📌 미국 Alabama(중부시간) 기준 '오늘 00:00' 생성
+function getTodayInAlabama() {
+  const now = new Date();
 
-// "1,234" → 1234 숫자로 변환
-const parseNumber = (value) => {
-  if (!value) return null;
-  return Number(String(value).replace(/,/g, ""));
-};
+  // 미국 Central Time offset 계산 (자동 DST 반영)
+  const options = { timeZone: "America/Chicago" };
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Chicago",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+
+  const parts = formatter.formatToParts(now);
+
+  const y = parts.find(p => p.type === "year").value;
+  const m = parts.find(p => p.type === "month").value;
+  const d = parts.find(p => p.type === "day").value;
+
+  return new Date(`${y}-${m}-${d}T00:00:00`);
+}
 
 
   function normalizeRow(row) {
@@ -934,7 +944,7 @@ const status = judgeStatus(normal, targetStock);
     const res = await fetch(`${API_BASE}/api/invoice/${inv}`);
     const data = await res.json();
 
-    const today = new Date();
+    const today = getTodayInAlabama();
     const etd = data?.etd ? new Date(data.etd) : null;
     const eta = data?.eta ? new Date(data.eta) : null;
 
