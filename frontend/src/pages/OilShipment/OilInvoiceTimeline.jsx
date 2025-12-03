@@ -6,7 +6,8 @@ export default function OilInvoiceTimeline({
   items,
   onUpdateHeader,
   onUpdateSeq,
-  editMode
+  editMode,
+  calendarDays
 }) {
 
   function getUSToday() {
@@ -106,21 +107,21 @@ export default function OilInvoiceTimeline({
         )}
       </TableCell>
 
-      {/* 1~38 seq */}
-      {Array.from({ length: 38 }).map((_, i) => (
-        <TableCell key={i} align="center" sx={{ backgroundColor: "#f1f8e9" }}>
-          {editMode ? (
-            <TextField
-              size="small"
-              value={seqMap[i + 1] || ""}
-              onChange={(e) => onUpdateSeq(i + 1, e.target.value)}
-              sx={{ width: 45 }}
-            />
-          ) : (
-            seqMap[i + 1] || "-"
-          )}
-        </TableCell>
-      ))}
+      {calendarDays.map(day => (
+  <TableCell key={day} align="center" sx={{ backgroundColor: "#f1f8e9" }}>
+    {editMode ? (
+      <TextField
+        size="small"
+        value={seqMap[day] || ""}
+        onChange={(e) => onUpdateSeq(day, e.target.value)}
+        sx={{ width: 45 }}
+      />
+    ) : (
+      seqMap[day] || "-"
+    )}
+  </TableCell>
+))}
+
     </TableRow>
   );
 }

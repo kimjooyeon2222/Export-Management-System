@@ -276,7 +276,8 @@ useEffect(() => {
   // ============================
   // 3) 1~38 달력 숫자 자동 생성
   // ============================
-  const calendarDays = Array.from({ length: 38 }, (_, i) => i + 1);
+  const calendarDays = Array.from({ length: oilList.length }, (_, i) => i + 1);
+
 
   return (
     <Box p={3}>
@@ -374,9 +375,10 @@ useEffect(() => {
       <TableCell align="center">ETD</TableCell>
       <TableCell align="center">ETA</TableCell>
 
-      {Array.from({ length: 38 }).map((_, i) => (
-        <TableCell key={i} align="center">{i + 1}</TableCell>
-      ))}
+      {calendarDays.map((day) => (
+  <TableCell key={day} align="center">{day}</TableCell>
+))}
+
     </TableRow>
   </TableHead>
 
@@ -391,6 +393,8 @@ useEffect(() => {
           eta: inv.eta,
         }}
         items={inv.items}
+        calendarDays={calendarDays}  // ← ★ 추가
+
         editMode={editMode}
         onUpdateHeader={(field, value) => updateHeader(inv.inv, field, value)}
         onUpdateSeq={(seq, value) => updateSeq(inv.inv, seq, value)}
