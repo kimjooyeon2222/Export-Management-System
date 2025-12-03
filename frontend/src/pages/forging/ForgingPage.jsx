@@ -19,6 +19,8 @@ import { useNavigate } from "react-router-dom";
 
 
 export default function ForgingPage() {
+  const [showStockPanel, setShowStockPanel] = useState(false);
+
 // 📌 미국 Alabama(중부시간) 기준 '오늘 00:00' 생성
 function getTodayInAlabama() {
   const now = new Date();
@@ -489,22 +491,47 @@ const getStatusStyle = (status) => {
 </Box>
 
 
-      {/* 제목 */}
-      <Typography variant="h5" sx={{  fontSize:17, fontWeight: "bold", mb: 3 }}>
-  원소재 재고 파악 및 운송일정 관리 
-  ({usDate ? getPeriod(usDate) : "작성일자"})
-
-</Typography>
-
-
-
-
-      
+      {/* ======================
+    페이지 제목 + 토글 버튼
+======================= */}
+<Box sx={{ 
+  display: "flex", 
+  justifyContent: "space-between", 
+  alignItems: "center",
+  mb: 3
+}}>
   
+  {/* 제목 */}
+  <Typography variant="h5" sx={{ fontSize: 18, fontWeight: "bold" }}>
+    원소재 재고 파악 및 운송일정 관리 
+    ({usDate ? getPeriod(usDate) : "작성일자"})
+  </Typography>
 
-      {/* 과부족 상태 패널 (T 제외 → 4개만 출력) */}
+  {/* 🔥 우측 상단 토글 버튼 */}
+  <Button
+    size="small"
+    variant="outlined"
+    onClick={() => setShowStockPanel(prev => !prev)}
+    sx={{
+      fontSize: "14px",
+      fontWeight: "bold",
+      mb:-1,
+      mt:2,
+    }}
+  >
+    {showStockPanel ? "− 접기" : "+ 과부족 상태표 보기"}
+  </Button>
+
+</Box>
+
+
+
+ {/* 과부족 상태 패널 (T 제외 → 4개만 출력) */}
+      
+  {showStockPanel && (
+     
       <Paper sx={{ p: 2, mb: 4, border: "2px solid #777" }}>
-
+ 
   {/* 🔥 가로 한 줄, 왼쪽 정렬 */}
   <Box 
     sx={{ 
@@ -698,7 +725,7 @@ const getStatusStyle = (status) => {
 
         </Table>
       </Paper>
-
+)}
       {/* ===============================
     🔶 과부족 아래 전체 (요구사항 반영 완성본)
 =============================== */}
