@@ -321,15 +321,13 @@ useEffect(() => {
 
   return (
     <Box p={3}>
-      {/* 제목 */}
-      <Typography variant="h5" fontWeight="bold" fontSize="18px" mb={3}>
-        오일 운송일정 관리 (Oil Shipment Schedule)
-      </Typography>
-  <Button
+         <Button
       variant="outlined"
       onClick={() => navigate("/")}
       sx={{
-        fontSize:"16x",
+        mt: 1,
+        mb: 5,
+        fontSize:"15px",
         borderColor: "#0069a6ff",     // 갈색 테두리
         color: "#0056a6ff",           // 텍스트 색
         backgroundColor: "#ffffff", // 흰색 배경
@@ -343,8 +341,14 @@ useEffect(() => {
     >
       ← 메인으로
     </Button>
+     
    
       <Box sx={{ mt: 3 }}>
+         {/* 제목 */}
+      <Typography variant="h5" fontWeight="bold" fontSize="20px">
+        오일 운송일정 관리 (Oil Shipment Schedule)
+      </Typography>
+ 
         {/* === 수정/입력 영역 === */}
 {!editMode && (
   <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>

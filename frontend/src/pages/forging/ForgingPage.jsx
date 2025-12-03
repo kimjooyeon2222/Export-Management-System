@@ -500,8 +500,7 @@ const getStatusStyle = (status) => {
 
 
       
-      
-
+  
 
       {/* 과부족 상태 패널 (T 제외 → 4개만 출력) */}
       <Paper sx={{ p: 2, mb: 4, border: "2px solid #777" }}>
@@ -551,64 +550,150 @@ const getStatusStyle = (status) => {
 
         <Table size="small">
           <TableHead>
-            <TableRow>
-              {["품목","적정재고","운항중","기존재고-불량","운항중+정상재고","판정"].map(h => (
-                <TableCell key={h} align="center" sx={{ fontWeight: "bold", fontSize:14 }}>
-                  {h}
-                </TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
+  <TableRow>
+    {[
+      "품목",
+      getKoreanMonthLabel(usDate),   // 예: 25년 11월 실사자료
+      "불량/발청 소재",
+      "적정재고",
+      "운항중",
+      "기존재고-불량",
+      "운항중+정상재고",
+      "판정"
+    ].map(h => (
+      <TableCell
+        key={h}
+        align="center"
+        sx={{ fontWeight: "bold", fontSize: 14 }}
+      >
+        {h}
+      </TableCell>
+    ))}
+  </TableRow>
+</TableHead>
 
-          <TableBody>
-            {items.slice(0, 4).map((it, idx) => {
-            const normal = it.normalStock;          // 기존재고 - 불량 자동 반영됨
-const after = it.running + normal;      // 운항중 + 정상재고
-const status = judgeStatus(normal, targetStock);
+<TableBody>
+  {items.slice(0, 4).map((it, idx) => {
+    const normal = it.normalStock;
+    const after = it.running + normal;
+    const status = judgeStatus(normal, targetStock);
 
-
-              return (
-                <TableRow key={idx}>
-                 {/* 🔥 품목명 Bold */}
-        <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px"  }}>
+    return (
+      <TableRow key={idx}>
+        
+        {/* 품목명 */}
+        <TableCell align="center" sx={{ fontWeight: "bold", fontSize: 15 }}>
           {it.fullName}
         </TableCell>
 
-        {/* 🔥 숫자 전체 Bold */}
-        <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px"  }}>
+        {/* 실사자료 수량 */}
+        <TableCell align="center" sx={{ fontWeight: "bold", fontSize: 15 }}>
+          {editMode ? (
+            <TextField
+              type="number"
+              variant="standard"
+              value={it.overStock}
+              onChange={(e) => {
+                const v = Number(e.target.value);
+
+                setItems(prev =>
+                  prev.map((p, i) =>
+                    i === idx ? { ...p, overStock: v } : p
+                  )
+                );
+
+                updateNormalStock();
+              }}
+              sx={{
+                width: 80,
+                "& input": {
+                  textAlign: "center",
+                  fontSize: 15,
+                  fontWeight: "bold",
+                  color: "#1155cc"
+                }
+              }}
+            />
+          ) : (
+            fmt(it.overStock)
+          )}
+        </TableCell>
+
+        {/* 불량/발청 소재 */}
+        <TableCell align="center" sx={{ fontWeight: "bold", fontSize: 15 }}>
+          {editMode ? (
+            <TextField
+              type="number"
+              variant="standard"
+              value={it.defect}
+              onChange={(e) => {
+                const v = Number(e.target.value);
+
+                setItems(prev =>
+                  prev.map((p, i) =>
+                    i === idx ? { ...p, defect: v } : p
+                  )
+                );
+
+                updateNormalStock();
+              }}
+              sx={{
+                width: 80,
+                "& input": {
+                  textAlign: "center",
+                  fontSize: 15,
+                }
+              }}
+            />
+          ) : (
+            fmt(it.defect)
+          )}
+        </TableCell>
+
+        {/* 적정재고 */}
+        <TableCell align="center" sx={{ fontWeight: "bold", fontSize: 15 }}>
           {fmt(targetStock)}
         </TableCell>
 
-        <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px"  }}>
+        {/* 운항중 */}
+        <TableCell align="center" sx={{ fontWeight: "bold", fontSize: 15 }}>
           {fmt(it.running)}
         </TableCell>
 
-        <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px"  }}>
+        {/* 기존재고 - 불량 */}
+        <TableCell align="center" sx={{ fontWeight: "bold", fontSize: 15 }}>
           {fmt(normal)}
         </TableCell>
 
-        <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px"  }}>
+        {/* 운항중 + 정상재고 */}
+        <TableCell align="center" sx={{ fontWeight: "bold", fontSize: 15 }}>
           {fmt(after)}
         </TableCell>
 
-                  <TableCell
-                    align="center"
-                    sx={{
-                      fontSize:16,
-                      fontWeight: "bold",
-                      color:
-                        status === "초과" ? "purple" :
-                        status === "양호" ? "green" :
-                        status === "위험" ? "red" :
-                        "orange"
-                    }}
-                  >
-                    {status}
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
+        {/* 판정 */}
+        <TableCell
+          align="center"
+          sx={{
+            fontSize: 16,
+            fontWeight: "bold",
+            color:
+              status === "초과"
+                ? "purple"
+                : status === "양호"
+                ? "green"
+                : status === "위험"
+                ? "red"
+                : "orange",
+          }}
+        >
+          {status}
+        </TableCell>
+      </TableRow>
+    );
+  })}
+</TableBody>
+
+
         </Table>
       </Paper>
 
