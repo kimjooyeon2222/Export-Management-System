@@ -290,12 +290,38 @@ const handleAdd = async () => {
     });
   }
 
-  // 검색 결과 없으면 처리
+  // =============================
+  // 🔥 3) 품명(part_name) 검색 — (한글도 포함)
+  // =============================
+  else if (searchType === "name") {
+    matchedPacking = allPacking.filter((r) => {
+      const nameValue = (r.part_name || "").trim().toLowerCase();
+      return nameValue.includes(input);
+    });
+  }
+
+  // =============================
+  // 🔥 4) INV# 자체 검색
+  // =============================
+  else if (searchType === "inv") {
+    // invoice 테이블에서 inv 검색
+    const matchedInvs = allInvoice.filter((i) =>
+      (i.inv_no || "").toLowerCase().includes(input)
+    );
+
+    // matching된 invoice만 packing 결합
+    matchedPacking = allPacking.filter((p) =>
+      matchedInvs.some(inv => inv.inv_no === p.inv_no)
+    );
+  }
+
+  // 검색 결과 없으면
   if (matchedPacking.length === 0) {
     alert("❌ 검색 결과가 없습니다.");
     setSearchResult(null);
     return;
   }
+
 
   // 🔹 invoice 데이터와 병합 (INV 기준)
   const mergedResults = matchedPacking.map((p) => {
@@ -476,6 +502,8 @@ const getAlabamaDate = (dateStr) =>
   >
     <MenuItem value="po">PO</MenuItem>
     <MenuItem value="part">품번</MenuItem>
+    <MenuItem value="name">품명</MenuItem>     
+    <MenuItem value="inv">INV#</MenuItem> 
   </Select>
 </Box>
 
