@@ -144,3 +144,24 @@ class OilScheduleRow(db.Model):
             "created_at": self.created_at,
             "updated_at": self.updated_at,
         }
+
+
+class OilItemList(db.Model):
+    __tablename__ = "oil_item_list"
+
+    id = db.Column(db.Integer, primary_key=True)
+    no = db.Column(db.Integer, nullable=False)
+    code = db.Column(db.String(100))
+    name = db.Column(db.String(255))
+    spec = db.Column(db.String(255))
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "no": self.no,
+            "code": self.code,
+            "name": self.name,
+            "spec": self.spec,
+            "updated_at": self.updated_at,
+        }

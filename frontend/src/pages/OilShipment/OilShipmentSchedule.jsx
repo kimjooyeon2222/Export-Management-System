@@ -20,7 +20,43 @@ import {
 
 
 export default function OilShipmentSchedule() {
+    const API_BASE = import.meta.env.VITE_API_URL;
+
+      const [oilList, setOilList] = useState([]);
+const [oilEditMode, setOilEditMode] = useState(false);
+const maxNo = oilList.length > 0 ? Math.max(...oilList.map(o => o.no)) : 0;
+
 const navigate = useNavigate();
+const addOilRow = () => {
+    const newRow = {
+    no: maxNo + 1,
+    code: "",
+    name: "",
+    spec: ""
+  };
+  setOilList(prev => [...prev, newRow]);
+};
+const deleteOilRow = () => {
+  setOilList(prev => prev.slice(0, -1));
+};
+
+const updateOilCell = (no, field, value) => {
+  setOilList(prev =>
+    prev.map(row =>
+      row.no === no
+        ? { ...row, [field]: value }
+        : row
+    )
+  );
+};
+const saveOilList = async () => {
+  await fetch(`${API_BASE}/api/oil-items/bulk`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(oilList),
+  });
+  alert("오일 관리 리스트 저장 완료!");
+};
 
 // HEADER 수정 (inv, po, etd, eta)
 const updateHeader = async (invKey, field, value) => {
@@ -84,7 +120,6 @@ const updateSeq = (invKey, seq, value) => {
 };
 
 
-const API_BASE = import.meta.env.VITE_API_URL;
 
 
 //DB 로딩 함수
@@ -226,51 +261,15 @@ scheduleRows.forEach((r) => {
   // ============================
   // 2) 오일 관리 리스트 (1~42)
   // ============================
-  const oilList = [
-    { no: 1, code: "A10U14166", name: "소화방지제", spec: "ANTI SOLDER-10" },
-    { no: 2, code: "A10U14168", name: "절삭수", spec: "BW COOL E-300X" },
-    { no: 3, code: "A10U14169", name: "윤활유", spec: "DTE-25 ULTRA" },
-    { no: 4, code: "A10U14702", name: "절삭유(먼지,연기억제)", spec: "EX-960" },
-    { no: 5, code: "A10U10715", name: "자동유(냉화성유)", spec: "FE-56" },
-    { no: 6, code: "A10U14165", name: "프레스 오일", spec: "PL-480" },
-    { no: 7, code: "A10U14170", name: "백탁저감제", spec: "TECLY NY-C" },
-    { no: 8, code: "A10U14167", name: "이형제", spec: "WDR-202A" },
-    { no: 9, code: "A10U14103", name: "ALDIES TR", spec: "400ML" },
-    { no: 10, code: "A10U14070", name: "CPC 작동유", spec: "AW 46" },
-    { no: 11, code: "A10U10710", name: "소포제", spec: "BW-WY-885-220" },
-    { no: 12, code: "A10U10617", name: "마유제", spec: "BY LUBE 08(고점자)" },
-    { no: 13, code: "A10U10757", name: "엘지유", spec: "BY PL 08G(고점자)" },
-    { no: 14, code: "A10U10954", name: "열매체유", spec: "Heat Transfer 52" },
-    // === 이어서 42번까지 추가 ===
-    { no: 15, code: "A10U10716", name: "CPC 작동유", spec: "WG 56" },
-    { no: 16, code: "A10U9887", name: "스케일 방지제", spec: "CLEANER S-100" },
-    { no: 17, code: "A10U10071", name: "기어오일", spec: "HA HTC-5 750W-85" },
-    { no: 18, code: "A10U10792", name: "초유화 세정액", spec: "WSOL 1820" },
-    { no: 19, code: "A10U10181", name: "방청유", spec: "S#22" },
-    { no: 20, code: "A10U10065", name: "수용성 세정유", spec: "BW CLEAN W-710" },
-    { no: 21, code: "A10U8446", name: "윤활제", spec: "ISO VG5" },
-    { no: 22, code: "A10U8447", name: "Hydraulics 기어", spec: "ISO VG46" },
-    { no: 23, code: "A10U15003", name: "소화방지제", spec: "ANTI SOLDER-100" },
-    { no: 24, code: "A10U8587", name: "백탁저감제(고점자)", spec: "TECTYL NY-C" },
-    { no: 25, code: "A10U10791", name: "세척액", spec: "W710" },
-    { no: 26, code: "A10U3074", name: "소포제", spec: "BW ADD-AF32" },
-    { no: 27, code: "A10U8583", name: "습동유", spec: "Tonna S2 M220" },
-    { no: 28, code: "A10U8585", name: "부동액", spec: "ANTIFREEZE EXTRA" },
-    { no: 29, code: "A10U15224", name: "ISO VG36 Hydraulic", spec: "AW36 (DRUM/200L)" },
-    { no: 30, code: "A10U15654", name: "HYDRAULIC OIL", spec: "VG32" },
-    { no: 31, code: "A10U10064", name: "비소용성 연삭제", spec: "SEMI-HOT BW-2000S" },
-    { no: 32, code: "A10U10066", name: "수용성세정유", spec: "BW CLEAN W-720SK" },
-    { no: 33, code: "A10U8856", name: "그리스", spec: "MOBILUX EP 023" },
-    { no: 34, code: "A10U7016", name: "유압유", spec: "AW-32" },
-    { no: 35, code: "A10U872", name: "윤활유", spec: "LUBE68" },
-    { no: 36, code: "A10U11038", name: "기계유", spec: "Veloctile Oil NO.6" },
-    { no: 37, code: "A10U4011", name: "수용성절삭유", spec: "EX-440Z" },
-    { no: 38, code: "A10U16452", name: "오일필터(10H필터)", spec: "E-HC-61X-F-OJ" },
-    { no: 39, code: "", name: "", spec: "" },
-    { no: 40, code: "", name: "", spec: "" },
-    { no: 41, code: "", name: "", spec: "" },
-    { no: 42, code: "", name: "", spec: "" },
-  ];
+
+
+useEffect(() => {
+  fetch(`${API_BASE}/api/oil-items`)
+    .then(res => res.json())
+    .then(data => setOilList(data));
+}, []);
+
+  
 
   // ============================
   // 3) 1~38 달력 숫자 자동 생성
@@ -390,32 +389,83 @@ scheduleRows.forEach((r) => {
       {/* 오일 관리 리스트 (1~42) */}
       {/* ================================ */}
       <Paper sx={{ p: 2 }}>
-        <Typography variant="subtitle1" fontWeight="bold" mb={2}>
+        <Typography variant="subtitle1" fontWeight="bold" mb={2} fontSize="18px">
           📘 오일 관리 리스트
         </Typography>
- <Box sx={{ display: "flex", gap: 1 }}>
-      <Button variant="contained">+ 행 추가</Button>
-      <Button variant="outlined" color="error">행 삭제</Button>
-      <Button variant="outlined" color="primary">수정 모드</Button>
-      <Button variant="contained" color="success">저장하기</Button>
-    </Box>
-        <Table size="small">
+     <Box 
+  sx={{ 
+    display: "flex",
+    gap: 1,
+    justifyContent: "flex-end",   // ⭐ 오른쪽 정렬 추가!
+    mb: 2
+  }}
+>
+  <Button variant="contained" onClick={addOilRow}>+ 행 추가</Button>
+  <Button variant="outlined" color="error" onClick={deleteOilRow}>행 삭제</Button>
+  <Button
+  variant="outlined"
+  color={oilEditMode ? "error" : "primary"}
+  onClick={() => setOilEditMode(!oilEditMode)}
+>
+  {oilEditMode ? "수정 종료" : "수정 모드"}
+</Button>
+  <Button variant="contained" color="success" onClick={saveOilList}>
+  저장하기
+</Button>
+</Box>
+
+        <Table size="small" sx={{ 
+    "& td, & th": { fontSize: "18px" }   // <─ 여기만 추가
+  }}>
           <TableHead>
-            <TableRow>
-              <TableCell>순번</TableCell>
-              <TableCell>품번</TableCell>
-              <TableCell>품목명</TableCell>
-              <TableCell>규격</TableCell>
-            </TableRow>
-          </TableHead>
+  <TableRow>
+    <TableCell sx={{ width: "8%", fontWeight: "bold" }}>순번</TableCell>
+    <TableCell sx={{ width: "15%", fontWeight: "bold" }}>품번</TableCell>
+    <TableCell sx={{ width: "25%", fontWeight: "bold" }}>품명</TableCell>
+    <TableCell sx={{ width: "52%", fontWeight: "bold" }}>규격</TableCell>
+  </TableRow>
+</TableHead>
 
           <TableBody>
             {oilList.map((oil) => (
               <TableRow key={oil.no}>
                 <TableCell>{oil.no}</TableCell>
-                <TableCell>{oil.code}</TableCell>
-                <TableCell>{oil.name}</TableCell>
-                <TableCell>{oil.spec}</TableCell>
+                <TableCell>
+  {oilEditMode ? (
+    <TextField
+      size="small"
+      value={oil.code}
+      onChange={(e) => updateOilCell(oil.no, "code", e.target.value)}
+    />
+  ) : (
+    oil.code
+  )}
+</TableCell>
+
+                <TableCell>
+  {oilEditMode ? (
+    <TextField
+      size="small"
+      value={oil.name}
+      onChange={(e) => updateOilCell(oil.no, "name", e.target.value)}
+    />
+  ) : (
+    oil.name
+  )}
+</TableCell>
+
+<TableCell>
+  {oilEditMode ? (
+    <TextField
+      size="small"
+      value={oil.spec}
+      onChange={(e) => updateOilCell(oil.no, "spec", e.target.value)}
+    />
+  ) : (
+    oil.spec
+  )}
+</TableCell>
+
               </TableRow>
             ))}
           </TableBody>

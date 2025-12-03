@@ -5,6 +5,8 @@ os.environ.pop("MYSQL_URL", None)
 os.environ.pop("JAWSDB_URL", None)
 
 from models import OilScheduleRow
+from models import OilItemList
+
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from config import Config
@@ -588,27 +590,29 @@ def get_oil_invoice(inv_no):
         "eta": inv.eta
     })
 
-# 저장하기  (POST) 라우트
-@app.route("/api/oil-schedule/bulk", methods=["POST"])
-def bulk_save_oil_schedule():
-    rows = request.json
 
-    # 기존 INV_NO 데이터 삭제 후 다시 insert 할 수도 있고,
-    # 중복 체크하면서 update/insert 해도 되고 너 선택 가능.
+# GET /api/oil-items
+@app.route("/api/oil-items", methods=["GET"])
+def get_oil_items():
+    rows = OilItemList.query.order_by(OilItemList.no.asc()).all()
+    return jsonify([r.to_dict() for r in rows])
 
-    for r in rows:
-        row = OilScheduleRow(
-            inv_no=r["inv_no"],
-            po_no=r["po_no"],
-            etd=r["etd"],
-            eta=r["eta"],
-            seq=r["seq"],
-            qty=r["qty"]
+@app.route("/api/oil-items/bulk", methods=["POST"])
+def save_oil_items():
+    data = request.json  # 리스트 형태
+
+    OilItemList.query.delete()
+
+    for row in data:
+        item = OilItemList(
+            no=row["no"],
+            code=row["code"],
+            name=row["name"],
+            spec=row["spec"],
         )
-        db.session.add(row)
+        db.session.add(item)
 
     db.session.commit()
-
     return jsonify({"message": "saved"})
 
 
