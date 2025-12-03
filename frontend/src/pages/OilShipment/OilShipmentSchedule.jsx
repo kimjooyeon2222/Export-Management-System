@@ -21,6 +21,7 @@ import {
 
 export default function OilShipmentSchedule() {
     const API_BASE = import.meta.env.VITE_API_URL;
+const [showOilList, setShowOilList] = useState(false);
 
       const [oilList, setOilList] = useState([]);
 const [oilEditMode, setOilEditMode] = useState(false);
@@ -36,6 +37,7 @@ const addOilRow = () => {
   };
   setOilList(prev => [...prev, newRow]);
 };
+
 const deleteOilRow = () => {
   setOilList(prev => prev.slice(0, -1));
 };
@@ -279,13 +281,14 @@ useEffect(() => {
   return (
     <Box p={3}>
       {/* 제목 */}
-      <Typography variant="h5" fontWeight="bold" mb={3}>
+      <Typography variant="h5" fontWeight="bold" fontSize="18px" mb={3}>
         오일 운송일정 관리 (Oil Shipment Schedule)
       </Typography>
   <Button
       variant="outlined"
       onClick={() => navigate("/")}
       sx={{
+        fontSize:"16x",
         borderColor: "#0069a6ff",     // 갈색 테두리
         color: "#0056a6ff",           // 텍스트 색
         backgroundColor: "#ffffff", // 흰색 배경
@@ -302,51 +305,68 @@ useEffect(() => {
    
       <Box sx={{ mt: 3 }}>
         {/* === 수정/입력 영역 === */}
-<Box 
-  sx={{ 
-    display: "flex", 
-    gap: 2, 
-    mb: 3, 
-    justifyContent: "flex-end"  // 🔥 우측 정렬
-  }}
->
-  <Button variant="contained" onClick={addRow}>
-    + 행 추가
-  </Button>
-
-  <Button
-    variant="outlined"
-    color="error"
-    onClick={() => {
-  const groups = Object.keys(grouped);
-  if (groups.length === 0) return;
-
-  const lastInv = groups[groups.length - 1]; // 마지막 INV 그룹
-
-  setScheduleRows(prev =>
-    prev.filter(r => r.inv_no !== lastInv)  // ⬅️ 그룹 전체 row 삭제
-  );
-}}
-
+{!editMode && (
+  <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
+    <Button variant="outlined" onClick={() => setEditMode(true)}>
+      수정 모드
+    </Button>
+  </Box>
+)}
+{editMode && (
+  <Box 
+    sx={{ 
+      display: "flex", 
+      gap: 2, 
+      mb: 3, 
+      justifyContent: "flex-end"
+    }}
   >
-    행 삭제
-  </Button>
+    <Button variant="contained" onClick={addRow}>
+      + 행 추가
+    </Button>
 
-  <Button
-    variant="outlined"
-    color={editMode ? "error" : "primary"}
-    onClick={() => setEditMode(!editMode)}
-  >
-    {editMode ? "수정 종료" : "수정 모드"}
-  </Button>
+    <Button
+      variant="outlined"
+      color="error"
+      onClick={() => {
+        const groups = Object.keys(grouped);
+        if (groups.length === 0) return;
+        const lastInv = groups[groups.length - 1];
+        setScheduleRows(prev => prev.filter(r => r.inv_no !== lastInv));
+      }}
+    >
+      행 삭제
+    </Button>
 
-  <Button variant="contained" color="success" onClick={saveAll}>
-    저장하기
-  </Button>
-</Box>
+    <Button
+      variant="outlined"
+      color="error"
+      onClick={() => setEditMode(false)}
+    >
+      수정 종료
+    </Button>
+
+    <Button variant="contained" color="success" onClick={saveAll}>
+      저장하기
+    </Button>
+  </Box>
+)}
+
 
   <Paper sx={{ p: 2 , mb:3}}>
-<Table size="small">
+<Table 
+  size="small"
+  sx={{
+    "& td, & th": { 
+      fontSize: "18px",
+      padding: "10px 6px"   // ← 세로 여백 늘림
+    },
+    "& tr": {
+      height: "40px"        // ← 행 높이 증가
+    }
+  }}
+>
+
   <TableHead>
     <TableRow sx={{ backgroundColor: "#e8f5e9" }}>
       <TableCell align="center">INV#</TableCell>
@@ -388,89 +408,115 @@ useEffect(() => {
       {/* ================================ */}
       {/* 오일 관리 리스트 (1~42) */}
       {/* ================================ */}
-      <Paper sx={{ p: 2 }}>
-        <Typography variant="subtitle1" fontWeight="bold" mb={2} fontSize="18px">
-          📘 오일 관리 리스트
-        </Typography>
-     <Box 
-  sx={{ 
-    display: "flex",
-    gap: 1,
-    justifyContent: "flex-end",   // ⭐ 오른쪽 정렬 추가!
-    mb: 2
-  }}
->
-  <Button variant="contained" onClick={addOilRow}>+ 행 추가</Button>
-  <Button variant="outlined" color="error" onClick={deleteOilRow}>행 삭제</Button>
+      {/* 오일 관리 리스트 Toggle 버튼 */}
+<Box sx={{ display: "flex", justifyContent: "flex-end", mb: 1 }}>
   <Button
-  variant="outlined"
-  color={oilEditMode ? "error" : "primary"}
-  onClick={() => setOilEditMode(!oilEditMode)}
->
-  {oilEditMode ? "수정 종료" : "수정 모드"}
-</Button>
-  <Button variant="contained" color="success" onClick={saveOilList}>
-  저장하기
-</Button>
+    variant="outlined"
+    onClick={() => setShowOilList(!showOilList)}
+    sx={{ fontWeight: "bold" }}
+  >
+    {showOilList ? "- 접기" : "+ 오일 관리 리스트 보기"}
+  </Button>
 </Box>
+{showOilList && (
+  <Paper sx={{ p: 2 }}>
+    <Typography variant="subtitle1" fontWeight="bold" mb={2} fontSize="18px">
+      📘 오일 관리 리스트
+    </Typography>
 
-        <Table size="small" sx={{ 
-    "& td, & th": { fontSize: "18px" }   // <─ 여기만 추가
-  }}>
-          <TableHead>
-  <TableRow>
-    <TableCell sx={{ width: "8%", fontWeight: "bold" }}>순번</TableCell>
-    <TableCell sx={{ width: "15%", fontWeight: "bold" }}>품번</TableCell>
-    <TableCell sx={{ width: "25%", fontWeight: "bold" }}>품명</TableCell>
-    <TableCell sx={{ width: "52%", fontWeight: "bold" }}>규격</TableCell>
-  </TableRow>
-</TableHead>
+    {/* 버튼 그룹 */}
+    {!oilEditMode && (
+  <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
+    <Button variant="outlined" onClick={() => setOilEditMode(true)}>
+      수정 모드
+    </Button>
+  </Box>
+)}
+{oilEditMode && (
+  <Box 
+    sx={{ 
+      display: "flex",
+      gap: 1,
+      justifyContent: "flex-end",
+      mb: 2
+    }}
+  >
+    <Button variant="contained" onClick={addOilRow}>+ 행 추가</Button>
+    <Button variant="outlined" color="error" onClick={deleteOilRow}>행 삭제</Button>
 
-          <TableBody>
-            {oilList.map((oil) => (
-              <TableRow key={oil.no}>
-                <TableCell>{oil.no}</TableCell>
-                <TableCell>
-  {oilEditMode ? (
-    <TextField
+    <Button variant="outlined" color="error" onClick={() => setOilEditMode(false)}>
+      수정 종료
+    </Button>
+
+    <Button variant="contained" color="success" onClick={saveOilList}>
+      저장하기
+    </Button>
+  </Box>
+)}
+
+
+    <Table
       size="small"
-      value={oil.code}
-      onChange={(e) => updateOilCell(oil.no, "code", e.target.value)}
-    />
-  ) : (
-    oil.code
-  )}
-</TableCell>
+      sx={{
+        "& td, & th": { fontSize: "18px" }
+      }}
+    >
+      <TableHead>
+        <TableRow>
+          <TableCell sx={{ width: "8%", fontWeight: "bold" }}>순번</TableCell>
+          <TableCell sx={{ width: "15%", fontWeight: "bold" }}>품번</TableCell>
+          <TableCell sx={{ width: "25%", fontWeight: "bold" }}>품명</TableCell>
+          <TableCell sx={{ width: "52%", fontWeight: "bold" }}>규격</TableCell>
+        </TableRow>
+      </TableHead>
 
-                <TableCell>
-  {oilEditMode ? (
-    <TextField
-      size="small"
-      value={oil.name}
-      onChange={(e) => updateOilCell(oil.no, "name", e.target.value)}
-    />
-  ) : (
-    oil.name
-  )}
-</TableCell>
+      <TableBody>
+        {oilList.map((oil) => (
+          <TableRow key={oil.no}>
+            <TableCell>{oil.no}</TableCell>
 
-<TableCell>
-  {oilEditMode ? (
-    <TextField
-      size="small"
-      value={oil.spec}
-      onChange={(e) => updateOilCell(oil.no, "spec", e.target.value)}
-    />
-  ) : (
-    oil.spec
-  )}
-</TableCell>
+            <TableCell>
+              {oilEditMode ? (
+                <TextField
+                  size="small"
+                  value={oil.code}
+                  onChange={(e) => updateOilCell(oil.no, "code", e.target.value)}
+                />
+              ) : (
+                oil.code
+              )}
+            </TableCell>
 
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Paper>
+            <TableCell>
+              {oilEditMode ? (
+                <TextField
+                  size="small"
+                  value={oil.name}
+                  onChange={(e) => updateOilCell(oil.no, "name", e.target.value)}
+                />
+              ) : (
+                oil.name
+              )}
+            </TableCell>
+
+            <TableCell>
+              {oilEditMode ? (
+                <TextField
+                  size="small"
+                  value={oil.spec}
+                  onChange={(e) => updateOilCell(oil.no, "spec", e.target.value)}
+                />
+              ) : (
+                oil.spec
+              )}
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  </Paper>
+)}
+
     </Box>
   );
 }
