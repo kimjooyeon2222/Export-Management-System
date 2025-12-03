@@ -500,50 +500,54 @@ const getStatusStyle = (status) => {
 
 
       
-      {/* 적정재고 기준 */}
-<Paper sx={{ p: 2, mb: 3, borderLeft: "5px solid #ff9800" }}>
-  <Typography sx={{ fontWeight: "bold", mb: 1, fontSize: "18px" }}>
-    적정재고 기준
-  </Typography>
-
-  {editMode ? (
-    <TextField
-      label="적정재고 수량"
-      type="number"
-      value={targetStock}
-      onChange={(e) => setTargetStock(Number(e.target.value))}
-      size="small"
-      sx={{
-        width: 200,
-        "& .MuiInputBase-input": {
-          fontSize: "19px",
-          fontWeight: "bold"
-        },
-        "& .MuiInputLabel-root": {
-          fontSize: "17px",
-          fontWeight: "bold"
-        }
-      }}
-    />
-  ) : (
-    <Typography
-      sx={{
-        width: 200,
-        fontSize: "17px",
-        fontWeight: "bold",
-        mt: 1,
-        ml: 0.5
-      }}
-    >
-      {fmt(targetStock)}
-    </Typography>
-  )}
-</Paper>
+      
 
 
       {/* 과부족 상태 패널 (T 제외 → 4개만 출력) */}
-      <Paper sx={{ p: 2, mb: 4,border: "2px solid #777" }}>
-        <Typography sx={{ fontWeight: "bold", mb: 2, fontSize:"16px" }}>※ 과부족 상태 ※</Typography>
+      <Paper sx={{ p: 2, mb: 4, border: "2px solid #777" }}>
+
+  {/* 🔥 가로 한 줄, 왼쪽 정렬 */}
+  <Box 
+    sx={{ 
+      display: "flex",
+      alignItems: "center",
+      gap: 3,   // ← 제목과 기준 사이 간격
+      mb: 2
+    }}
+  >
+    {/* 왼쪽: 제목 */}
+    <Typography sx={{ fontWeight: "bold", fontSize: "18px" }}>
+      ※ 과부족 상태 ※
+    </Typography>
+
+    {/* 오른쪽: 적정재고 기준 (제목 바로 옆) */}
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+      <Typography sx={{ fontSize: "15px", fontWeight: "bold" }}>
+        적정재고 기준:
+      </Typography>
+
+      {editMode ? (
+        <TextField
+          type="number"
+          size="small"
+          value={targetStock}
+          onChange={(e) => setTargetStock(Number(e.target.value))}
+          sx={{
+            width: 120,
+            "& input": {
+              textAlign: "center",
+              fontWeight: "bold",
+            },
+          }}
+        />
+      ) : (
+        <Typography sx={{ fontSize: "17px", fontWeight: "bold" }}>
+          {fmt(targetStock)}
+        </Typography>
+      )}
+    </Box>
+  </Box>
+
 
         <Table size="small">
           <TableHead>
