@@ -52,6 +52,7 @@ const actionSX = {
 // ==============================|| DASHBOARD - DEFAULT ||============================== //
 
 export default function DashboardDefault() {
+  const today =  new Date();
   const navigate = useNavigate();
 
   // EMS 버튼 데이터
@@ -100,7 +101,9 @@ export default function DashboardDefault() {
               color: 'text.secondary'
             }}
           >
-            2025.10.22
+           {today.toLocaleDateString()}
+
+            
            </Typography>
         </Box>
 
