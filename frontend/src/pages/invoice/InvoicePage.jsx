@@ -304,16 +304,17 @@ const handleAdd = async () => {
   // 🔥 4) INV# 자체 검색
   // =============================
   else if (searchType === "inv") {
-    // invoice 테이블에서 inv 검색
-    const matchedInvs = allInvoice.filter((i) =>
-      (i.inv_no || "").toLowerCase().includes(input)
-    );
+  const rawInput = poNumber.trim().toLowerCase();   // ⭐ 하이픈 제거하지 않음
 
-    // matching된 invoice만 packing 결합
-    matchedPacking = allPacking.filter((p) =>
-      matchedInvs.some(inv => inv.inv_no === p.inv_no)
-    );
-  }
+  const matchedInvs = allInvoice.filter((i) =>
+    (i.inv_no || "").toLowerCase().includes(rawInput)
+  );
+
+  matchedPacking = allPacking.filter((p) =>
+    matchedInvs.some(inv => inv.inv_no === p.inv_no)
+  );
+}
+
 
   // 검색 결과 없으면
   if (matchedPacking.length === 0) {

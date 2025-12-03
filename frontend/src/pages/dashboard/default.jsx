@@ -130,6 +130,9 @@ export default function DashboardDefault() {
                   else if (btn.label === '오일') {
                      navigate('/oil-schedule');   // 오일 운송일정 페이지로 이동
                  }
+                 else if (btn.label === 'AXLE서브품') {
+                     navigate('/axle-sub');   // AXLE 서브 페이지로 이동
+                 }
                  else {
                    alert(`${btn.label} 페이지는 준비 중입니다.`);
                  }
