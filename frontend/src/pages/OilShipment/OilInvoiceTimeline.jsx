@@ -20,14 +20,14 @@ export default function OilInvoiceTimeline({
 
   // seq → qty 매핑
   const seqMap = useMemo(() => {
-    const map = {};
-    items.forEach((it) => {
-      if (it.seq >= 1 && it.seq <= 38) {
-        map[it.seq] = it.qty;
-      }
-    });
-    return map;
-  }, [items]);
+  const map = {};
+  items.forEach((it) => {
+    // 🔥 모든 seq 처리 (1 ~ oilList.length)
+    map[it.seq] = it.qty;
+  });
+  return map;
+}, [items]);
+
 
   return (
     <TableRow>
@@ -113,7 +113,7 @@ export default function OilInvoiceTimeline({
       <TextField
         size="small"
         value={seqMap[day] || ""}
-        onChange={(e) => onUpdateSeq(day, e.target.value)}
+        onChange={(e) => onUpdateSeq(invoiceInfo.inv, day, e.target.value)}
         sx={{ width: 45 }}
       />
     ) : (

@@ -526,7 +526,14 @@ def save_schedule_rows():
 # GET /api/oil-schedule
 @app.route("/api/oil-schedule", methods=["GET"])
 def get_oil_schedule():
-    rows = OilScheduleRow.query.order_by(OilScheduleRow.id.asc()).all()
+    rows = (
+        OilScheduleRow.query
+        .order_by(
+            OilScheduleRow.inv_no.asc(),   # 🔥 invoice별 그룹
+            OilScheduleRow.seq.asc()       # 🔥 seq 1~N 순서대로
+        )
+        .all()
+    )
 
     result = []
     for r in rows:
@@ -541,6 +548,7 @@ def get_oil_schedule():
         })
 
     return jsonify(result)
+
 
 #oil_schedule_row 저장 (bulk 저장) API
 

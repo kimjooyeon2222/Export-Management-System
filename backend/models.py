@@ -126,11 +126,16 @@ class OilScheduleRow(db.Model):
     etd = db.Column(db.String(20))
     eta = db.Column(db.String(20))
 
-    seq = db.Column(db.Integer)          # 1~38
-    qty = db.Column(db.String(50))       # "1벌", "2DR", "1PL"
+    seq = db.Column(db.Integer, nullable=False, default=1)  # ★ 개선 1
+    qty = db.Column(db.String(50))
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # ★ 개선 2: inv_no + seq 조합은 유니크하게 유지
+    __table_args__ = (
+        db.UniqueConstraint("inv_no", "seq", name="uix_inv_seq"),
+    )
 
     def to_dict(self):
         return {

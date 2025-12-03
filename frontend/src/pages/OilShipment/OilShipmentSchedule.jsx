@@ -135,6 +135,46 @@ const loadOilSchedule = async () => {
 
   // 전체 스케줄 rows (DB → React)
 const [scheduleRows, setScheduleRows] = useState([]);
+// ==============================================
+// 🔥 오일 관리 리스트(oilList) 변화 → seq 자동 확장
+// ==============================================
+useEffect(() => {
+  if (scheduleRows.length === 0) return; // 아직 초기 로딩 안 된 경우
+
+  const neededSeq = oilList.length; // 예: 42개면 seq 1~42 필요
+  if (neededSeq === 0) return;
+
+  const maxSeqInDB = Math.max(...scheduleRows.map(r => r.seq || 0));
+
+  // 🔥 현재 seq가 부족하면 새 seq 자동으로 추가
+  if (neededSeq > maxSeqInDB) {
+    const missingSeqs = [];
+    for (let s = maxSeqInDB + 1; s <= neededSeq; s++) {
+      missingSeqs.push(s);
+    }
+
+    const invList = [...new Set(scheduleRows.map(r => r.inv_no))];
+
+    const newRows = [];
+
+    invList.forEach(inv => {
+      missingSeqs.forEach(s => {
+        newRows.push({
+          id: uuidv4(),
+          inv_no: inv,
+          po_no: "",
+          etd: "",
+          eta: "",
+          seq: s,
+          qty: "",
+        });
+      });
+    });
+
+    setScheduleRows(prev => [...prev, ...newRows]);
+  }
+}, [oilList]);
+
 const [inv, setInv] = useState("");
 const [po, setPo] = useState("");
 const [etd, setEtd] = useState("");
@@ -397,7 +437,7 @@ useEffect(() => {
 
         editMode={editMode}
         onUpdateHeader={(field, value) => updateHeader(inv.inv, field, value)}
-        onUpdateSeq={(seq, value) => updateSeq(inv.inv, seq, value)}
+        onUpdateSeq={(invKey,seq, value) => updateSeq(invKey, seq, value)}
       />
     ))}
   </TableBody>
