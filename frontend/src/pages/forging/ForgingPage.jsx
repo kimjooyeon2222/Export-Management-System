@@ -521,9 +521,10 @@ const getStatusStyle = (status) => {
 
     {/* 오른쪽: 적정재고 기준 (제목 바로 옆) */}
     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-      <Typography sx={{ fontSize: "15px", fontWeight: "bold" }}>
-        적정재고 기준:
-      </Typography>
+      <Typography sx={{ fontSize: "15px", fontWeight: "bold", color: "#777" }}>
+  적정재고 기준:
+</Typography>
+
 
       {editMode ? (
         <TextField
@@ -536,11 +537,12 @@ const getStatusStyle = (status) => {
             "& input": {
               textAlign: "center",
               fontWeight: "bold",
+              color: "#777", 
             },
           }}
         />
       ) : (
-        <Typography sx={{ fontSize: "17px", fontWeight: "bold" }}>
+        <Typography sx={{ fontSize: "17px", fontWeight: "bold", color:"#777" }}>
           {fmt(targetStock)}
         </Typography>
       )}
@@ -701,6 +703,12 @@ const getStatusStyle = (status) => {
     🔶 과부족 아래 전체 (요구사항 반영 완성본)
 =============================== */}
 <Paper sx={{ p: 2, mb: 4, border: "2px solid #777" }}>
+{/* 제목 영역 */}
+<Box sx={{ mb: 2 }}>
+  <Typography sx={{ fontWeight: "bold", fontSize: "18px", mt:1 }}>
+    ※ 운송 스케줄 현황 ※
+  </Typography>
+</Box>
 
   {/* 🔹 엑셀 ROUNDUP 구현 */}
   {(() => {
