@@ -623,6 +623,51 @@ def save_oil_items():
     db.session.commit()
     return jsonify({"message": "saved"})
 
+@app.route("/api/axle", methods=["GET"])
+def get_axle_inventory():
+    rows = AxleInventory.query.all()
+    return jsonify([r.to_dict() for r in rows])
+
+@app.route("/api/axle/<int:id>", methods=["PUT"])
+def update_axle_item(id):
+    row = AxleInventory.query.get_or_404(id)
+    data = request.json
+
+    for k, v in data.items():
+        setattr(row, k, v)
+
+    db.session.commit()
+    return jsonify({"message": "updated"})
+
+@app.route("/api/axle", methods=["POST"])
+def create_axle_item():
+    data = request.json
+    row = AxleInventory(**data)
+    db.session.add(row)
+    db.session.commit()
+    return jsonify({"id": row.id}), 201
+
+@app.route("/api/axle-schedule", methods=["GET"])
+def get_axle_schedule():
+    rows = AxleSchedule.query.all()
+    return jsonify([r.to_dict() for r in rows])
+
+@app.route("/api/axle-schedule", methods=["POST"])
+def create_axle_schedule():
+    data = request.json
+    row = AxleSchedule(inv_no=data["inv_no"])
+    db.session.add(row)
+    db.session.commit()
+    return jsonify({"id": row.id}), 201
+
+
+@app.route("/api/axle-schedule/<int:id>", methods=["DELETE"])
+def delete_axle_schedule(id):
+    row = AxleSchedule.query.get_or_404(id)
+    db.session.delete(row)
+    db.session.commit()
+    return jsonify({"message": "deleted"})
+
 
 # ============================================
 # 서버 실행

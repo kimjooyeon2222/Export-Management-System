@@ -353,7 +353,7 @@ useEffect(() => {
 {!editMode && (
   <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
     <Button variant="outlined" onClick={() => setEditMode(true)}>
-      수정 모드
+      수정 모드 활성화
     </Button>
   </Box>
 )}

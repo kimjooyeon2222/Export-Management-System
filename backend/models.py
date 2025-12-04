@@ -170,3 +170,54 @@ class OilItemList(db.Model):
             "spec": self.spec,
             "updated_at": self.updated_at,
         }
+# ===========================================
+# 🚗 AXLE INVENTORY MODEL
+# ===========================================
+class AxleInventory(db.Model):
+    __tablename__ = "axle_inventory"
+
+    id = db.Column(db.Integer, primary_key=True)
+    company = db.Column(db.String(50), nullable=False)
+    item_name = db.Column(db.String(100), nullable=False)
+    item_code = db.Column(db.String(100), nullable=False)
+    box_qty = db.Column(db.Integer, nullable=False)
+
+    actual_stock = db.Column(db.Integer, default=0)
+    target_stock = db.Column(db.Integer, default=0)
+
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow,
+                           onupdate=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "company": self.company,
+            "item_name": self.item_name,
+            "item_code": self.item_code,
+            "box_qty": self.box_qty,
+            "actual_stock": self.actual_stock,
+            "target_stock": self.target_stock,
+            "updated_at": self.updated_at,
+        }
+
+
+# ===========================================
+# 🚗 AXLE SCHEDULE MODEL
+# ===========================================
+class AxleSchedule(db.Model):
+    __tablename__ = "axle_schedule"
+
+    id = db.Column(db.Integer, primary_key=True)
+    inv_no = db.Column(db.String(50), nullable=False)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow,
+                           onupdate=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "inv_no": self.inv_no,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+        }
