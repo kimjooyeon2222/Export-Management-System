@@ -183,7 +183,6 @@ class AxleInventory(db.Model):
     box_qty = db.Column(db.Integer, nullable=False)
 
     actual_stock = db.Column(db.Integer, default=0)
-    target_stock = db.Column(db.Integer, default=0)
 
     updated_at = db.Column(db.DateTime, default=datetime.utcnow,
                            onupdate=datetime.utcnow)
@@ -196,7 +195,7 @@ class AxleInventory(db.Model):
             "item_code": self.item_code,
             "box_qty": self.box_qty,
             "actual_stock": self.actual_stock,
-            "target_stock": self.target_stock,
+
             "updated_at": self.updated_at,
         }
 
@@ -221,3 +220,12 @@ class AxleSchedule(db.Model):
             "created_at": self.created_at,
             "updated_at": self.updated_at,
         }
+
+class AxleSetting(db.Model):
+    __tablename__ = "axle_setting"
+
+    id = db.Column(db.Integer, primary_key=True)
+    target_stock = db.Column(db.Integer)
+    writer = db.Column(db.String(50))
+    us_date = db.Column(db.Date)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

@@ -12,6 +12,9 @@ from flask_cors import CORS
 from config import Config
 from models import db, Invoice, PackingList, StockSetting, StockItem, ScheduleRow
 from config import Config
+from models import AxleInventory, AxleSchedule
+from models import AxleSetting
+
 from sqlalchemy import text
 print("🔥 Flask 실제 연결 DB:", Config.SQLALCHEMY_DATABASE_URI)
 
@@ -667,6 +670,44 @@ def delete_axle_schedule(id):
     db.session.delete(row)
     db.session.commit()
     return jsonify({"message": "deleted"})
+
+@app.route("/api/axle-setting", methods=["GET"])
+def get_axle_setting():
+    setting = AxleSetting.query.first()
+    if not setting:
+        return jsonify({
+            "target_stock": 0,
+            "writer": "",
+            "us_date": None
+        })
+
+    return jsonify({
+        "target_stock": setting.target_stock,
+        "writer": setting.writer,
+        "us_date": setting.us_date.strftime("%Y-%m-%d") if setting.us_date else None
+    })
+
+
+@app.route("/api/axle-setting", methods=["PUT"])
+def update_axle_setting():
+    data = request.json
+
+    setting = AxleSetting.query.first()
+    if not setting:
+        setting = AxleSetting()
+
+    setting.target_stock = data.get("target_stock")
+    setting.writer = data.get("writer")
+
+    # 날짜는 안전하게 처리
+    us_date = data.get("us_date")
+    if us_date and us_date not in ["", None]:
+        setting.us_date = datetime.strptime(us_date, "%Y-%m-%d").date()
+
+    db.session.add(setting)
+    db.session.commit()
+
+    return jsonify({"message": "updated"})
 
 
 # ============================================

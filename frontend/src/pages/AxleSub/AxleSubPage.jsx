@@ -12,8 +12,64 @@ import {
   TableBody
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import { v4 as uuidv4 } from "uuid";
+
+
 
 export default function AxleSubPage() {
+
+   
+    const saveSetting = async () => {
+  await fetch(`${API_BASE}/api/axle-setting`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      target_stock: targetStockSetting,
+      writer,
+      us_date: usDate
+    })
+  });
+};
+
+    const fetchSetting = async () => {
+  const res = await fetch(`${API_BASE}/api/axle-setting`);
+  const data = await res.json();
+
+  setTargetStockSetting(data.target_stock);
+  setWriter(data.writer);
+  setUsDate(data.us_date);
+};
+
+const [targetStockSetting, setTargetStockSetting] = useState(0);
+    // 🔥 targetStockSetting 변경 시 모든 행의 target_stock를 자동 갱신
+useEffect(() => {
+  setAxleRows(prev =>
+    prev.map(row => ({
+      ...row,
+      target_stock: targetStockSetting
+    }))
+  );
+}, [targetStockSetting]);
+
+    // ★ 엑셀 수식 =IF(F6>=F4*1.13,"초과", ...)
+const getStatus = (actual, target) => {
+  if (actual >= target * 1.13) return "초과";
+  if (actual >= target && actual > target * 0.96) return "양호";
+  if (actual <= target * 0.7) return "위험";
+  return "적정재고미달";
+};
+
+const statusColor = (status) => {
+  switch (status) {
+    case "초과": return "purple";
+    case "양호": return "green";
+    case "위험": return "red";
+    case "적정재고미달": return "orange";
+    default: return "black";
+  }
+};
+
+
     const [scheduleRows, setScheduleRows] = useState([]);
 const fetchScheduleData = async () => {
   try {
@@ -26,14 +82,7 @@ const fetchScheduleData = async () => {
 };
 
 
-    const statusColor = (status) => {
-  switch (status) {
-    case "초과": return "purple";
-    case "적정재고미달": return "orange";
-    case "양호": return "green";
-    default: return "black";
-  }
-};
+   
 
   const API_BASE = import.meta.env.VITE_API_URL;
 
@@ -82,6 +131,7 @@ const fetchAxleData = async () => {
   useEffect(() => {
     fetchAxleData();
       fetchScheduleData(); // 추가!
+      fetchSetting(); // ← 추가
 
   }, []);
 
@@ -89,24 +139,37 @@ const fetchAxleData = async () => {
   // 🔥  AXLE 항목 저장
   // ===============================
   const saveAxleData = async () => {
-    try {
-      for (let row of axleRows) {
-        await fetch(`${API_BASE}/api/axle/${row.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(row)
-        });
-      }
+  try {
+    // 1) AXLE 재고 저장
+    for (let row of axleRows) {
+      // 🔥 row마다 updated_at 제거
+      const cleanRow = { ...row };
+      delete cleanRow.updated_at;
 
-      alert("저장 완료!");
-      setEditMode(false);
-      fetchAxleData();
-
-    } catch (err) {
-      console.error("저장 오류:", err);
-      alert("저장 실패!");
+      await fetch(`${API_BASE}/api/axle/${row.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(cleanRow)
+      });
     }
-  };
+
+    // 2) 전역 설정(적정재고, 작성자, 날짜) 저장
+    await saveSetting();
+
+    alert("저장 완료!");
+    setEditMode(false);
+
+    // 최신 데이터 다시 불러오기
+    fetchAxleData();
+    fetchSetting();
+
+  } catch (err) {
+    console.error("저장 오류:", err);
+    alert("저장 실패!");
+  }
+};
+
+
 
   // ===============================
   // 🔥  테이블 값 변경 핸들러
@@ -209,10 +272,32 @@ const fetchAxleData = async () => {
       =============================== */}
       {showStockPanel && (
   <Paper sx={{ p: 2, mb: 4, border: "2px solid #777" }}>
-   
+      <Box sx={{ display: "flex",  mb: 2, gap:3}}>
     <Typography sx={{ fontWeight: "bold", fontSize: 18, mb: 1 }}>
       ※ 과부족 상태 ※
     </Typography>
+ 
+  {editMode ? (
+  <TextField
+    label="적정재고 기준"
+    size="small"
+    type="number"
+    value={targetStockSetting}
+    onChange={(e) => setTargetStockSetting(Number(e.target.value))}
+    InputLabelProps={{
+      sx: { fontSize: "16px", fontWeight: "bold" }
+    }}
+    sx={{ width: 160 }}
+  />
+) : (
+  <Typography sx={{ fontSize: 16, fontWeight: "bold", ml: 1 }}>
+    기준: {targetStockSetting}
+  </Typography>
+)}
+
+  
+</Box>
+
  {/* 🔥 우측 상단 행추가/행삭제 버튼 */}
     <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2, gap: 1 }}>
       <Button
@@ -230,7 +315,7 @@ const fetchAxleData = async () => {
               item_code: "",
               box_qty: 0,
               actual_stock: 0,
-              target_stock: 0
+              target_stock: targetStockSetting
             }
           ]);
         }}
@@ -280,45 +365,41 @@ return (
     <TableCell>{row.box_qty}</TableCell>
 
     <TableCell>
-      <TextField
-        size="small"
-        type="number"
-        value={row.actual_stock}
-        onChange={(e) =>
-          editMode &&
-          updateCell(row.id, "actual_stock", Number(e.target.value))
-        }
-        InputProps={{ readOnly: !editMode }}
-        sx={{ width: 90 }}
-      />
-    </TableCell>
+  {editMode ? (
+    <TextField
+      size="small"
+      type="number"
+      value={row.actual_stock}
+      onChange={(e) =>
+        updateCell(row.id, "actual_stock", Number(e.target.value))
+      }
+      sx={{ width: 90 }}
+    />
+  ) : (
+    <span>{row.actual_stock}</span>
+  )}
+</TableCell>
 
-    <TableCell>
-      <TextField
-        size="small"
-        type="number"
-        value={row.target_stock}
-        onChange={(e) =>
-          editMode &&
-          updateCell(row.id, "target_stock", Number(e.target.value))
-        }
-        InputProps={{ readOnly: !editMode }}
-        sx={{ width: 90 }}
-      />
-    </TableCell>
 
-    <TableCell>{inTransit}</TableCell>
+   
+
+
+    <TableCell>{targetStockSetting}</TableCell>
+
+
     <TableCell>{row.actual_stock}</TableCell>
     <TableCell>{total}</TableCell>
 
     <TableCell
-      sx={{
-        color: row.actual_stock >= row.target_stock ? "green" : "orange",
-        fontWeight: "bold"
-      }}
-    >
-      {row.actual_stock >= row.target_stock ? "양호" : "적정재고미달"}
-    </TableCell>
+  sx={{
+    color: statusColor(getStatus(row.actual_stock, targetStockSetting)),
+    fontWeight: "bold"
+  }}
+>
+  {getStatus(row.actual_stock, targetStockSetting)}
+</TableCell>
+
+
   </TableRow>
 );
 
@@ -326,6 +407,7 @@ return (
       </TableBody>
     </Table>
   </Paper>
+  
 )}
 
 
@@ -341,11 +423,12 @@ return (
         size="small"
         disabled={!editMode}
         onClick={() =>
-          setScheduleRows(prev => [
-            ...prev,
-            { id: uuidv4(), inv_no: "" }
-          ])
-        }
+  setScheduleRows(prev => [
+    ...prev,
+    { id: uuidv4(), inv_no: "NEW" } // ★ inv_no 빈값 금지
+  ])
+}
+
       >
         + 행추가
       </Button>
