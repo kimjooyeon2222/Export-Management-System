@@ -455,7 +455,7 @@ const saveAxleData = async () => {
     sx={{ width: 160 }}
   />
 ) : (
-  <Typography sx={{ fontSize: 16, fontWeight: "bold", ml: 1 }}>
+  <Typography sx={{ fontSize: 16, fontWeight: "bold", ml: 1, color:"#777" }}>
     적정재고 기준: {formatNumber(targetStockSetting)}
   </Typography>
 )}
@@ -466,7 +466,7 @@ const saveAxleData = async () => {
 
 
     <Table size="small">
-      <TableHead>
+      <TableHead sx={{ bgcolor: "#ffe599", borderTop: "2px solid #000" }}>
         <TableRow>
           <TableCell>업체명</TableCell>
           <TableCell>품명</TableCell>
@@ -598,7 +598,7 @@ const saveAxleData = async () => {
       </Button>
     </Box>
   <Table size="small">
-    <TableHead>
+  <TableHead sx={{ bgcolor: "#ffe599", borderTop: "2px solid #000" }}>
   <TableRow>
     <TableCell>INV</TableCell>
     <TableCell>ETD</TableCell>

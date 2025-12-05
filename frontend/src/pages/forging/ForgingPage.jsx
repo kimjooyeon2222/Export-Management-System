@@ -578,7 +578,7 @@ const getStatusStyle = (status) => {
 
 
         <Table size="small">
-          <TableHead>
+          <TableHead sx={{ bgcolor: "#ffe599", borderTop: "2px solid #000" }}>
   <TableRow>
     {[
       "품목",
