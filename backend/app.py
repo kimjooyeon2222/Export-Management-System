@@ -14,6 +14,16 @@ from models import db, Invoice, PackingList, StockSetting, StockItem, ScheduleRo
 from config import Config
 from models import AxleInventory, AxleSchedule
 from models import AxleSetting
+from datetime import datetime
+
+def to_date(value):
+    if not value:
+        return None
+    try:
+        return datetime.strptime(value, "%Y-%m-%d").date()
+    except:
+        return None
+
 
 from sqlalchemy import text
 print("🔥 Flask 실제 연결 DB:", Config.SQLALCHEMY_DATABASE_URI)
@@ -708,6 +718,65 @@ def update_axle_setting():
     db.session.commit()
 
     return jsonify({"message": "updated"})
+
+@app.route("/api/packing-list/by-inv/<inv_no>")
+def get_packing_list_by_inv(inv_no):
+    try:
+        # 1) invoice.id 찾기
+        invoice = Invoice.query.filter_by(inv_no=inv_no).first()
+        if not invoice:
+            return jsonify([])   # 없으면 빈 배열 반환
+
+        # 2) 해당 invoice_id의 packing_list 데이터 조회
+        rows = PackingList.query.filter_by(invoice_id=invoice.id).all()
+
+        result = [
+            {
+                "part_name": row.part_name,
+                "qty": row.qty
+            }
+            for row in rows
+        ]
+
+        return jsonify(result)
+
+    except Exception as e:
+        print("packing_list 조회 오류:", e)
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/axle-schedule/<int:id>", methods=["PUT"])
+def update_axle_schedule(id):
+    row = AxleSchedule.query.get_or_404(id)
+    data = request.json
+
+    # React에서 보내는 모든 필드 업데이트
+    for key in ["inv_no", "etd", "eta", "plug", "gasket", "dowel_pin", "plate"]:
+        if key in data:
+            setattr(row, key, data[key])
+
+    db.session.commit()
+    return jsonify({"message": "updated"})
+
+# ============================================
+# 🔥 AXLE SCHEDULE BULK SAVE API
+# ============================================
+@app.route("/api/axle-schedule/bulk", methods=["POST"])
+def save_axle_schedule_bulk():
+    rows = request.json  # React에서 보낸 배열
+
+    # 기존 데이터 전부 삭제
+    AxleSchedule.query.delete()
+
+    # 새로운 데이터 삽입
+    for r in rows:
+        row = AxleSchedule(
+            inv_no=r.get("inv_no"),
+
+        )
+        db.session.add(row)
+
+    db.session.commit()
+    return jsonify({"message": "saved"})
 
 
 # ============================================

@@ -16,9 +16,114 @@ import { v4 as uuidv4 } from "uuid";
 
 
 
-export default function AxleSubPage() {
 
-   
+export default function AxleSubPage() {
+    const formatNumber = (num) => {
+  if (num === null || num === undefined) return "0";
+  return Number(num).toLocaleString();
+};
+
+      const API_BASE = import.meta.env.VITE_API_URL;
+    const keyMap = {
+  "PLUG": "plug",
+  "GASKET": "gasket",
+  "PLATE": "plate",
+  "PIN-DOWEL": "dowel_pin"   // ← 이게 핵심
+};
+const keyMapForAxle = {
+  "PLUG": "plug",
+  "GASKET": "gasket",
+  "DOWEL PIN": "dowel_pin",
+  "PLATE": "plate"
+};
+
+const fetchPackingQty = async (inv_no) => {
+  if (!inv_no) return { plug: 0, gasket: 0, dowel_pin: 0, plate: 0 };
+
+  try {
+    const res = await fetch(`${API_BASE}/api/packing-list/by-inv/${inv_no}`);
+    const data = await res.json();
+
+    const getQty = (name) => {
+      const row = data.find(x => x.part_name?.toUpperCase() === name);
+      return row ? Number(row.qty) : 0;
+    };
+
+    return {
+      plug: getQty("PLUG"),
+      gasket: getQty("GASKET"),
+      dowel_pin: getQty("PIN-DOWEL"),
+      plate: getQty("PLATE"),
+    };
+
+  } catch (err) {
+    console.error("packing_list 로딩 오류:", err);
+    return { plug: 0, gasket: 0, dowel_pin: 0, plate: 0 };
+  }
+};
+
+
+const [todayAlabama, setTodayAlabama] = useState(null);
+useEffect(() => {
+  setTodayAlabama(new Date(getTodayInAlabama()));
+}, []);
+const calcInTransit = (itemName) => {
+  if (!todayAlabama || !Array.isArray(scheduleRows)) return 0;
+
+  const key = keyMapForAxle[itemName?.toUpperCase()];
+  if (!key) return 0;
+
+  return scheduleRows
+    .filter(row => getScheduleStatus(row.etd, row.eta) === "운항중")
+    .reduce((sum, row) => sum + (Number(row[key]) || 0), 0);
+};
+
+
+   const getTodayInAlabama = () => {
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Chicago",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+
+  const str = formatter.format(new Date()); // "2025-12-04"
+  return new Date(str);   // 🔥 Date 객체로 변환
+};
+
+    const getScheduleStatus = (etd, eta) => {
+  if (!todayAlabama) return "";
+
+  const today = todayAlabama;   // "2025-12-04" → Date 객체
+
+  // 1) ETA < TODAY  → 입고완료
+  if (eta && new Date(eta) < today) {
+    return "입고완료";
+  }
+
+  // 2) ETA = "일정 없음" 또는 공백 → 부산항 미입고
+  if (!eta || eta === "일정 없음") {
+    return "부산항 미입고";
+  }
+
+  // 3) ETD > TODAY → 선적대기중
+  if (etd && new Date(etd) > today) {
+    return "선적대기중";
+  }
+
+  // 4) 나머지 → 운항중
+  return "운항중";
+};
+
+const updateScheduleCell = (tempId, field, value) => {
+  setScheduleRows(prev =>
+    prev.map(row =>
+      row.tempId === tempId ? { ...row, [field]: value } : row
+    )
+  );
+};
+
+
     const saveSetting = async () => {
   await fetch(`${API_BASE}/api/axle-setting`, {
     method: "PUT",
@@ -71,20 +176,71 @@ const statusColor = (status) => {
 
 
     const [scheduleRows, setScheduleRows] = useState([]);
+
+useEffect(() => {
+    // DB에서 scheduleRows 로드가 끝난 이후 실행
+    if (scheduleRows.length > 0) {
+        scheduleRows.forEach(async row => {
+            if (row.inv_no) {
+                const qty = await fetchPackingQty(row.inv_no);
+                updateScheduleCell(row.tempId, "plug", qty.plug);
+updateScheduleCell(row.tempId, "gasket", qty.gasket);
+updateScheduleCell(row.tempId, "dowel_pin", qty.dowel_pin);
+updateScheduleCell(row.tempId, "plate", qty.plate);
+
+
+                const ship = await fetch(`${API_BASE}/api/invoice/${row.inv_no}`).then(r => r.json());
+                if (!ship.error) {
+                   updateScheduleCell(row.tempId, "etd", ship.etd);
+updateScheduleCell(row.tempId, "eta", ship.eta);
+
+                }
+            }
+        });
+    }
+}, [scheduleRows.length]);
+const refreshScheduleValues = async (rows) => {
+  for (const row of rows) {
+    if (!row.inv_no) continue;
+
+    const qty = await fetchPackingQty(row.inv_no);
+    updateScheduleCell(row.tempId, "plug", qty.plug);
+    updateScheduleCell(row.tempId, "gasket", qty.gasket);
+    updateScheduleCell(row.tempId, "dowel_pin", qty.dowel_pin);
+    updateScheduleCell(row.tempId, "plate", qty.plate);
+
+    const ship = await fetch(`${API_BASE}/api/invoice/${row.inv_no}`).then(r => r.json());
+    if (!ship.error) {
+      updateScheduleCell(row.tempId, "etd", ship.etd || "");
+      updateScheduleCell(row.tempId, "eta", ship.eta || "");
+    }
+  }
+};
+
 const fetchScheduleData = async () => {
   try {
     const res = await fetch(`${API_BASE}/api/axle-schedule`);
     const data = await res.json();
-    setScheduleRows(data);
+
+    const withIds = data.map(r => ({
+      ...r,
+      tempId: uuidv4(),
+      id: r.id
+    }));
+
+    setScheduleRows(withIds);
+    return withIds;    // ⭐ 추가
   } catch (err) {
     console.error("AXLE 스케줄 로드 오류:", err);
+    return [];
   }
 };
 
 
+
    
 
-  const API_BASE = import.meta.env.VITE_API_URL;
+
 
   const navigate = useNavigate();
 
@@ -138,11 +294,11 @@ const fetchAxleData = async () => {
   // ===============================
   // 🔥  AXLE 항목 저장
   // ===============================
-  const saveAxleData = async () => {
+  // ⭐ 저장 함수
+const saveAxleData = async () => {
   try {
-    // 1) AXLE 재고 저장
+    // 1) AXLE 저장
     for (let row of axleRows) {
-      // 🔥 row마다 updated_at 제거
       const cleanRow = { ...row };
       delete cleanRow.updated_at;
 
@@ -153,15 +309,22 @@ const fetchAxleData = async () => {
       });
     }
 
-    // 2) 전역 설정(적정재고, 작성자, 날짜) 저장
+    // 2) 설정 저장
     await saveSetting();
+
+    // 3) 스케줄 Bulk 저장
+    await fetch(`${API_BASE}/api/axle-schedule/bulk`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(scheduleRows)
+    });
 
     alert("저장 완료!");
     setEditMode(false);
 
-    // 최신 데이터 다시 불러오기
-    fetchAxleData();
-    fetchSetting();
+    // 4) 한 번만 최신 로드 + 최신 값으로 연동
+    const newSchedule = await fetchScheduleData();
+    await refreshScheduleValues(newSchedule);
 
   } catch (err) {
     console.error("저장 오류:", err);
@@ -171,13 +334,15 @@ const fetchAxleData = async () => {
 
 
 
+
+
   // ===============================
   // 🔥  테이블 값 변경 핸들러
   // ===============================
   const updateCell = (id, field, value) => {
     setAxleRows(prev =>
       prev.map(row =>
-        row.id === id ? { ...row, [field]: value } : row
+        row.tempId === id ? { ...row, [field]: value } : row
       )
     );
   };
@@ -291,50 +456,14 @@ const fetchAxleData = async () => {
   />
 ) : (
   <Typography sx={{ fontSize: 16, fontWeight: "bold", ml: 1 }}>
-    기준: {targetStockSetting}
+    적정재고 기준: {formatNumber(targetStockSetting)}
   </Typography>
 )}
 
   
 </Box>
 
- {/* 🔥 우측 상단 행추가/행삭제 버튼 */}
-    <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2, gap: 1 }}>
-      <Button
-        variant="contained"
-        color="success"
-        size="small"
-        disabled={!editMode}
-        onClick={() => {
-          setAxleRows(prev => [
-            ...prev,
-            {
-              id: Date.now(),
-              company: "",
-              item_name: "",
-              item_code: "",
-              box_qty: 0,
-              actual_stock: 0,
-              target_stock: targetStockSetting
-            }
-          ]);
-        }}
-      >
-        + 행추가
-      </Button>
 
-      <Button
-        variant="contained"
-        color="error"
-        size="small"
-        disabled={!editMode}
-        onClick={() => {
-          setAxleRows(prev => prev.slice(0, -1));
-        }}
-      >
-        - 행삭제
-      </Button>
-    </Box>
 
     <Table size="small">
       <TableHead>
@@ -354,56 +483,61 @@ const fetchAxleData = async () => {
 
       <TableBody>
         {axleRows.map((row) => {
-          const inTransit = 0;
-const total = row.actual_stock + inTransit;
+  const inTransit = calcInTransit(row.item_name);   // 운항중
+  const existing = row.actual_stock;                // 기존재고
+  const total = inTransit + existing;               // 총합
 
-return (
-  <TableRow key={row.id}>
-    <TableCell>{row.company}</TableCell>
-    <TableCell>{row.item_name}</TableCell>
-    <TableCell>{row.item_code}</TableCell>
-    <TableCell>{row.box_qty}</TableCell>
+  return (
+    <TableRow key={row.id}>
+      <TableCell>{row.company}</TableCell>
+      <TableCell>{row.item_name}</TableCell>
+      <TableCell>{row.item_code}</TableCell>
+      <TableCell>{formatNumber(row.box_qty)}</TableCell>
 
-    <TableCell>
-  {editMode ? (
-    <TextField
-      size="small"
-      type="number"
-      value={row.actual_stock}
-      onChange={(e) =>
-        updateCell(row.id, "actual_stock", Number(e.target.value))
-      }
-      sx={{ width: 90 }}
-    />
-  ) : (
-    <span>{row.actual_stock}</span>
-  )}
-</TableCell>
+      {/* 실사자료 */}
+      <TableCell>
+        {editMode ? (
+          <TextField
+            size="small"
+            type="number"
+            value={row.actual_stock}
+            onChange={(e) =>
+              updateCell(row.id, "actual_stock", Number(e.target.value))
+            }
+            sx={{ width: 90 }}
+          />
+        ) : (
+          <span>{formatNumber(row.actual_stock)}</span>
+        )}
+      </TableCell>
 
+      {/* 적정재고 */}
+      <TableCell>{formatNumber(targetStockSetting)}</TableCell>
 
-   
-
-
-    <TableCell>{targetStockSetting}</TableCell>
-
-
-    <TableCell>{row.actual_stock}</TableCell>
-    <TableCell>{total}</TableCell>
-
-    <TableCell
-  sx={{
-    color: statusColor(getStatus(row.actual_stock, targetStockSetting)),
-    fontWeight: "bold"
-  }}
->
-  {getStatus(row.actual_stock, targetStockSetting)}
-</TableCell>
+      {/* 🔥 운항중 → 여기 수정됨 */}
+      <TableCell>{formatNumber(inTransit)}</TableCell>
 
 
-  </TableRow>
-);
+      {/* 🔥 기존재고 */}
+      <TableCell>{formatNumber(existing)}</TableCell>
 
-        })}
+
+      {/* 🔥 운항중 + 기존재고 */}
+      <TableCell>{formatNumber(total)}</TableCell>
+
+      {/* 판단결과 */}
+      <TableCell
+        sx={{
+          color: statusColor(getStatus(total, targetStockSetting)),
+          fontWeight: "bold",
+        }}
+      >
+        {getStatus(total, targetStockSetting)}
+      </TableCell>
+    </TableRow>
+  );
+})}
+
       </TableBody>
     </Table>
   </Paper>
@@ -425,7 +559,18 @@ return (
         onClick={() =>
   setScheduleRows(prev => [
     ...prev,
-    { id: uuidv4(), inv_no: "NEW" } // ★ inv_no 빈값 금지
+    {
+      tempId: uuidv4(),  // ⭐ 화면용
+      id: null,          // ⭐ DB id (저장 전까지 null)
+  inv_no: "",
+  etd: "",
+  eta: "",
+  plug: 0,
+  gasket: 0,
+  dowel_pin: 0,
+  plate: 0
+}
+ // ★ inv_no 빈값 금지
   ])
 }
 
@@ -438,33 +583,110 @@ return (
         color="error"
         size="small"
         disabled={!editMode}
-        onClick={() =>
-          setScheduleRows(prev => prev.slice(0, -1))
-        }
+        onClick={() => {
+  if (scheduleRows.length === 0) return;
+
+  const lastTempId = scheduleRows[scheduleRows.length - 1].tempId;
+  setScheduleRows(prev => prev.filter(r => r.tempId !== lastTempId));
+}}
+
+
+
+
       >
         - 행삭제
       </Button>
     </Box>
   <Table size="small">
     <TableHead>
-      <TableRow>
-        <TableCell>INV</TableCell>
-        <TableCell>NO</TableCell>
-        <TableCell>ETD</TableCell>
-        <TableCell>ETA</TableCell>
-        <TableCell>상태</TableCell>
-      </TableRow>
-    </TableHead>
+  <TableRow>
+    <TableCell>INV</TableCell>
+    <TableCell>ETD</TableCell>
+    <TableCell>ETA</TableCell>
+    <TableCell>상태</TableCell>
+    <TableCell>PLUG</TableCell>
+    <TableCell>GASKET</TableCell>
+    <TableCell>DOWEL PIN</TableCell>
+    <TableCell>PLATE</TableCell>
+  </TableRow>
+</TableHead>
 
-    <TableBody>
-      {scheduleRows.map(row => (
-        <TableRow key={row.id}>
-  <TableCell>{row.inv_no}</TableCell>
-  <TableCell>{row.created_at?.slice(0, 10)}</TableCell>
-</TableRow>
 
-      ))}
-    </TableBody>
+   <TableBody>
+  {scheduleRows.map(row => (
+    <TableRow key={row.tempId}>
+
+
+      {/* INV 번호 입력 */}
+      <TableCell>
+        {editMode ? (
+          <TextField
+            size="small"
+            value={row.inv_no}
+            onChange={async (e) => {
+  const inv = e.target.value;
+
+  updateScheduleCell(row.tempId, "inv_no", inv);
+
+  // 1) PACKING LIST 수량 불러오기
+  const qty = await fetchPackingQty(inv);
+
+
+updateScheduleCell(row.tempId, "plug", qty.plug);
+updateScheduleCell(row.tempId, "gasket", qty.gasket);
+updateScheduleCell(row.tempId, "dowel_pin", qty.dowel_pin);
+updateScheduleCell(row.tempId, "plate", qty.plate);
+
+
+
+  // 2) INVOICE에서 ETD/ETA 불러오기 (🔥 status는 안씀!)
+  try {
+    const res = await fetch(`${API_BASE}/api/invoice/${inv}`);
+    const ship = await res.json();
+
+    if (!ship.error) {
+      updateScheduleCell(row.tempId, "etd", ship.etd || "");
+      updateScheduleCell(row.tempId, "eta", ship.eta || "");
+    }
+  } catch (err) {
+    console.error("ETD/ETA 불러오기 오류:", err);
+  }
+}
+}
+
+          />
+        ) : (
+          row.inv_no
+        )}
+      </TableCell>
+
+
+
+      {/* ETD */}
+      <TableCell>
+     
+         {row.etd}
+
+      </TableCell>
+
+      {/* ETA */}
+      <TableCell>
+        {row.eta}
+      </TableCell>
+
+      {/* 상태 */}
+      <TableCell>{getScheduleStatus(row.etd, row.eta)}</TableCell>
+
+      {/* 수량들 */}
+      <TableCell>{formatNumber(row.plug)}</TableCell>
+      <TableCell>{formatNumber(row.gasket)}</TableCell>
+      <TableCell>{formatNumber(row.dowel_pin)}</TableCell>
+      <TableCell>{formatNumber(row.plate)}</TableCell>
+
+    </TableRow>
+  ))}
+</TableBody>
+
   </Table>
 </Paper>
 
