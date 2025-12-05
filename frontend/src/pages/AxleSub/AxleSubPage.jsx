@@ -541,16 +541,16 @@ const saveAxleData = async () => {
 
       <TableHead sx={{ bgcolor: "#ffe599", borderTop: "2px solid #000" }}>
         <TableRow>
-          <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>업체명</TableCell>
-          <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>품명</TableCell>
-          <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>품번</TableCell>
-          <TableCell sx={{ fontSize: "15px" , fontWeight: "bold" }}>박스 입수량</TableCell>
-          <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>실사자료</TableCell>
-          <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>적정재고</TableCell>
-          <TableCell sx={{ fontSize: "15px" , fontWeight: "bold" }}>운항중</TableCell>
-          <TableCell sx={{ fontSize: "15px" , fontWeight: "bold" }}>기존재고</TableCell>
-          <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>운항중 + 기존재고</TableCell>
-          <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>판단결과</TableCell>
+          <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold"  }}>업체명</TableCell>
+          <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold"  }}>품명</TableCell>
+          <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold"  }}>품번</TableCell>
+          <TableCell align="center" sx={{ fontSize: "15px" , fontWeight: "bold" }}>박스 입수량</TableCell>
+          <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold"  }}>실사자료</TableCell>
+          <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold"  }}>적정재고</TableCell>
+          <TableCell align="center" sx={{ fontSize: "15px" , fontWeight: "bold" }}>운항중</TableCell>
+
+          <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold"  }}>운항중 + 실사자료</TableCell>
+          <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold"  }}>판단결과</TableCell>
         </TableRow>
       </TableHead>
 
@@ -566,13 +566,13 @@ const saveAxleData = async () => {
 
   return (
     <TableRow key={row.id}>
-      <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>{row.company}</TableCell>
-      <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>{row.item_name}</TableCell>
-      <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>{row.item_code}</TableCell>
-      <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>{formatNumber(row.box_qty)}</TableCell>
+      <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold"  }}>{row.company}</TableCell>
+      <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold"  }}>{row.item_name}</TableCell>
+      <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold"  }}>{row.item_code}</TableCell>
+      <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold"  }}>{formatNumber(row.box_qty)}</TableCell>
 
       {/* 실사자료 */}
-      <TableCell sx={{ fontSize: "15px", fontWeight: "bold" 
+      <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" 
        }}>
         {editMode ? (
           <TextField
@@ -590,21 +590,18 @@ const saveAxleData = async () => {
       </TableCell>
 
       {/* 적정재고 */}
-      <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>{formatNumber(target)}</TableCell>
+      <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold"  }}>{formatNumber(target)}</TableCell>
 
       {/* 🔥 운항중 → 여기 수정됨 */}
-      <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>{formatNumber(inTransit)}</TableCell>
+      <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold"  }}>{formatNumber(inTransit)}</TableCell>
 
-
-      {/* 🔥 기존재고 */}
-      <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>{formatNumber(existing)}</TableCell>
 
 
       {/* 🔥 운항중 + 기존재고 */}
-      <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>{formatNumber(total)}</TableCell>
+      <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold"  }}>{formatNumber(total)}</TableCell>
 
       {/* 판단결과 */}
-      <TableCell
+      <TableCell align="center"
         sx={{
           color: statusColor(getStatus(existing, target)),
           fontWeight: "bold", fontSize: "15px"
@@ -678,14 +675,14 @@ const saveAxleData = async () => {
   <Table size="small" sx={{ "& *": { fontWeight: "bold" } }}>
   <TableHead sx={{ bgcolor: "#ffe599", borderTop: "2px solid #000" }}>
   <TableRow>
-    <TableCell sx={{ fontSize: "15px", fontWeight: "bold" }}>INV</TableCell>
-    <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>ETD</TableCell>
-    <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>ETA</TableCell>
-    <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>상태</TableCell>
-    <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>PLUG</TableCell>
-    <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>GASKET</TableCell>
-    <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>DOWEL PIN</TableCell>
-    <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>PLATE</TableCell>
+    <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>INV</TableCell>
+    <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold"  }}>ETD</TableCell>
+    <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold"  }}>ETA</TableCell>
+    <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold"  }}>상태</TableCell>
+    <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold"  }}>PLUG</TableCell>
+    <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold"  }}>GASKET</TableCell>
+    <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold"  }}>DOWEL PIN</TableCell>
+    <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold"  }}>PLATE</TableCell>
   </TableRow>
 </TableHead>
 
@@ -696,7 +693,7 @@ const saveAxleData = async () => {
 
 
       {/* INV 번호 입력 */}
-      <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>
+      <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>
         {editMode ? (
           <TextField
             size="small"
@@ -741,14 +738,14 @@ updateScheduleCell(row.tempId, "plate", qty.plate);
 
 
       {/* ETD */}
-      <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>
+      <TableCell  align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>
      
          {row.etd}
 
       </TableCell>
 
       {/* ETA */}
-      <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>
+      <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>
         {row.eta}
       </TableCell>
 
@@ -762,10 +759,10 @@ updateScheduleCell(row.tempId, "plate", qty.plate);
 
 
       {/* 수량들 */}
-      <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>{formatNumber(row.plug)}</TableCell>
-      <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>{formatNumber(row.gasket)}</TableCell>
-      <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>{formatNumber(row.dowel_pin)}</TableCell>
-      <TableCell sx={{ fontSize: "15px" , fontWeight: "bold" }}>{formatNumber(row.plate)}</TableCell>
+      <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold"  }}>{formatNumber(row.plug)}</TableCell>
+      <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold"  }}>{formatNumber(row.gasket)}</TableCell>
+      <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold"  }}>{formatNumber(row.dowel_pin)}</TableCell>
+      <TableCell align="center" sx={{ fontSize: "15px" , fontWeight: "bold"}}>{formatNumber(row.plate)}</TableCell>
 
     </TableRow>
   ))}
