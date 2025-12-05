@@ -552,12 +552,13 @@ const getAlabamaDate = (dateStr) =>
         {/* 왼쪽 검색결과 */}
         <Box
           sx={{
-               flex: '0 0 1400px',   // 높이 완전 고정
+               flex: 1.75,   // 높이 완전 고정
                 flexShrink: 0,       // ❗ 절대로 줄어들지 않음
                  border: '1px solid #ccc',
                  borderRadius: 1,
                  p: 2,
                  overflowY: 'auto',
+
                  maxHeight: '340px'
 
 
