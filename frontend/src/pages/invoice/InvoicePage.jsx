@@ -57,6 +57,14 @@ const itemToExporters = {
 
 
 export default function InvoicePage() {
+  // 🔥 타입별 placeholder 매핑
+const placeholderMap = {
+  po: "PO 번호 입력",
+  part: "품번 입력",
+  name: "품명 입력",
+  inv: "INV 번호 입력"
+};
+
   const todayUS = new Date(
   new Date().toLocaleString("en-US", { timeZone: "America/Chicago" })
 );
@@ -513,7 +521,7 @@ const getAlabamaDate = (dateStr) =>
             size="small"
             value={poNumber}
             onChange={(e) => setPoNumber(e.target.value)}
-            placeholder={searchType === "po" ? "4500001303" : "품번 입력"}
+            placeholder={placeholderMap[searchType]}   // 🔥 자동 placeholder 전환
             sx={{
               bgcolor: 'white',
               borderRadius: 1,
@@ -951,7 +959,7 @@ const arrived = delayedDate2 < todayUS;
                   'CONT#',
                   'BL#',
                     <Box key="etdHeader" sx={{ textAlign: 'center', whiteSpace: 'pre-line' }}>
-                      ETD<br />(출발<br></br>예정일)
+                      ETD<br />(출발 예정일)
                     </Box>,
                     <Box key="etaHeader" sx={{ textAlign: 'center', whiteSpace: 'pre-line' }}>
                       ETA<br />(공장 도착 예정일)
@@ -1088,6 +1096,7 @@ const arrived = delayedDate2 < todayUS;
                   ...(idx === 2 && { color: "blue", cursor: "pointer", textDecoration: "underline" }),
                   ...(idx === 9 ? delayedStyle : {}),   // delayed 색상
                   ...(idx === 10 ? countStyle : {}),     // count 색상
+                   ...(idx === 5 || idx === 6 || idx === 12? { whiteSpace: "pre-line" } : {}),
                   ...(userRole === "admin" && { cursor: "pointer" })
                 }}
                 onClick={() => {
@@ -1130,8 +1139,11 @@ const arrived = delayedDate2 < todayUS;
                   }
                 }}
               >
-                {val}
-              </TableCell>
+              {/* 🔥 val 출력 부분만 변경됨 (기능 유지) */}
+    {(idx === 5 || idx === 6 || idx === 12)
+      ? (val || "").replace(/,\s*/g, "\n") // 쉼표 -> 줄바꿈 .replace(/\/\s*/g, "\n")  // 슬래시 → 줄바꿈
+      : val}
+  </TableCell>
             ))}
           </SortableRow>
         );
