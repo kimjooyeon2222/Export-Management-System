@@ -530,6 +530,10 @@ const saveAxleData = async () => {
   const inTransit = calcInTransit(row.item_name);   // 운항중
   const existing = row.actual_stock;                // 기존재고
   const total = inTransit + existing;               // 총합
+  const target =
+    row.item_name?.toUpperCase() === "DOWEL PIN"
+      ? targetStockSetting * 2
+      : targetStockSetting;
 
   return (
     <TableRow key={row.id}>
@@ -556,7 +560,7 @@ const saveAxleData = async () => {
       </TableCell>
 
       {/* 적정재고 */}
-      <TableCell sx={{ fontSize: "15px" }}>{formatNumber(targetStockSetting)}</TableCell>
+      <TableCell sx={{ fontSize: "15px" }}>{formatNumber(target)}</TableCell>
 
       {/* 🔥 운항중 → 여기 수정됨 */}
       <TableCell sx={{ fontSize: "15px" }}>{formatNumber(inTransit)}</TableCell>
@@ -572,11 +576,11 @@ const saveAxleData = async () => {
       {/* 판단결과 */}
       <TableCell
         sx={{
-          color: statusColor(getStatus(total, targetStockSetting)),
+          color: statusColor(getStatus(existing, target)),
           fontWeight: "bold", fontSize: "15px"
         }}
       >
-        {getStatus(total, targetStockSetting)}
+        {getStatus(existing, target)}
       </TableCell>
     </TableRow>
   );
