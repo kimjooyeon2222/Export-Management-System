@@ -441,22 +441,50 @@ const saveAxleData = async () => {
       {/* 작성자 + 날짜 */}
       <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}>
         <TextField
-          label="작성자"
-          size="small"
-          value={writer}
-          InputProps={{ readOnly: !editMode }}
-          onChange={e => editMode && setWriter(e.target.value)}
-          sx={{ width: 160 }}
-        />
+  label="작성자"
+  size="small"
+  value={writer}
+  InputProps={{
+    readOnly: !editMode,
+    sx: {
+      "& input": {
+        fontSize: "14px",
+        fontWeight: "bold",
+        textAlign: "center"
+      }
+    }
+  }}
+  InputLabelProps={{
+    shrink: true,
+    sx: { fontSize: "15px", fontWeight: "bold" }
+  }}
+  onChange={e => editMode && setWriter(e.target.value)}
+  sx={{ width: 130 }}
+/>
+
 
         <TextField
-          label="북미 기준 날짜 (YYYY-MM-DD)"
-          size="small"
-          value={usDate}
-          InputProps={{ readOnly: !editMode }}
-          onChange={e => editMode && setUsDate(e.target.value)}
-          sx={{ width: 200 }}
-        />
+  label="북미 기준 날짜 (YYYY-MM-DD)"
+  size="small"
+  value={usDate}
+  InputProps={{
+    readOnly: !editMode,
+    sx: {
+      "& input": {
+        fontSize: "14px",
+        fontWeight: "bold",
+        textAlign: "center"
+      }
+    }
+  }}
+  InputLabelProps={{
+    shrink: true,
+    sx: { fontSize: "15px", fontWeight: "bold" }
+  }}
+  onChange={e => editMode && setUsDate(e.target.value)}
+  sx={{ width: 150 }}
+/>
+
       </Box>
 
       {/* 제목 + 과부족 토글 */}
@@ -509,19 +537,20 @@ const saveAxleData = async () => {
 
 
 
-    <Table size="small">
+    <Table size="small" sx={{ "& *": { fontWeight: "bold" } }}>
+
       <TableHead sx={{ bgcolor: "#ffe599", borderTop: "2px solid #000" }}>
         <TableRow>
-          <TableCell sx={{ fontSize: "15px" }}>업체명</TableCell>
-          <TableCell sx={{ fontSize: "15px" }}>품명</TableCell>
-          <TableCell sx={{ fontSize: "15px" }}>품번</TableCell>
-          <TableCell sx={{ fontSize: "15px" }}>박스 입수량</TableCell>
-          <TableCell sx={{ fontSize: "15px" }}>실사자료</TableCell>
-          <TableCell sx={{ fontSize: "15px" }}>적정재고</TableCell>
-          <TableCell sx={{ fontSize: "15px" }}>운항중</TableCell>
-          <TableCell sx={{ fontSize: "15px" }}>기존재고</TableCell>
-          <TableCell sx={{ fontSize: "15px" }}>운항중 + 기존재고</TableCell>
-          <TableCell sx={{ fontSize: "15px" }}>판단결과</TableCell>
+          <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>업체명</TableCell>
+          <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>품명</TableCell>
+          <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>품번</TableCell>
+          <TableCell sx={{ fontSize: "15px" , fontWeight: "bold" }}>박스 입수량</TableCell>
+          <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>실사자료</TableCell>
+          <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>적정재고</TableCell>
+          <TableCell sx={{ fontSize: "15px" , fontWeight: "bold" }}>운항중</TableCell>
+          <TableCell sx={{ fontSize: "15px" , fontWeight: "bold" }}>기존재고</TableCell>
+          <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>운항중 + 기존재고</TableCell>
+          <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>판단결과</TableCell>
         </TableRow>
       </TableHead>
 
@@ -537,13 +566,14 @@ const saveAxleData = async () => {
 
   return (
     <TableRow key={row.id}>
-      <TableCell sx={{ fontSize: "15px" }}>{row.company}</TableCell>
-      <TableCell sx={{ fontSize: "15px" }}>{row.item_name}</TableCell>
-      <TableCell sx={{ fontSize: "15px" }}>{row.item_code}</TableCell>
-      <TableCell sx={{ fontSize: "15px" }}>{formatNumber(row.box_qty)}</TableCell>
+      <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>{row.company}</TableCell>
+      <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>{row.item_name}</TableCell>
+      <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>{row.item_code}</TableCell>
+      <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>{formatNumber(row.box_qty)}</TableCell>
 
       {/* 실사자료 */}
-      <TableCell sx={{ fontSize: "15px" }}>
+      <TableCell sx={{ fontSize: "15px", fontWeight: "bold" 
+       }}>
         {editMode ? (
           <TextField
             size="small"
@@ -560,18 +590,18 @@ const saveAxleData = async () => {
       </TableCell>
 
       {/* 적정재고 */}
-      <TableCell sx={{ fontSize: "15px" }}>{formatNumber(target)}</TableCell>
+      <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>{formatNumber(target)}</TableCell>
 
       {/* 🔥 운항중 → 여기 수정됨 */}
-      <TableCell sx={{ fontSize: "15px" }}>{formatNumber(inTransit)}</TableCell>
+      <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>{formatNumber(inTransit)}</TableCell>
 
 
       {/* 🔥 기존재고 */}
-      <TableCell sx={{ fontSize: "15px" }}>{formatNumber(existing)}</TableCell>
+      <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>{formatNumber(existing)}</TableCell>
 
 
       {/* 🔥 운항중 + 기존재고 */}
-      <TableCell sx={{ fontSize: "15px" }}>{formatNumber(total)}</TableCell>
+      <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>{formatNumber(total)}</TableCell>
 
       {/* 판단결과 */}
       <TableCell
@@ -645,17 +675,17 @@ const saveAxleData = async () => {
         - 행삭제
       </Button>
     </Box>
-  <Table size="small">
+  <Table size="small" sx={{ "& *": { fontWeight: "bold" } }}>
   <TableHead sx={{ bgcolor: "#ffe599", borderTop: "2px solid #000" }}>
   <TableRow>
-    <TableCell sx={{ fontSize: "15px" }}>INV</TableCell>
-    <TableCell sx={{ fontSize: "15px" }}>ETD</TableCell>
-    <TableCell sx={{ fontSize: "15px" }}>ETA</TableCell>
-    <TableCell sx={{ fontSize: "15px" }}>상태</TableCell>
-    <TableCell sx={{ fontSize: "15px" }}>PLUG</TableCell>
-    <TableCell sx={{ fontSize: "15px" }}>GASKET</TableCell>
-    <TableCell sx={{ fontSize: "15px" }}>DOWEL PIN</TableCell>
-    <TableCell sx={{ fontSize: "15px" }}>PLATE</TableCell>
+    <TableCell sx={{ fontSize: "15px", fontWeight: "bold" }}>INV</TableCell>
+    <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>ETD</TableCell>
+    <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>ETA</TableCell>
+    <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>상태</TableCell>
+    <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>PLUG</TableCell>
+    <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>GASKET</TableCell>
+    <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>DOWEL PIN</TableCell>
+    <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>PLATE</TableCell>
   </TableRow>
 </TableHead>
 
@@ -666,7 +696,7 @@ const saveAxleData = async () => {
 
 
       {/* INV 번호 입력 */}
-      <TableCell sx={{ fontSize: "15px" }}>
+      <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>
         {editMode ? (
           <TextField
             size="small"
@@ -711,19 +741,19 @@ updateScheduleCell(row.tempId, "plate", qty.plate);
 
 
       {/* ETD */}
-      <TableCell sx={{ fontSize: "15px" }}>
+      <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>
      
          {row.etd}
 
       </TableCell>
 
       {/* ETA */}
-      <TableCell sx={{ fontSize: "15px" }}>
+      <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>
         {row.eta}
       </TableCell>
 
       {/* 상태 */}
-<TableCell align="center" sx={{ fontSize: "15px" }}>
+<TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold"  }}>
   <Box sx={getForgingStatusStyle(getScheduleStatus(row.etd, row.eta))}>
     {getScheduleStatus(row.etd, row.eta)}
   </Box>
@@ -732,10 +762,10 @@ updateScheduleCell(row.tempId, "plate", qty.plate);
 
 
       {/* 수량들 */}
-      <TableCell sx={{ fontSize: "15px" }}>{formatNumber(row.plug)}</TableCell>
-      <TableCell sx={{ fontSize: "15px" }}>{formatNumber(row.gasket)}</TableCell>
-      <TableCell sx={{ fontSize: "15px" }}>{formatNumber(row.dowel_pin)}</TableCell>
-      <TableCell sx={{ fontSize: "15px" }}>{formatNumber(row.plate)}</TableCell>
+      <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>{formatNumber(row.plug)}</TableCell>
+      <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>{formatNumber(row.gasket)}</TableCell>
+      <TableCell sx={{ fontSize: "15px", fontWeight: "bold"  }}>{formatNumber(row.dowel_pin)}</TableCell>
+      <TableCell sx={{ fontSize: "15px" , fontWeight: "bold" }}>{formatNumber(row.plate)}</TableCell>
 
     </TableRow>
   ))}
