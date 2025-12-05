@@ -1,3 +1,10 @@
+
+//combo box 용 imoprt
+
+import { useNavigate } from 'react-router-dom';
+import { Button, Menu, MenuItem } from '@mui/material';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+
 import PropTypes from 'prop-types';
 import { useRef, useState } from 'react';
 
@@ -47,8 +54,31 @@ function a11yProps(index) {
 }
 
 // ==============================|| HEADER CONTENT - PROFILE ||============================== //
+const quickLinks = [
+  { label: "INVOICE TRK", url: "/invoice" },
+  { label: "단조품", url: "/forging" },
+  { label: "오일", url: "/oil" },
+  { label: "AXLE 서브품", url: "/AxleSub" },
+  { label: "EV 서브품", url: "/ev" },
+  { label: "브라켓", url: "/bracket" },
+  { label: "공구대차(종료)", url: "/cart" },
+  { label: "수출품 사진", url: "/photo" }
+];
 
 export default function Profile() {
+// 콤보박스용 
+const navigate = useNavigate();
+const [quick, setQuick] = useState("");
+const [menuAnchor, setMenuAnchor] = useState(null);
+const menuOpen = Boolean(menuAnchor);
+const handleMenuOpen = (e) => setMenuAnchor(e.currentTarget);
+const handleMenuClose = () => setMenuAnchor(null);
+const go = (url) => {
+  navigate(url);
+  handleMenuClose();
+};
+
+
   const theme = useTheme();
 
   const anchorRef = useRef(null);
@@ -71,6 +101,31 @@ export default function Profile() {
   };
 
   return (
+     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+
+    {/* 🔥 수출현황 바로가기 콤보박스 추가 */}
+    <Button
+  onClick={handleMenuOpen}
+  endIcon={<ArrowDropDownIcon />}
+  sx={{
+    background: '#fff',
+    fontWeight: 'bold',
+    borderRadius: 1,
+    height: 36,
+    px: 2
+  }}
+>
+  수출현황 바로가기
+</Button>
+
+<Menu anchorEl={menuAnchor} open={menuOpen} onClose={handleMenuClose}>
+  {quickLinks.map((item) => (
+    <MenuItem key={item.url} onClick={() => go(item.url)}>
+      {item.label}
+    </MenuItem>
+  ))}
+</Menu>
+
     <Box sx={{ flexShrink: 0, ml: 0.75 }}>
       <ButtonBase
         sx={(theme) => ({
@@ -188,6 +243,7 @@ export default function Profile() {
           </Transitions>
         )}
       </Popper>
+      </Box>
     </Box>
   );
 }

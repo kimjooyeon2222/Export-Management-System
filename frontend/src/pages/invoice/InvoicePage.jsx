@@ -954,7 +954,7 @@ const arrived = delayedDate2 < todayUS;
                   'INV#',
                   'INV 금액',
                   <TableCell sx={{ width: '140px', textAlign: 'center', fontWeight: 'bold' }}>
-  <div>품목<br></br>구분</div>
+  <div>품목구분</div>
 </TableCell>
 ,
                   'CONT#',
