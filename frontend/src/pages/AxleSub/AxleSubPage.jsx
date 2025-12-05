@@ -745,9 +745,20 @@ updateScheduleCell(row.tempId, "plate", qty.plate);
       </TableCell>
 
       {/* ETA */}
-      <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>
-        {row.eta}
-      </TableCell>
+      {/* ETA */}
+{/* ETA */}
+<TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>
+  {getScheduleStatus(row.etd, row.eta) === "운항중" ? (
+    <Box sx={getForgingStatusStyle("운항중")}>
+      {row.eta}
+    </Box>
+  ) : (
+    row.eta
+  )}
+</TableCell>
+
+
+
 
       {/* 상태 */}
 <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold"  }}>
