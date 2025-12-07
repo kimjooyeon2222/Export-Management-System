@@ -448,11 +448,6 @@ if (showUpcoming) {
 }
 
 
-
-  
-
-
-
   return (
     <Box sx={{ bgcolor: '#fff', height: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* 타이틀 */}
