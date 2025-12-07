@@ -348,55 +348,6 @@ const handleAdd = async () => {
 
 
 
-
-
-  const parseDate = (str) => new Date(str);
-
-  // 필터링 로직 (수출자 / 품목 버튼 반영)
-  const filteredRows = rows.filter((r) => {
-
-
-    // 기본조건: showUpcoming (5일 이내 필터링)
-    if (showUpcoming) {
-  const etaDate = parseDate(r.eta);
-  const daysToETA = Math.floor((etaDate - todayUS) / (1000 * 60 * 60 * 24));
-
-  // 🔥 빨간색 조건 외 모두 제외
-  if (!(daysToETA > 0)) return false;
-}
-
- // --- 날짜 필터링 정확한 버전 ---
-// ETD 시작 필터
-if (etdStart) {
-  if (!r.etd || r.etd.trim() === "") return false;
-  if (r.etd < etdStart) return false;
-}
-
-// ETA 종료 필터
-if (etaEnd) {
-  if (!r.eta || r.eta.trim() === "") return false;
-  if (r.eta > etaEnd) return false;
-}
-
-
-
-    // 버튼 조건: 선택된 수출자/품목 기준 필터
-    if (selectedExporter && selectedItem) {
-      // 둘 다 선택됨 → 교집합
-      return r.exporter === selectedExporter && r.item_type === selectedItem;
-    } else if (selectedExporter) {
-      return r.exporter === selectedExporter;
-     } else if (selectedItem) {
-      return r.item_type === selectedItem;
-    }
-
-    // 아무 것도 선택 안했을 때 전체 표시
-    return true;
-  })
-   .sort((a, b) => 0);
-
-
-  
   // 미국 앨라배마(Chicago) 시간으로 날짜 변환
 const getUSDate = (dateStr) =>
   new Date(
@@ -433,6 +384,65 @@ const getAlabamaDate = (dateStr) =>
 
 
 
+  const parseDate = (str) => new Date(str);
+
+  // 필터링 로직 (수출자 / 품목 버튼 반영)
+  const filteredRows = rows.filter((r) => {
+
+
+    // 기본조건: showUpcoming (5일 이내 필터링)
+    if (showUpcoming) {
+  // 🔥 delayed_date가 있으면 그 날짜로 필터링
+  const baseDate = r.delayed_date
+    ? getAlabamaDate(normalizeDate(r.delayed_date))
+    : getAlabamaDate(normalizeDate(r.eta)); // fallback = ETA
+
+  const daysToArrival = Math.floor((baseDate - todayUS) / (1000 * 60 * 60 * 24));
+
+  // 🔥 오늘 이후 ~ 5일 전까지 포함
+  if (!(daysToArrival >= 0 )) return false;
+}
+
+
+ // --- 날짜 필터링 정확한 버전 ---
+// ETD 시작 필터
+if (etdStart) {
+  if (!r.etd || r.etd.trim() === "") return false;
+  if (r.etd < etdStart) return false;
+}
+
+// ETA 종료 필터
+if (etaEnd) {
+  if (!r.eta || r.eta.trim() === "") return false;
+  if (r.eta > etaEnd) return false;
+}
+
+
+
+    // 버튼 조건: 선택된 수출자/품목 기준 필터
+    if (selectedExporter && selectedItem) {
+      // 둘 다 선택됨 → 교집합
+      return r.exporter === selectedExporter && r.item_type === selectedItem;
+    } else if (selectedExporter) {
+      return r.exporter === selectedExporter;
+     } else if (selectedItem) {
+      return r.item_type === selectedItem;
+    }
+
+    // 아무 것도 선택 안했을 때 전체 표시
+    return true;
+  })
+   .sort((a, b) => {
+  const aDate = a.delayed_date
+    ? getAlabamaDate(normalizeDate(a.delayed_date))
+    : getAlabamaDate(normalizeDate(a.eta));
+
+  const bDate = b.delayed_date
+    ? getAlabamaDate(normalizeDate(b.delayed_date))
+    : getAlabamaDate(normalizeDate(b.eta));
+
+  return aDate - bDate;   // 🔥 오름차순 정렬
+});
 
   return (
     <Box sx={{ bgcolor: '#fff', height: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -601,10 +611,7 @@ const delayedDate2 = merged.delayed_date
   ? getAlabamaDate(merged.delayed_date)
   : getAlabamaDate(merged.eta);
 
-// 오늘 미국(앨라배마) 기준 날짜
-const todayUS = new Date(
-  new Date().toLocaleString("en-US", { timeZone: "America/Chicago" })
-);
+
 
 
 // 🔥 최종 도착 여부 규칙
@@ -1041,13 +1048,7 @@ const arrived = delayedDate2 < todayUS;
         let delayedStyle = {};
         if (daysToETA < 0) {
           delayedStyle = { bgcolor: "#d6eaff" }; // 도착 완료
-        } else if (daysToETA === 0) {
-          delayedStyle = {
-            bgcolor: "#ffe0b2",
-            color: "#e65100",
-            fontWeight: "bold",
-          };
-        } else if (daysToETA > 0 && daysToETA <= 5) {
+        }  else if (daysToETA >= 0 && daysToETA <= 5) {
           delayedStyle = {
             bgcolor: "#ffcccc",
             color: "#b71c1c",
