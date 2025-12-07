@@ -675,7 +675,7 @@ const saveAxleData = async () => {
   <Table size="small" sx={{ "& *": { fontWeight: "bold" } }}>
   <TableHead sx={{ bgcolor: "#ffe599", borderTop: "2px solid #000" }}>
   <TableRow>
-    <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>INV</TableCell>
+    <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>INV#</TableCell>
     <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold"  }}>ETD</TableCell>
     <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold"  }}>ETA</TableCell>
     <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold"  }}>상태</TableCell>
