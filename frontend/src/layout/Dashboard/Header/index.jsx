@@ -9,6 +9,7 @@ import Toolbar from '@mui/material/Toolbar';
 import AppBarStyled from './AppBarStyled';
 import HeaderContent from './HeaderContent';
 import IconButton from 'components/@extended/IconButton';
+import ExportCombo from './ExportCombo';   // ⭐ 반드시 추가
 
 import { handlerDrawerOpen, useGetMenuMaster } from 'api/menu';
 import { DRAWER_WIDTH, MINI_DRAWER_WIDTH } from 'config';
@@ -46,6 +47,10 @@ export default function Header() {
       >
         {!drawerOpen ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
       </IconButton>
+
+      {/* 🔥 여기 수출통합관리 콤보박스 들어가는 자리 */}
+      <ExportCombo />
+
       {headerContent}
     </Toolbar>
   );
