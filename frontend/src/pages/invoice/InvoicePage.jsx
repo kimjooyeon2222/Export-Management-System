@@ -387,7 +387,7 @@ const getAlabamaDate = (dateStr) =>
   const parseDate = (str) => new Date(str);
 
   // 필터링 로직 (수출자 / 품목 버튼 반영)
-  const filteredRows = rows.filter((r) => {
+  let filteredRows = rows.filter((r) => {
 
 
     // 기본조건: showUpcoming (5일 이내 필터링)
@@ -432,17 +432,26 @@ if (etaEnd) {
     // 아무 것도 선택 안했을 때 전체 표시
     return true;
   })
-   .sort((a, b) => {
-  const aDate = a.delayed_date
-    ? getAlabamaDate(normalizeDate(a.delayed_date))
-    : getAlabamaDate(normalizeDate(a.eta));
+   // 금일 이후 도착분 버튼 켜졌을 때만 delayed_date 기준 정렬
+if (showUpcoming) {
+  filteredRows = filteredRows.sort((a, b) => {
+    const aDate = a.delayed_date
+      ? getAlabamaDate(normalizeDate(a.delayed_date))
+      : getAlabamaDate(normalizeDate(a.eta));
 
-  const bDate = b.delayed_date
-    ? getAlabamaDate(normalizeDate(b.delayed_date))
-    : getAlabamaDate(normalizeDate(b.eta));
+    const bDate = b.delayed_date
+      ? getAlabamaDate(normalizeDate(b.delayed_date))
+      : getAlabamaDate(normalizeDate(b.eta));
 
-  return aDate - bDate;   // 🔥 오름차순 정렬
-});
+    return aDate - bDate;
+  });
+}
+
+
+
+  
+
+
 
   return (
     <Box sx={{ bgcolor: '#fff', height: '100vh', display: 'flex', flexDirection: 'column' }}>
