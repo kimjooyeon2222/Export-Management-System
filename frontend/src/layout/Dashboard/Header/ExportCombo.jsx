@@ -16,7 +16,7 @@ export default function ExportCombo() {
   { label: "단조품", path: "/forging" },
   { label: "오일", path: "/oil-schedule" },     // 🔥 수정됨
   { label: "AXLE서브품", path: "/axle-sub" },   // 🔥 수정됨
-  { label: "EV서브품", path: "/ev" },
+  { label: "EV서브품", path: "/ev-sub" },
   { label: "브라켓", path: "/bracket" },
   { label: "공구대차(종료)", path: "/cart" },
   { label: "수출품 사진", path: "/photo" }

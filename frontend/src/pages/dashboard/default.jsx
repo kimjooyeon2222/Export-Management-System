@@ -136,6 +136,10 @@ export default function DashboardDefault() {
                  else if (btn.label === 'AXLE서브품') {
                      navigate('/axle-sub');   // AXLE 서브 페이지로 이동
                  }
+                 else if (btn.label === 'EV서브품') {
+                     navigate('/ev-sub');
+                 }
+
                  else {
                    alert(`${btn.label} 페이지는 준비 중입니다.`);
                  }
