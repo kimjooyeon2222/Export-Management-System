@@ -70,7 +70,9 @@ const placeholderMap = {
   po: "PO 번호 입력",
   part: "품번 입력",
   name: "품명 입력",
-  inv: "INV 번호 입력"
+  inv: "INV 번호 입력",
+  vendor: "거래처 입력"  
+
 };
 
   const todayUS = toMidnight(new Date(), "America/Chicago");
@@ -166,7 +168,7 @@ const [etaEnd, setEtaEnd] = useState("");
   const navigate = useNavigate();
   const [poNumber, setPoNumber] = useState('');
   const [searchResult, setSearchResult] = useState(null);
-  const [showUpcoming, setShowUpcoming] = useState(false);
+  const [showUpcoming, setShowUpcoming] = useState(true);
   const [userRole] = useState('admin');
 // === 상단에 추가 ===
   const [isEditMode, setIsEditMode] = useState(false);
@@ -324,11 +326,15 @@ const handleAdd = async () => {
   // 🔥 3) 품명(part_name) 검색 — (한글도 포함)
   // =============================
   else if (searchType === "name") {
-    matchedPacking = allPacking.filter((r) => {
-      const nameValue = (r.part_name || "").trim().toLowerCase();
-      return nameValue.includes(input);
-    });
-  }
+  matchedPacking = allPacking.filter((r) => {
+    const nameValue = (r.part_name || "")
+      .toLowerCase()
+      .replace(/[^0-9a-z가-힣]/g, "");   // ⭐ 하이픈, 공백, 특수문자 제거
+
+    return nameValue.includes(input);
+  });
+}
+
 
   // =============================
   // 🔥 4) INV# 자체 검색
@@ -344,6 +350,30 @@ const handleAdd = async () => {
     matchedInvs.some(inv => inv.inv_no === p.inv_no)
   );
 }
+// ===================================================
+// 🔥 5) 거래처 검색 (packing_list.vendor 기준)
+// ===================================================
+else if (searchType === "vendor") {
+  const rawInput = poNumber.trim().toLowerCase();
+
+  matchedPacking = allPacking.filter((p) => {
+    const vendorValue = (p.vendor || "").toLowerCase();
+    return vendorValue.includes(rawInput);
+  });
+
+  // vendor 검색 시에도 invoice 데이터 매칭
+  matchedPacking = matchedPacking.map((p) => {
+    const invMatch = allInvoice.find((i) => i.inv_no === p.inv_no);
+    return { ...p, ...invMatch };
+  });
+
+  // INV 중복 제거
+  matchedPacking = matchedPacking.filter(
+    (item, index, self) =>
+      index === self.findIndex((r) => r.inv_no === item.inv_no)
+  );
+}
+
 
 
   // 검색 결과 없으면
@@ -553,6 +583,8 @@ if (showUpcoming) {
     <MenuItem value="part">품번</MenuItem>
     <MenuItem value="name">품명</MenuItem>     
     <MenuItem value="inv">INV#</MenuItem> 
+    <MenuItem value="vendor">거래처</MenuItem>
+
   </Select>
 </Box>
 
