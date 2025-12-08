@@ -6,6 +6,7 @@ os.environ.pop("JAWSDB_URL", None)
 
 from models import OilScheduleRow
 from models import OilItemList
+from models import EvInventory, EvSchedule, EvSetting
 
 from flask import Flask, jsonify, request
 from flask_cors import CORS
@@ -15,6 +16,7 @@ from config import Config
 from models import AxleInventory, AxleSchedule
 from models import AxleSetting
 from datetime import datetime
+
 
 def to_date(value):
     if not value:
@@ -777,6 +779,107 @@ def save_axle_schedule_bulk():
 
     db.session.commit()
     return jsonify({"message": "saved"})
+
+
+
+@app.route("/api/ev-inventory", methods=["GET"])
+def get_ev_inventory():
+    rows = EvInventory.query.all()
+    return jsonify([r.to_dict() for r in rows])
+
+@app.route("/api/ev-inventory/<int:id>", methods=["PUT"])
+def update_ev_inventory(id):
+    row = EvInventory.query.get_or_404(id)
+    data = request.json
+
+    for k, v in data.items():
+        setattr(row, k, v)
+
+    db.session.commit()
+    return jsonify({"message": "updated"})
+
+@app.route("/api/ev-inventory", methods=["POST"])
+def create_ev_inventory():
+    data = request.json
+    row = EvInventory(**data)
+    db.session.add(row)
+    db.session.commit()
+    return jsonify({"id": row.id}), 201
+
+@app.route("/api/ev-setting", methods=["GET"])
+def get_ev_setting():
+    setting = EvSetting.query.first()
+
+    if not setting:
+        return jsonify({
+            "target_stock": 0,
+            "writer": "",
+            "us_date": None
+        })
+
+    return jsonify({
+        "target_stock": setting.target_stock,
+        "writer": setting.writer,
+        "us_date": setting.us_date.strftime("%Y-%m-%d") if setting.us_date else None
+    })
+
+
+@app.route("/api/ev-setting", methods=["PUT"])
+def update_ev_setting():
+    data = request.json
+
+    setting = EvSetting.query.first()
+    if not setting:
+        setting = EvSetting()
+
+    setting.target_stock = data.get("target_stock")
+    setting.writer = data.get("writer")
+
+    us_date = data.get("us_date")
+    if us_date and us_date not in ["", None]:
+        setting.us_date = datetime.strptime(us_date, "%Y-%m-%d").date()
+
+    db.session.add(setting)
+    db.session.commit()
+
+    return jsonify({"message": "updated"})
+
+@app.route("/api/ev-schedule", methods=["GET"])
+def get_ev_schedule():
+    rows = EvSchedule.query.all()
+    return jsonify([r.to_dict() for r in rows])
+
+@app.route("/api/ev-schedule", methods=["POST"])
+def create_ev_schedule():
+    data = request.json
+    row = EvSchedule(inv_no=data["inv_no"])
+    db.session.add(row)
+    db.session.commit()
+    return jsonify({"id": row.id}), 201
+
+@app.route("/api/ev-schedule/<int:id>", methods=["DELETE"])
+def delete_ev_schedule(id):
+    row = EvSchedule.query.get_or_404(id)
+    db.session.delete(row)
+    db.session.commit()
+    return jsonify({"message": "deleted"})
+
+
+@app.route("/api/ev-schedule/bulk", methods=["POST"])
+def save_ev_schedule_bulk():
+    rows = request.json
+
+    # 기존 전체 삭제
+    EvSchedule.query.delete()
+
+    # 새로 저장
+    for r in rows:
+        row = EvSchedule(inv_no=r.get("inv_no"))
+        db.session.add(row)
+
+    db.session.commit()
+    return jsonify({"message": "saved"})
+
 
 
 # ============================================

@@ -57,6 +57,14 @@ const itemToExporters = {
 
 
 export default function InvoicePage() {
+  // 날짜를 해당 지역(timezone)의 "자정 00:00"으로 맞추는 함수
+const toMidnight = (date, timeZone = "America/Chicago") => {
+  const local = new Date(date).toLocaleString("en-US", { timeZone });
+  const d = new Date(local);
+  d.setHours(0, 0, 0, 0);
+  return d;
+};
+
   // 🔥 타입별 placeholder 매핑
 const placeholderMap = {
   po: "PO 번호 입력",
@@ -65,9 +73,8 @@ const placeholderMap = {
   inv: "INV 번호 입력"
 };
 
-  const todayUS = new Date(
-  new Date().toLocaleString("en-US", { timeZone: "America/Chicago" })
-);
+  const todayUS = toMidnight(new Date(), "America/Chicago");
+
 
   const [searchType, setSearchType] = useState("po");
 
@@ -393,11 +400,12 @@ const getAlabamaDate = (dateStr) =>
     // 기본조건: showUpcoming (5일 이내 필터링)
     if (showUpcoming) {
   // 🔥 delayed_date가 있으면 그 날짜로 필터링
-  const baseDate = r.delayed_date
-    ? getAlabamaDate(normalizeDate(r.delayed_date))
-    : getAlabamaDate(normalizeDate(r.eta)); // fallback = ETA
+const baseDate = r.delayed_date
+  ? toMidnight(normalizeDate(r.delayed_date), "America/Chicago")
+  : toMidnight(normalizeDate(r.eta), "America/Chicago");
 
-  const daysToArrival = Math.floor((baseDate - todayUS) / (1000 * 60 * 60 * 24));
+const daysToArrival = Math.floor((baseDate - todayUS) / (1000 * 60 * 60 * 24));
+
 
   // 🔥 오늘 이후 ~ 5일 전까지 포함
   if (!(daysToArrival >= 0 )) return false;
@@ -602,24 +610,20 @@ if (showUpcoming) {
   const eta = merged.eta || '-';
   const delayed = merged.delayed_date || '-';
 
-  // 도착 여부 계산 (ETA vs 공장도착일, 둘 다 미국시간 기준)
-  const etaUS = getAlabamaDate(eta);
-  const factoryUS = merged.delayed_date
-  ? getAlabamaDate(merged.delayed_date)
-  : etaUS;
+
+
 
 // === 도착 여부: delayed_date가 오늘 이전이면 무조건 도착 ===
 
 // delayed_date 또는 ETA 중 실제 도착일 적용
+const etaDate2 = toMidnight(normalizeDate(merged.eta), "America/Chicago");
+
 const delayedDate2 = merged.delayed_date
-  ? getAlabamaDate(merged.delayed_date)
-  : getAlabamaDate(merged.eta);
+  ? toMidnight(normalizeDate(merged.delayed_date), "America/Chicago")
+  : etaDate2;
 
-
-
-
-// 🔥 최종 도착 여부 규칙
 const arrived = delayedDate2 < todayUS;
+
 
 
 
@@ -1032,11 +1036,13 @@ const arrived = delayedDate2 < todayUS;
     <TableBody>
       {filteredRows.map((row, i) => {
         // === 날짜 정규화 ===
-        const etdDate = getKoreaDate(normalizeDate(row.etd));   // 한국 시간
-        const etaDate = getUSDate(normalizeDate(row.eta));      // 미국 시간
-        const delayedDate = row.delayed_date
-          ? getUSDate(normalizeDate(row.delayed_date))          // 미국 시간
-          : etaDate;
+        const etdDate = toMidnight(normalizeDate(row.etd), "Asia/Seoul");
+const etaDate = toMidnight(normalizeDate(row.eta), "America/Chicago");
+
+const delayedDate = row.delayed_date
+  ? toMidnight(normalizeDate(row.delayed_date), "America/Chicago")
+  : etaDate;
+
 
         // === ETA까지 남은 날짜(색상용) ===
         const daysToETA = Math.floor((etaDate - todayUS) / (1000 * 60 * 60 * 24));

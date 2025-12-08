@@ -229,3 +229,81 @@ class AxleSetting(db.Model):
     writer = db.Column(db.String(50))
     us_date = db.Column(db.Date)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+# ===========================================
+# 🚗 EV SETTING MODEL
+# ===========================================
+class EvSetting(db.Model):
+    __tablename__ = "ev_setting"
+
+    id = db.Column(db.Integer, primary_key=True)
+    target_stock = db.Column(db.Integer, nullable=False)
+    writer = db.Column(db.String(50))
+    us_date = db.Column(db.Date)
+
+    updated_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "target_stock": self.target_stock,
+            "writer": self.writer,
+            "us_date": self.us_date,
+            "updated_at": self.updated_at,
+        }
+# ===========================================
+# 🚗 EV INVENTORY MODEL
+# ===========================================
+class EvInventory(db.Model):
+    __tablename__ = "ev_inventory"
+
+    id = db.Column(db.Integer, primary_key=True)
+    company = db.Column(db.String(50), nullable=False)
+    item_name = db.Column(db.String(100), nullable=False)
+    item_code = db.Column(db.String(100), nullable=False)
+    box_qty = db.Column(db.Integer, nullable=False)
+
+    actual_stock = db.Column(db.Integer, default=0)
+
+    updated_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "company": self.company,
+            "item_name": self.item_name,
+            "item_code": self.item_code,
+            "box_qty": self.box_qty,
+            "actual_stock": self.actual_stock,
+            "updated_at": self.updated_at,
+        }
+# ===========================================
+# 🚗 EV SCHEDULE MODEL
+# ===========================================
+class EvSchedule(db.Model):
+    __tablename__ = "ev_schedule"
+
+    id = db.Column(db.Integer, primary_key=True)
+    inv_no = db.Column(db.String(50), nullable=False)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "inv_no": self.inv_no,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+        }

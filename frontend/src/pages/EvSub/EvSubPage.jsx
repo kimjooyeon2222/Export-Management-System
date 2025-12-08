@@ -16,6 +16,48 @@ import { useNavigate } from "react-router-dom";
 import HorizontalScroll from "./HorizontalScroll";
 
 export default function EvSubPage() {
+    const [scheduleRows, setScheduleRows] = useState([]);
+
+    const [inventoryRows, setInventoryRows] = useState([]);
+
+    const API_BASE = import.meta.env.VITE_API_URL;
+    useEffect(() => {
+  loadEvData();
+}, []);
+
+const loadEvData = async () => {
+  try {
+    // 1) EV Setting
+    const resSetting = await fetch(`${API_BASE}/api/ev-setting`);
+    const setting = await resSetting.json();
+
+    setWriter(setting.writer || "");
+    setUsDate(setting.us_date || "");
+
+    // 2) EV Inventory
+    const resInv = await fetch(`${API_BASE}/api/ev-inventory`);
+    const inventory = await resInv.json();
+    setInventoryRows(inventory);   // ← 따로 state 추가해야 함
+
+    // 3) EV Schedule
+    const resSchedule = await fetch(`${API_BASE}/api/ev-schedule`);
+    const schedules = await resSchedule.json();
+
+    // scheduleRows에 로드
+    setScheduleRows(
+      schedules.map((row, idx) => ({
+        ...row,
+        tempId: idx + 1, // React Key용
+      }))
+    );
+
+  } catch (err) {
+    console.error("EV 데이터 불러오기 실패:", err);
+  }
+};
+
+
+
     const [todayAlabama, setTodayAlabama] = useState(null);
 
 useEffect(() => {
@@ -134,24 +176,6 @@ const formatNumber = (num) =>
     ? num.toLocaleString()
     : num ? Number(num).toLocaleString() : "0";
 
-    // 🚚 운송 스케줄 더미 데이터 (DB 연동 전 테스트용)
-const [scheduleRows, setScheduleRows] = useState([
-  {
-    tempId: 1,
-    inv_no: "INV001",
-    etd: "2025-12-01",
-    eta: "2025-12-28",
-    // 28개 품명 수량 자동 샘플 생성
-    ...Object.fromEntries(PART_NAMES.map((n) => [n, Math.floor(Math.random() * 200)]))
-  },
-  {
-    tempId: 2,
-    inv_no: "INV002",
-    etd: "2025-12-05",
-    eta: "2026-01-10",
-    ...Object.fromEntries(PART_NAMES.map((n) => [n, Math.floor(Math.random() * 200)]))
-  }
-]);
 
 
   const navigate = useNavigate();
