@@ -11,23 +11,29 @@ export default function OilInvoiceTimeline(
   calendarDays
 }) {
 
-    
-function toMidnightUS(dateStr) {
-  if (!dateStr) return null;
+const normalizeDate = (str) => {
+  if (!str) return null;
 
-  const [year, month, day] = dateStr.split("-").map(Number);
+  if (!isNaN(Date.parse(str))) return str;
 
-  // 먼저 해당 날짜의 UTC timestamp 생성
-  const utc = Date.UTC(year, month - 1, day, 0, 0, 0);
+  const match = str.match(/(\d{1,2})월\s*(\d{1,2})일/);
+  if (!match) return null;
 
-  // 그 날짜의 Chicago offset 가져오기
-  const offsetHours = getChicagoOffset(new Date(utc));
+  const month = match[1].padStart(2, "0");
+  const day = match[2].padStart(2, "0");
 
-  // offset을 반영해 미국 시간 timestamp 생성
-  const chicagoTimestamp = utc - offsetHours * 3600 * 1000;
+  const year = new Date().getFullYear();
+  return `${year}-${month}-${day}`;
+};
 
-  return new Date(chicagoTimestamp);
-}
+const toMidnight = (date, timeZone = "America/Chicago") => {
+  const local = new Date(date).toLocaleString("en-US", { timeZone });
+  const d = new Date(local);
+  d.setHours(0, 0, 0, 0);
+  return d;
+};
+const todayUS = toMidnight(new Date(), "America/Chicago");
+
 
 
 function getChicagoOffset(date) {
@@ -116,7 +122,7 @@ function getUSToday() {
         sx={{
           backgroundColor:
             invoiceInfo.eta &&
-            toMidnightUS(invoiceInfo.eta) > getUSToday()
+            toMidnight(normalizeDate(invoiceInfo.eta), "America/Chicago") > todayUS
               ? "#ffe6eb"
               : "inherit",
         }}
@@ -132,12 +138,14 @@ function getUSToday() {
             style={{
               color:
                 invoiceInfo.eta &&
-                toMidnightUS(invoiceInfo.eta) > getUSToday()
+                toMidnight(normalizeDate(invoiceInfo.eta), "America/Chicago") > todayUS
+
                   ? "red"
                   : "inherit",
               fontWeight:
                 invoiceInfo.eta &&
-                toMidnightUS(invoiceInfo.eta) > getUSToday()
+                toMidnight(normalizeDate(invoiceInfo.eta), "America/Chicago") > todayUS
+
                   ? "bold"
                   : "normal",
             }}
