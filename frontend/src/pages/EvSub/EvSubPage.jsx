@@ -16,6 +16,27 @@ import { useNavigate } from "react-router-dom";
 import HorizontalScroll from "./HorizontalScroll";
 
 export default function EvSubPage() {
+  function getChicagoOffset(date) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Chicago",
+    timeZoneName: "short",
+  }).formatToParts(date);
+
+  const name = parts.find(p => p.type === "timeZoneName").value;
+  return name === "CDT" ? -5 : -6;
+}
+
+const toAlabamaMidnight = (dateStr) => {
+  if (!dateStr) return null;
+
+  const [year, month, day] = dateStr.split("-").map(Number);
+  const utc = Date.UTC(year, month - 1, day, 0, 0, 0);
+
+  const offsetHours = getChicagoOffset(new Date(utc));
+  const chicagoTimestamp = utc - offsetHours * 3600 * 1000;
+
+  return new Date(chicagoTimestamp);
+};
     const [scheduleRows, setScheduleRows] = useState([]);
 
     const [inventoryRows, setInventoryRows] = useState([]);
@@ -61,20 +82,27 @@ const loadEvData = async () => {
     const [todayAlabama, setTodayAlabama] = useState(null);
 
 useEffect(() => {
-  setTodayAlabama(new Date(getTodayInAlabama()));
+    setTodayAlabama(getTodayInAlabama());
 }, []);
 
 const getTodayInAlabama = () => {
-  const formatter = new Intl.DateTimeFormat("en-CA", {
+  const formatter = new Intl.DateTimeFormat("en-US", {
     timeZone: "America/Chicago",
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
   });
 
-  const str = formatter.format(new Date());
-  return new Date(str);
+  const parts = formatter.formatToParts(new Date());
+
+  const y = parts.find(p => p.type === "year").value;
+  const m = parts.find(p => p.type === "month").value;
+  const d = parts.find(p => p.type === "day").value;
+
+  // 미국 날짜의 "정확한 00:00:00" 고정
+  return new Date(`${y}-${m}-${d}T00:00:00`);
 };
+
 
     // ★ 운송 상태 색상 스타일 (AxleSubPage 동일)
 const getForgingStatusStyle = (status) => {
@@ -198,9 +226,10 @@ const formatNumber = (num) =>
   if (!todayAlabama) return "";
 
   const today = todayAlabama;
-
+  const etdDate = etd ? new Date(etd) : null;
+  const etaUS = eta ? toAlabamaMidnight(eta) : null;
   // ETA < TODAY → 입고완료
-  if (eta && new Date(eta) < today) {
+  if (etaUS && etaUS < today) {
     return "입고완료";
   }
 
@@ -210,7 +239,7 @@ const formatNumber = (num) =>
   }
 
   // ETD > TODAY → 선적대기중
-  if (etd && new Date(etd) > today) {
+  if (etd && etdDate > today) {
     return "선적대기중";
   }
 

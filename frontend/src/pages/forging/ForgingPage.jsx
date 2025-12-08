@@ -19,6 +19,29 @@ import { useNavigate } from "react-router-dom";
 
 
 export default function ForgingPage() {
+function toKoreaMidnight(dateStr) {
+  if (!dateStr) return null;
+  return new Date(`${dateStr}T00:00:00+09:00`);
+}
+function toAlabamaMidnight(dateStr) {
+  if (!dateStr) return null;
+
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Chicago",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+
+  const parts = formatter.formatToParts(new Date(dateStr));
+  const y = parts.find(p => p.type === "year").value;
+  const m = parts.find(p => p.type === "month").value;
+  const d = parts.find(p => p.type === "day").value;
+
+  return new Date(`${y}-${m}-${d}T00:00:00`);
+}
+
+
   const [showStockPanel, setShowStockPanel] = useState(false);
 
 // 📌 미국 Alabama(중부시간) 기준 '오늘 00:00' 생성
@@ -879,8 +902,9 @@ const getStatusStyle = (status) => {
     const data = await res.json();
 
     const today = getTodayInAlabama();
-    const etd = data?.etd ? new Date(data.etd) : null;
-    const eta = data?.eta ? new Date(data.eta) : null;
+    const etd = data?.etd ? toKoreaMidnight(data.etd) : null;
+    const eta = data?.eta ? toAlabamaMidnight(data.eta) : null;
+
 
     let status = "";
 

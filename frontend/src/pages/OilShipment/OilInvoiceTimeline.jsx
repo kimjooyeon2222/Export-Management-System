@@ -1,7 +1,8 @@
 import React, { useMemo } from "react";
 import { TableRow, TableCell, TextField } from "@mui/material";
 
-export default function OilInvoiceTimeline({
+export default function OilInvoiceTimeline(   
+    {
   invoiceInfo,
   items,
   onUpdateHeader,
@@ -10,13 +11,52 @@ export default function OilInvoiceTimeline({
   calendarDays
 }) {
 
-  function getUSToday() {
-    const now = new Date();
-    const us = new Date(
-      now.toLocaleString("en-US", { timeZone: "America/Chicago" })
-    );
-    return new Date(us.getFullYear(), us.getMonth(), us.getDate());
-  }
+    
+function toMidnightUS(dateStr) {
+  if (!dateStr) return null;
+
+  const [year, month, day] = dateStr.split("-").map(Number);
+
+  // 먼저 해당 날짜의 UTC timestamp 생성
+  const utc = Date.UTC(year, month - 1, day, 0, 0, 0);
+
+  // 그 날짜의 Chicago offset 가져오기
+  const offsetHours = getChicagoOffset(new Date(utc));
+
+  // offset을 반영해 미국 시간 timestamp 생성
+  const chicagoTimestamp = utc - offsetHours * 3600 * 1000;
+
+  return new Date(chicagoTimestamp);
+}
+
+
+function getChicagoOffset(date) {
+  // date 기준 Chicago offset (DST 대응)
+  const options = { timeZone: "America/Chicago", timeZoneName: "short" };
+  const parts = new Intl.DateTimeFormat("en-US", options).formatToParts(date);
+  const zoneName = parts.find(p => p.type === "timeZoneName").value;
+
+  // CST → UTC-6, CDT → UTC-5
+  return zoneName === "CDT" ? -5 : -6;
+}
+function getUSToday() {
+  const now = new Date();
+
+  // 지금 시점의 Chicago 날짜를 얻기 위한 offset 계산
+  const offsetHours = getChicagoOffset(now);
+
+  // 지금 시간 기준 UTC timestamp
+  const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+
+  // 미국 날짜 timestamp
+  const chicagoTimestamp = utc - offsetHours * 3600 * 1000;
+
+  const chicagoDate = new Date(chicagoTimestamp);
+  chicagoDate.setHours(0, 0, 0, 0);
+
+  return chicagoDate;
+}
+
 
   // seq → qty 매핑
   const seqMap = useMemo(() => {
@@ -76,7 +116,7 @@ export default function OilInvoiceTimeline({
         sx={{
           backgroundColor:
             invoiceInfo.eta &&
-            new Date(invoiceInfo.eta) > getUSToday()
+            toMidnightUS(invoiceInfo.eta) > getUSToday()
               ? "#ffe6eb"
               : "inherit",
         }}
@@ -92,12 +132,12 @@ export default function OilInvoiceTimeline({
             style={{
               color:
                 invoiceInfo.eta &&
-                new Date(invoiceInfo.eta) > getUSToday()
+                toMidnightUS(invoiceInfo.eta) > getUSToday()
                   ? "red"
                   : "inherit",
               fontWeight:
                 invoiceInfo.eta &&
-                new Date(invoiceInfo.eta) > getUSToday()
+                toMidnightUS(invoiceInfo.eta) > getUSToday()
                   ? "bold"
                   : "normal",
             }}

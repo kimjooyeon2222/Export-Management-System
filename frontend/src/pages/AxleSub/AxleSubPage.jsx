@@ -18,6 +18,34 @@ import { v4 as uuidv4 } from "uuid";
 
 
 export default function AxleSubPage() {
+    function getChicagoOffset(date) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Chicago",
+    timeZoneName: "short",
+  }).formatToParts(date);
+
+  const tz = parts.find(p => p.type === "timeZoneName").value;
+  return tz === "CDT" ? -5 : -6;
+}
+function toAlabamaMidnight(dateStr) {
+  if (!dateStr) return null;
+
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const utc = Date.UTC(y, m - 1, d, 0, 0, 0);
+  const offset = getChicagoOffset(new Date(utc));
+  const ts = utc - offset * 3600 * 1000;
+  return new Date(ts);
+}
+function getTodayInAlabama() {
+  const now = new Date();
+  const offset = getChicagoOffset(now);
+  const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+  const ts = utc - offset * 3600 * 1000;
+  const d = new Date(ts);
+  d.setHours(0,0,0,0);
+  return d;
+}
+
     const getForgingStatusStyle = (status) => {
   if (status === "입고완료") {
     return {
@@ -123,40 +151,21 @@ const calcInTransit = (itemName) => {
 };
 
 
-   const getTodayInAlabama = () => {
-  const formatter = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/Chicago",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
 
-  const str = formatter.format(new Date()); // "2025-12-04"
-  return new Date(str);   // 🔥 Date 객체로 변환
-};
 
     const getScheduleStatus = (etd, eta) => {
   if (!todayAlabama) return "";
 
   const today = todayAlabama;   // "2025-12-04" → Date 객체
 
-  // 1) ETA < TODAY  → 입고완료
-  if (eta && new Date(eta) < today) {
-    return "입고완료";
-  }
+ const etaUS = eta ? toAlabamaMidnight(eta) : null;
+const etdUS = etd ? toAlabamaMidnight(etd) : null;
 
-  // 2) ETA = "일정 없음" 또는 공백 → 부산항 미입고
-  if (!eta || eta === "일정 없음") {
-    return "부산항 미입고";
-  }
+if (etaUS && etaUS < today) return "입고완료";
+if (!eta || eta === "일정 없음") return "부산항 미입고";
+if (etdUS && etdUS > today) return "선적대기중";
 
-  // 3) ETD > TODAY → 선적대기중
-  if (etd && new Date(etd) > today) {
-    return "선적대기중";
-  }
-
-  // 4) 나머지 → 운항중
-  return "운항중";
+return "운항중";
 };
 
 const updateScheduleCell = (tempId, field, value) => {

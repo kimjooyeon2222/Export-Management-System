@@ -413,16 +413,19 @@ const daysToArrival = Math.floor((baseDate - todayUS) / (1000 * 60 * 60 * 24));
 
 
  // --- 날짜 필터링 정확한 버전 ---
-// ETD 시작 필터
+// 기간 필터
 if (etdStart) {
-  if (!r.etd || r.etd.trim() === "") return false;
-  if (r.etd < etdStart) return false;
+  const etdDate = toMidnight(normalizeDate(r.etd), "Asia/Seoul");   // 한국시간 00:00
+  const startDate = toMidnight(etdStart, "Asia/Seoul");
+
+  if (etdDate < startDate) return false;
 }
 
-// ETA 종료 필터
 if (etaEnd) {
-  if (!r.eta || r.eta.trim() === "") return false;
-  if (r.eta > etaEnd) return false;
+  const etaDate = toMidnight(normalizeDate(r.eta), "America/Chicago"); // 미국시간 00:00
+  const endDate = toMidnight(etaEnd, "America/Chicago");
+
+  if (etaDate > endDate) return false;
 }
 
 
