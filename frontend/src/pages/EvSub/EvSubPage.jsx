@@ -306,58 +306,93 @@ const [scheduleRows, setScheduleRows] = useState([
           과부족 상태 패널
       ===================================== */}
       {showStockPanel && (
-        <Paper sx={{ p: 2, mb: 4, border: "2px solid #777" }}>
-          <Typography sx={{ fontWeight: "bold", fontSize: 18 }}>
-            ※ 과부족 상태 ※
-          </Typography>
+  <Paper sx={{ p: 2, mb: 4, border: "2px solid #777" }}>
+    <Typography sx={{ fontWeight: "bold", fontSize: 18, mb: 2 }}>
+      ※ 과부족 상태 ※
+    </Typography>
 
-          <Table size="small" sx={{ mt: 2 }}>
-            <TableHead>
-              <TableRow>
-                {["품목", "기존재고", "적정재고", "과부족 상태"].map((h) => (
-                  <TableCell
-                    key={h}
-                    sx={{ fontWeight: "bold", fontSize: 15, bgcolor: "#f0f0f0" }}
-                  >
-                    {h}
-                  </TableCell>
-                ))}
-              </TableRow>
-            </TableHead>
+    <Table size="small">
+      <TableHead
+        sx={{
+          bgcolor: "#ffe599",          // 🔥 운송 스케줄과 동일한 헤더 배경색
+          "& th": {
+            fontWeight: "bold",
+            fontSize: "15px",
+            textAlign: "center",
+            
+          }
+        }}
+      >
+        <TableRow>
+          <TableCell>업체명</TableCell>
+          <TableCell>품명</TableCell>
+          <TableCell>품번</TableCell>
+          <TableCell>박스 입수량</TableCell>
+          <TableCell>실사자료</TableCell>
+          <TableCell>적정재고</TableCell>
+          <TableCell>운항중</TableCell>
+          <TableCell>운항중 + 실사자료</TableCell>
+          <TableCell>판단결과</TableCell>
+        </TableRow>
+      </TableHead>
 
-            <TableBody>
-              {[
-                { name: "PLUG", current: 1200, proper: 1000 },
-                { name: "GASKET", current: 600, proper: 900 },
-                { name: "DOWEL PIN", current: 200, proper: 300 }
-              ].map((row) => {
-                const status = getStatus(row.current, row.proper);
-                return (
-                  <TableRow key={row.name}>
-                    <TableCell sx={{ fontWeight: "bold" }}>{row.name}</TableCell>
-                    <TableCell>{row.current.toLocaleString()}</TableCell>
-                    <TableCell>{row.proper.toLocaleString()}</TableCell>
-                    <TableCell>
-                      
-<Box
-  component="span"
-  sx={{
-    px: 1.2,
-    borderRadius: 1,
-    fontWeight: "bold",
-    color: statusColor(status)
-  }}
->
-  {status}
-</Box>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </Paper>
-      )}
+      <TableBody>
+        {[
+          {
+            company: "ABC",
+            name: "PLUG",
+            code: "111-222",
+            box: 100,
+            current: 1200,
+            proper: 1000,
+            transit: 300
+          },
+          {
+            company: "XYZ",
+            name: "GASKET",
+            code: "333-444",
+            box: 200,
+            current: 600,
+            proper: 900,
+            transit: 50
+          }
+        ].map((row, idx) => {
+          const total = row.transit + row.current;
+          const status = getStatus(row.current, row.proper);
+
+          return (
+            <TableRow key={idx}>
+              <TableCell align="center" sx={{ fontWeight: "bold" }}>{row.company}</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold" }}>{row.name}</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold" }}>{row.code}</TableCell>
+              <TableCell align="center">{row.box.toLocaleString()}</TableCell>
+              <TableCell align="center">{row.current.toLocaleString()}</TableCell>
+              <TableCell align="center">{row.proper.toLocaleString()}</TableCell>
+              <TableCell align="center">{row.transit.toLocaleString()}</TableCell>
+              <TableCell align="center">{total.toLocaleString()}</TableCell>
+
+              <TableCell align="center">
+                <Box
+                  component="span"
+                  sx={{
+                    px: 1.2,
+                    borderRadius: 1,
+                    fontWeight: "bold",
+                    color: statusColor(status)
+                  }}
+                >
+                  {status}
+                </Box>
+              </TableCell>
+            </TableRow>
+          );
+        })}
+      </TableBody>
+    </Table>
+  </Paper>
+)}
+
+    
 
       {/* =====================================
           운송 스케줄 패널
