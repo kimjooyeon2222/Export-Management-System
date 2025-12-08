@@ -26,30 +26,22 @@ function toKoreaMidnight(dateStr) {
 function toAlabamaMidnight(dateStr) {
   if (!dateStr) return null;
 
-  const formatter = new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/Chicago",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
+  // 입력값이 YYYY-MM-DD 라고 가정
+  const [y, m, d] = dateStr.split("-").map(Number);
 
-  const parts = formatter.formatToParts(new Date(dateStr));
-  const y = parts.find(p => p.type === "year").value;
-  const m = parts.find(p => p.type === "month").value;
-  const d = parts.find(p => p.type === "day").value;
+  // 미국 Chicago 00:00 → UTC = +6시간
+  const utcTS = Date.UTC(y, m - 1, d, 6, 0, 0);
 
-  return new Date(`${y}-${m}-${d}T00:00:00`);
+  return new Date(utcTS);
 }
+
 
 
   const [showStockPanel, setShowStockPanel] = useState(false);
 
 // 📌 미국 Alabama(중부시간) 기준 '오늘 00:00' 생성
 function getTodayInAlabama() {
-  const now = new Date();
-
-  // 미국 Central Time offset 계산 (자동 DST 반영)
-  const options = { timeZone: "America/Chicago" };
+  // Alabama(Chicago) 현재 날짜를 문자열로 얻음
   const formatter = new Intl.DateTimeFormat("en-US", {
     timeZone: "America/Chicago",
     year: "numeric",
@@ -57,14 +49,15 @@ function getTodayInAlabama() {
     day: "2-digit",
   });
 
-  const parts = formatter.formatToParts(now);
+  const parts = formatter.formatToParts(new Date());
+  const y = parts.find((p) => p.type === "year").value;
+  const m = parts.find((p) => p.type === "month").value;
+  const d = parts.find((p) => p.type === "day").value;
 
-  const y = parts.find(p => p.type === "year").value;
-  const m = parts.find(p => p.type === "month").value;
-  const d = parts.find(p => p.type === "day").value;
-
-  return new Date(`${y}-${m}-${d}T00:00:00`);
+  // 실제 알라배마 날짜의 00:00을 UTC 기준으로 만들어줌
+  return new Date(Date.UTC(y, m - 1, d, 6, 0, 0)); // 00:00 CST = 06:00 UTC
 }
+
 
 
   function normalizeRow(row) {
@@ -182,19 +175,69 @@ useEffect(() => {
   loadItems();
 }, []);
 
+function parseDBDate(dateValue) {
+  if (!dateValue) return null;
+
+  // timestamp or ISO string → Date 객체 변환
+  const d = new Date(dateValue);
+  if (!isNaN(d)) return d;  // 이미 정상 Date
+
+  // YYYY-MM-DD 형태라면 수동 변환
+  const [y, m, dd] = dateValue.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, dd, 6, 0, 0));
+}
+
 useEffect(() => {
   async function loadRows() {
     const res = await fetch(`${API_BASE}/api/schedule-rows`);
     const dbRows = await res.json();
 
-    setRows(dbRows);
+    const fixedRows = dbRows.map(r => {
+      const etd = parseDBDate(r.etd);
+      const eta = parseDBDate(r.eta);
 
-    // 로딩 후 running 자동계산
-    updateRunningTotals(dbRows);
+      return {
+        ...r,
+        etd,
+        eta
+      };
+    });
+
+    const today = getTodayInAlabama();
+
+    const recalculated = fixedRows.map(r => {
+      const etdDate = r.etd;
+      const etaDate = r.eta;
+
+      let status = "";
+
+      // ETA 없으면 부산항 미입고
+      if (!etaDate) {
+        status = "부산항 미입고";
+      }
+      // ETA 지났으면 입고완료      
+      else if (etaDate < today) {
+        status = "입고완료";
+      }
+      // ETD가 있고 미래면 선적대기중
+      else if (etdDate && etdDate > today) {
+        status = "선적대기중";
+      }
+      // 나머지는 운항중
+      else {
+        status = "운항중";
+      }
+
+      return { ...r, status };
+    });
+
+    setRows(recalculated);
+    updateRunningTotals(recalculated);
   }
 
   loadRows();
 }, []);
+
 
 
 
@@ -908,10 +951,23 @@ const getStatusStyle = (status) => {
 
     let status = "";
 
-    if (!data?.eta || data.eta === "일정 없음") status = "부산항 미입고";
-    else if (eta < today) status = "입고완료";
-    else if (etd > today) status = "선적대기중";
-    else status = "운항중";
+if (!data?.eta || data.eta === "일정 없음") {
+  status = "부산항 미입고";
+} 
+else {
+  const etdDate = data?.etd ? toAlabamaMidnight(data.etd) : null;
+  const etaDate = data?.eta ? toAlabamaMidnight(data.eta) : null;
+  const today = getTodayInAlabama();
+
+  if (etaDate < today) {
+    status = "입고완료";
+  } else if (etdDate > today) {
+    status = "선적대기중";
+  } else {
+    status = "운항중";
+  }
+}
+
 
     // 4️⃣ 입력된 INV에 대한 데이터 반영
     setRows(prev => {
@@ -921,8 +977,9 @@ const getStatusStyle = (status) => {
               ...r,
               no: data?.no || "",
               status,
-              etd: data?.etd || "",
-              eta: data?.eta || "",
+              etd: data?.etd ? toKoreaMidnight(data.etd) : null,
+eta: data?.eta ? toAlabamaMidnight(data.eta) : null,
+
               month_depart: data?.etd
                 ? `${new Date(data.etd).getMonth() + 1}월`
                 : "",
@@ -1051,7 +1108,8 @@ const getStatusStyle = (status) => {
           {/* 🔹 ETD (입력칸 제거, 자동 표시만) */}
           <TableCell align="center">
   <Typography sx={{ fontWeight: "bold", fontSize: "15px" }}>
-    {row.etd}
+    {row.etd ? row.etd.toISOString().split("T")[0] : ""}
+
   </Typography>
 </TableCell>
 
@@ -1065,7 +1123,8 @@ const getStatusStyle = (status) => {
       fontSize: "15px",
     }}
   >
-    {row.eta}
+    {row.eta ? row.eta.toISOString().split("T")[0] : ""}
+
   </Box>
 </TableCell>
 
