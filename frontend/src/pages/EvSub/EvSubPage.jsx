@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+
 import { 
   Box,
   Typography,
@@ -15,7 +16,88 @@ import { useNavigate } from "react-router-dom";
 import HorizontalScroll from "./HorizontalScroll";
 
 export default function EvSubPage() {
-    
+    const [todayAlabama, setTodayAlabama] = useState(null);
+
+useEffect(() => {
+  setTodayAlabama(new Date(getTodayInAlabama()));
+}, []);
+
+const getTodayInAlabama = () => {
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Chicago",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+
+  const str = formatter.format(new Date());
+  return new Date(str);
+};
+
+    // ★ 운송 상태 색상 스타일 (AxleSubPage 동일)
+const getForgingStatusStyle = (status) => {
+  if (status === "입고완료") {
+    return {
+      bgcolor: "#d9f7be",
+      color: "#237804",
+      fontWeight: "bold",
+      borderRadius: "6px",
+      px: 1,
+      display: "inline-block",
+    };
+  }
+
+  if (status === "운항중") {
+    return {
+      bgcolor: "#ffe6f1",
+      color: "#c41d7f",
+      fontWeight: "bold",
+      borderRadius: "6px",
+      px: 1,
+      display: "inline-block",
+    };
+  }
+
+  if (status === "선적대기중") {
+    return {
+      bgcolor: "#d0e0e3",
+      color: "#0b5394",
+      fontWeight: "bold",
+      borderRadius: "6px",
+      px: 1,
+      display: "inline-block",
+    };
+  }
+
+  return {
+    bgcolor: "#f4cccc",
+    color: "#990000",
+    fontWeight: "bold",
+    borderRadius: "6px",
+    px: 1,
+    display: "inline-block",
+  };
+};
+
+    // ★ 엑셀 수식 =IF(F6>=F4*1.13,"초과", ...)
+const getStatus = (actual, target) => {
+  if (actual >= target * 1.13) return "초과";
+  if (actual >= target && actual > target * 0.96) return "양호";
+  if (actual <= target * 0.7) return "위험";
+  return "적정재고미달";
+};
+
+// ★ 상태 색상 지정
+const statusColor = (status) => {
+  switch (status) {
+    case "초과": return "purple";
+    case "양호": return "green";
+    case "위험": return "red";
+    case "적정재고미달": return "orange";
+    default: return "black";
+  }
+};
+
     // 운송 스케줄용 품명 28개
 const PART_NAMES = [
   "PIN DOWEL",
@@ -84,44 +166,34 @@ const [scheduleRows, setScheduleRows] = useState([
   // 과부족 패널 토글
   const [showStockPanel, setShowStockPanel] = useState(false);
 
-  // ============================
-  // 과부족 계산 로직
-  // ============================
-  const getStockStatus = (current, proper) => {
-    if (!proper || !current) return "N/A";
-
-    if (current >= proper * 1.13) return "초과";
-    if (current >= proper && current > proper * 0.96) return "양호";
-    if (current <= proper * 0.7) return "위험";
-    return "적정재고미달";
-  };
-
-  const stockStatusStyle = {
-    "초과": { bgcolor: "#d9f7be", color: "#135200", fontWeight: "bold", px: 1.2, borderRadius: 1 },
-    "양호": { bgcolor: "#e6f4ff", color: "#0050b3", fontWeight: "bold", px: 1.2, borderRadius: 1 },
-    "위험": { bgcolor: "#fff1f0", color: "#a8071a", fontWeight: "bold", px: 1.2, borderRadius: 1 },
-    "적정재고미달": { bgcolor: "#fffbe6", color: "#ad8b00", fontWeight: "bold", px: 1.2, borderRadius: 1 },
-    "N/A": { bgcolor: "#fafafa", color: "#8c8c8c", fontWeight: "bold", px: 1.2, borderRadius: 1 }
-  };
-
+ 
   // ============================
   // 운송 스케줄 계산
   // ============================
   const getScheduleStatus = (etd, eta) => {
-    if (!eta || eta === "일정 없음") return "일정 없음";
+  if (!todayAlabama) return "";
 
-    const today = new Date();
-    const etaDate = new Date(eta);
+  const today = todayAlabama;
 
-    if (etaDate <= today) return "입고완료";
-    return "운항중";
-  };
+  // ETA < TODAY → 입고완료
+  if (eta && new Date(eta) < today) {
+    return "입고완료";
+  }
 
-  const scheduleStatusStyle = {
-    "입고완료": { bgcolor: "#d9f7be", color: "#237804", fontWeight: "bold", px: 1.2, borderRadius: 1 },
-    "운항중": { bgcolor: "#e6f4ff", color: "#0050b3", fontWeight: "bold", px: 1.2, borderRadius: 1 },
-    "일정 없음": { bgcolor: "#f5f5f5", color: "#595959", fontWeight: "bold", px: 1.2, borderRadius: 1 }
-  };
+  // ETA 없음 → 부산항 미입고
+  if (!eta || eta === "일정 없음") {
+    return "부산항 미입고";
+  }
+
+  // ETD > TODAY → 선적대기중
+  if (etd && new Date(etd) > today) {
+    return "선적대기중";
+  }
+
+  // 나머지 → 운항중
+  return "운항중";
+};
+
 
   // ============================
   // 날짜 → (11월 초, 중순, 말)
@@ -259,16 +331,25 @@ const [scheduleRows, setScheduleRows] = useState([
                 { name: "GASKET", current: 600, proper: 900 },
                 { name: "DOWEL PIN", current: 200, proper: 300 }
               ].map((row) => {
-                const status = getStockStatus(row.current, row.proper);
+                const status = getStatus(row.current, row.proper);
                 return (
                   <TableRow key={row.name}>
                     <TableCell sx={{ fontWeight: "bold" }}>{row.name}</TableCell>
                     <TableCell>{row.current.toLocaleString()}</TableCell>
                     <TableCell>{row.proper.toLocaleString()}</TableCell>
                     <TableCell>
-                      <Box component="span" sx={stockStatusStyle[status]}>
-                        {status}
-                      </Box>
+                      
+<Box
+  component="span"
+  sx={{
+    px: 1.2,
+    borderRadius: 1,
+    fontWeight: "bold",
+    color: statusColor(status)
+  }}
+>
+  {status}
+</Box>
                     </TableCell>
                   </TableRow>
                 );
@@ -312,13 +393,23 @@ const [scheduleRows, setScheduleRows] = useState([
             <TableRow key={row.tempId}>
               <TableCell align="center">{row.inv_no}</TableCell>
               <TableCell align="center">{row.etd}</TableCell>
-              <TableCell align="center">{row.eta}</TableCell>
+              <TableCell align="center">
+  {getScheduleStatus(row.etd, row.eta) === "운항중" ? (
+    <Box sx={getForgingStatusStyle("운항중")}>
+      {row.eta}
+    </Box>
+  ) : (
+    row.eta
+  )}
+</TableCell>
+
 
               <TableCell align="center">
-                <Box sx={scheduleStatusStyle[getScheduleStatus(row.etd, row.eta)]}>
-                  {getScheduleStatus(row.etd, row.eta)}
-                </Box>
-              </TableCell>
+  <Box sx={getForgingStatusStyle(getScheduleStatus(row.etd, row.eta))}>
+    {getScheduleStatus(row.etd, row.eta)}
+  </Box>
+</TableCell>
+
 
               {PART_NAMES.map((pname, idx) => (
                 <TableCell key={idx} align="center">
@@ -332,6 +423,7 @@ const [scheduleRows, setScheduleRows] = useState([
       </Table>
     </Box>
   </HorizontalScroll>
+  
 </Paper>
 
     </Box>
