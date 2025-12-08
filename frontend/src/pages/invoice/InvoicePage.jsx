@@ -126,23 +126,38 @@ const handleDragEnd = async (event) => {
   }
 };
 function SortableRow({ row, children, rowBg, sortMode }) {
+  if (!sortMode) {
+    // 🔥 sortMode OFF → 일반 TableRow 사용 (useSortable 절대 실행 안 됨)
+    return (
+      <TableRow style={{ backgroundColor: rowBg }}>
+        {children}
+      </TableRow>
+    );
+  }
+
+  // 🔥 sortMode ON일 때만 useSortable 작동
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({ id: row.id });
 
   const style = {
-    transform: CSS.Transform.toString(transform), 
+    transform: CSS.Transform.toString(transform),
     transition,
     backgroundColor: rowBg,
-    cursor: sortMode ? "grab" : "default"
+    cursor: "grab",
   };
 
   return (
-    <TableRow ref={setNodeRef} style={style} {...(sortMode ? attributes : {})}
-      {...(sortMode ? listeners : {})}>
+    <TableRow
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+    >
       {children}
     </TableRow>
   );
 }
+
 
 const [etdStart, setEtdStart] = useState("");
 const [etaEnd, setEtaEnd] = useState("");
@@ -1027,145 +1042,257 @@ const arrived = delayedDate2 < todayUS;
               </TableRow>
             </TableHead>
 
-            <DndContext
-  sensors={sensors}
-  collisionDetection={closestCenter}
-  onDragEnd={handleDragEnd}
->
-  <SortableContext
-    items={filteredRows.map((r) => r.id)}
-    strategy={verticalListSortingStrategy}
+            {/* ==========================  
+    🔥 정렬 모드 조건부 렌더링  
+   ========================== */}
+{sortMode ? (
+  <DndContext
+    sensors={sensors}
+    collisionDetection={closestCenter}
+    onDragEnd={handleDragEnd}
   >
-    <TableBody>
-      {filteredRows.map((row, i) => {
-        // === 날짜 정규화 ===
-        const etdDate = toMidnight(normalizeDate(row.etd), "Asia/Seoul");
-const etaDate = toMidnight(normalizeDate(row.eta), "America/Chicago");
+    <SortableContext
+      items={filteredRows.map((r) => r.id)}
+      strategy={verticalListSortingStrategy}
+    >
+      <TableBody>
+        {filteredRows.map((row, i) => {
+          // === 날짜 정규화 ===
+          const etdDate = toMidnight(normalizeDate(row.etd), "Asia/Seoul");
+          const etaDate = toMidnight(normalizeDate(row.eta), "America/Chicago");
 
-const delayedDate = row.delayed_date
-  ? toMidnight(normalizeDate(row.delayed_date), "America/Chicago")
-  : etaDate;
+          const delayedDate = row.delayed_date
+            ? toMidnight(normalizeDate(row.delayed_date), "America/Chicago")
+            : etaDate;
 
+          // === ETA까지 남은 날짜 ===
+          const daysToETA = Math.floor((etaDate - todayUS) / (1000 * 60 * 60 * 24));
 
-        // === ETA까지 남은 날짜(색상용) ===
-        const daysToETA = Math.floor((etaDate - todayUS) / (1000 * 60 * 60 * 24));
+          // === ETA vs 실제 도착일 ===
+          const diffDays = Math.floor((delayedDate - etaDate) / (1000 * 60 * 60 * 24));
+          const countText = `${diffDays}일`;
+          const countNum = diffDays;
 
-        // === ETA vs 실제 도착일 차이 ===
-        const diffDays = Math.floor((delayedDate - etaDate) / (1000 * 60 * 60 * 24));
+          // === 색상 스타일 ===
+          let delayedStyle = {};
+          if (daysToETA < 0) {
+            delayedStyle = { bgcolor: "#d6eaff" };
+          } else if (daysToETA >= 0 && daysToETA <= 5) {
+            delayedStyle = {
+              bgcolor: "#ffcccc",
+              color: "#b71c1c",
+              fontWeight: "bold",
+            };
+          } else {
+            delayedStyle = { bgcolor: "#ffcccc" };
+          }
 
-        // COUNT 표시용
-        const countText = `${diffDays}일`;
-        const countNum = diffDays;
+          const countStyle =
+            countNum >= 10
+              ? { bgcolor: "#ccf2e0", color: "red", fontWeight: "bold" }
+              : { bgcolor: "white", color: "black", fontWeight: "normal" };
 
-        // 🚀 지연(Delayed) 색상 스타일 - ETA 기준
-        let delayedStyle = {};
-        if (daysToETA < 0) {
-          delayedStyle = { bgcolor: "#d6eaff" }; // 도착 완료
-        }  else if (daysToETA >= 0 && daysToETA <= 5) {
-          delayedStyle = {
-            bgcolor: "#ffcccc",
-            color: "#b71c1c",
-            fontWeight: "bold",
-          };
-        } else {
-          delayedStyle = { bgcolor: "#ffcccc" };
-        }
+          const rowBg = i % 2 === 0 ? "#fff5e6" : "#ffffff";
 
-        const countStyle =
-          countNum >= 10
-            ? { bgcolor: "#ccf2e0", color: "red", fontWeight: "bold" }
-            : { bgcolor: "white", color: "black", fontWeight: "normal" };
-
-        const rowBg = i % 2 === 0 ? "#fff5e6" : "#ffffff";
-
-        return (
-          <SortableRow key={row.id} row={row} rowBg={rowBg} sortMode={sortMode}>
-          
-            {[
-              row.id,
-              row.exporter,
-              row.inv_no,
-              row.amount,
-              row.item_type,
-              row.cont_no,
-              row.bl_no,
-              row.etd,
-              row.eta,
-              row.delayed_date,
-              countText,
-              row.needs_help,
-              row.remark
-            ].map((val, idx) => (
-              <TableCell
-                key={idx}
-                align="center"
-                sx={{
-                  fontSize: "1rem",
-                   
-                   // 🚀 삭제 모드에서 선택된 행 → 색상 강조
-    ...(deleteMode && selectedInvs.includes(row.inv_no) && {
-      bgcolor: "#ffcccc !important",
-      color: "black",
-      fontWeight: "bold",
-    }),
-                  ...(idx === 2 && { color: "blue", cursor: "pointer", textDecoration: "underline" }),
-                  ...(idx === 9 ? delayedStyle : {}),   // delayed 색상
-                  ...(idx === 10 ? countStyle : {}),     // count 색상
-                   ...(idx === 5 || idx === 6 || idx === 12? { whiteSpace: "pre-line" } : {}),
-                  ...(userRole === "admin" && { cursor: "pointer" })
-                }}
-                onClick={() => {
-                  if (deleteMode) {
-                    // 삭제모드에서 클릭 시 선택
-                    if (selectedInvs.includes(row.inv_no)) {
-                      setSelectedInvs(prev => prev.filter(v => v !== row.inv_no));
-                    } else {
-                      setSelectedInvs(prev => [...prev, row.inv_no]);
+          return (
+            <SortableRow key={row.id} row={row} rowBg={rowBg} sortMode={true}>
+              {[
+                row.id,
+                row.exporter,
+                row.inv_no,
+                row.amount,
+                row.item_type,
+                row.cont_no,
+                row.bl_no,
+                row.etd,
+                row.eta,
+                row.delayed_date,
+                countText,
+                row.needs_help,
+                row.remark
+              ].map((val, idx) => (
+                <TableCell
+                  key={idx}
+                  align="center"
+                  sx={{
+                    fontSize: "1rem",
+                    ...(deleteMode && selectedInvs.includes(row.inv_no) && {
+                      bgcolor: "#ffcccc !important",
+                      color: "black",
+                      fontWeight: "bold",
+                    }),
+                    ...(idx === 2 && { color: "blue", cursor: "pointer", textDecoration: "underline" }),
+                    ...(idx === 9 ? delayedStyle : {}),
+                    ...(idx === 10 ? countStyle : {}),
+                    ...(idx === 5 || idx === 6 || idx === 12 ? { whiteSpace: "pre-line" } : {}),
+                    ...(userRole === "admin" && { cursor: "pointer" })
+                  }}
+                  onClick={() => {
+                    if (deleteMode) {
+                      if (selectedInvs.includes(row.inv_no)) {
+                        setSelectedInvs(prev => prev.filter(v => v !== row.inv_no));
+                      } else {
+                        setSelectedInvs(prev => [...prev, row.inv_no]);
+                      }
+                      return;
                     }
-                    return;
-                  }
 
-                  // INV 클릭 → PACKING LIST 이동
-                  if (idx === 2 && !isEditMode) {
-                    return navigate(`/packing-list/${row.inv_no}`);
-                  }
-
-                  // 관리자 & 수정 모드
-                  if (userRole === "admin" && isEditMode) {
-                    const value = prompt("값 수정", String(val || ""));
-                    if (value !== null) {
-                      const keys = [
-                        "id",
-                        "exporter",
-                        "inv_no",
-                        "amount",
-                        "item_type",
-                        "cont_no",
-                        "bl_no",
-                        "etd",
-                        "eta",
-                        "delayed_date",
-                        "count_days",
-                        "needs_help",
-                        "remark"
-                      ];
-                      handleEdit(row.id, keys[idx], value);
+                    if (idx === 2 && !isEditMode) {
+                      return navigate(`/packing-list/${row.inv_no}`);
                     }
+
+                    if (userRole === "admin" && isEditMode) {
+                      const value = prompt("값 수정", String(val || ""));
+                      if (value !== null) {
+                        const keys = [
+                          "id",
+                          "exporter",
+                          "inv_no",
+                          "amount",
+                          "item_type",
+                          "cont_no",
+                          "bl_no",
+                          "etd",
+                          "eta",
+                          "delayed_date",
+                          "count_days",
+                          "needs_help",
+                          "remark"
+                        ];
+                        handleEdit(row.id, keys[idx], value);
+                      }
+                    }
+                  }}
+                >
+                  {(idx === 5 || idx === 6 || idx === 12)
+                    ? (val || "").replace(/,\s*/g, "\n")
+                    : val}
+                </TableCell>
+              ))}
+            </SortableRow>
+          );
+        })}
+      </TableBody>
+    </SortableContext>
+  </DndContext>
+) : (
+  /* ==========================  
+      🔥 정렬 OFF: 단순 TableBody  
+     ========================== */
+  <TableBody>
+    {filteredRows.map((row, i) => {
+      // 동일 코드 (정렬 OFF에서도 로직 그대로 유지)
+      const etdDate = toMidnight(normalizeDate(row.etd), "Asia/Seoul");
+      const etaDate = toMidnight(normalizeDate(row.eta), "America/Chicago");
+
+      const delayedDate = row.delayed_date
+        ? toMidnight(normalizeDate(row.delayed_date), "America/Chicago")
+        : etaDate;
+
+      const daysToETA = Math.floor((etaDate - todayUS) / (1000 * 60 * 60 * 24));
+
+      const diffDays = Math.floor((delayedDate - etaDate) / (1000 * 60 * 60 * 24));
+      const countText = `${diffDays}일`;
+      const countNum = diffDays;
+
+      let delayedStyle = {};
+      if (daysToETA < 0) delayedStyle = { bgcolor: "#d6eaff" };
+      else if (daysToETA >= 0 && daysToETA <= 5)
+        delayedStyle = {
+          bgcolor: "#ffcccc",
+          color: "#b71c1c",
+          fontWeight: "bold",
+        };
+      else delayedStyle = { bgcolor: "#ffcccc" };
+
+      const countStyle =
+        countNum >= 10
+          ? { bgcolor: "#ccf2e0", color: "red", fontWeight: "bold" }
+          : { bgcolor: "white", color: "black", fontWeight: "normal" };
+
+      const rowBg = i % 2 === 0 ? "#fff5e6" : "#ffffff";
+
+      return (
+        <SortableRow key={row.id} row={row} rowBg={rowBg} sortMode={false}>
+          {[
+            row.id,
+            row.exporter,
+            row.inv_no,
+            row.amount,
+            row.item_type,
+            row.cont_no,
+            row.bl_no,
+            row.etd,
+            row.eta,
+            row.delayed_date,
+            countText,
+            row.needs_help,
+            row.remark
+          ].map((val, idx) => (
+            <TableCell
+              key={idx}
+              align="center"
+              sx={{
+                fontSize: "1rem",
+                ...(deleteMode && selectedInvs.includes(row.inv_no) && {
+                  bgcolor: "#ffcccc !important",
+                  color: "black",
+                  fontWeight: "bold",
+                }),
+                ...(idx === 2 && { color: "blue", cursor: "pointer", textDecoration: "underline" }),
+                ...(idx === 9 ? delayedStyle : {}),
+                ...(idx === 10 ? countStyle : {}),
+                ...(idx === 5 || idx === 6 || idx === 12 ? { whiteSpace: "pre-line" } : {}),
+                ...(userRole === "admin" && { cursor: "pointer" })
+              }}
+              onClick={() => {
+                if (deleteMode) {
+                  if (selectedInvs.includes(row.inv_no)) {
+                    setSelectedInvs(prev => prev.filter(v => v !== row.inv_no));
+                  } else {
+                    setSelectedInvs(prev => [...prev, row.inv_no]);
                   }
-                }}
-              >
-              {/* 🔥 val 출력 부분만 변경됨 (기능 유지) */}
-    {(idx === 5 || idx === 6 || idx === 12)
-      ? (val || "").replace(/,\s*/g, "\n") // 쉼표 -> 줄바꿈 .replace(/\/\s*/g, "\n")  // 슬래시 → 줄바꿈
-      : val}
-  </TableCell>
-            ))}
-          </SortableRow>
-        );
-      })}
-    </TableBody>
-  </SortableContext>
-</DndContext>
+                  return;
+                }
+
+                if (idx === 2 && !isEditMode) {
+                  return navigate(`/packing-list/${row.inv_no}`);
+                }
+
+                if (userRole === "admin" && isEditMode) {
+                  const value = prompt("값 수정", String(val || ""));
+                  if (value !== null) {
+                    const keys = [
+                      "id",
+                      "exporter",
+                      "inv_no",
+                      "amount",
+                      "item_type",
+                      "cont_no",
+                      "bl_no",
+                      "etd",
+                      "eta",
+                      "delayed_date",
+                      "count_days",
+                      "needs_help",
+                      "remark"
+                    ];
+                    handleEdit(row.id, keys[idx], value);
+                  }
+                }
+              }}
+            >
+              {(idx === 5 || idx === 6 || idx === 12)
+                ? (val || "").replace(/,\s*/g, "\n")
+                : val}
+            </TableCell>
+          ))}
+        </SortableRow>
+      );
+    })}
+  </TableBody>
+)}
+
 
 
           </Table>
