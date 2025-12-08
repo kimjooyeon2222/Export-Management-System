@@ -525,17 +525,36 @@ if (showUpcoming) {
         }}
       >
         <Button
-          variant="outlined"
-          onClick={() => navigate('/')}
-          sx={{
-            color: 'white',
-            borderColor: 'white',
-            fontWeight: 'bold',
-            fontSize: '0.9rem',
-            textTransform: 'none',
-            '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }
-          }}
-        >
+  variant="outlined"
+  onClick={() => navigate('/')}
+  disableRipple
+  sx={{
+    color: 'white !important',        // 🔥 글씨 절대 안 변함
+    borderColor: 'white',
+    fontWeight: 'bold',
+    fontSize: '0.9rem',
+    textTransform: 'none',
+    textDecoration: 'none !important',  // 🔥 링크 기본 파란 hover 제거
+
+    '&:hover': {
+      backgroundColor: 'rgba(255, 255, 255, 0.2)',
+      color: 'white !important',       // 🔥 글씨 파란색 뜨는 문제 해결
+      borderColor: 'white',
+      textDecoration: 'none',
+    },
+
+    // 클릭 후 파란 focus 제거
+    '&:focus': {
+      outline: 'none',
+      color: 'white',
+    },
+    '&:active': {
+      color: 'white',
+    }
+  }}
+>
+
+
           ← 메인으로
         </Button>
 
