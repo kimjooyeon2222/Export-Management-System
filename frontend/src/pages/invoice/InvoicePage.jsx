@@ -930,7 +930,13 @@ const arrived = delayedDate2 < todayUS;
   variant="contained"
   color={sortMode ? "secondary" : "info"}
   size="small"
+  disabled={!isEditMode}   // 🔥 수정모드 OFF면 비활성화
   onClick={() => {
+    if (!isEditMode) {
+      alert("수정 모드를 먼저 활성화하세요.");
+      return;
+    }
+    
     setSortMode(prev => !prev);
     if (!sortMode) {
       alert("🔧 행 정렬 모드가 활성화되었습니다.\n드래그해서 순서를 변경하세요.");
@@ -942,9 +948,23 @@ const arrived = delayedDate2 < todayUS;
   {sortMode ? "정렬 종료" : "행 정렬"}
 </Button>
 
-          <Button variant="contained" color="success" size="small" onClick={handleAdd}>
-            추가
-          </Button>
+
+          <Button
+  variant="contained"
+  color="success"
+  size="small"
+  disabled={!isEditMode}   // 🔥 수정 모드 OFF면 추가 불가
+  onClick={() => {
+    if (!isEditMode) {
+      alert("수정 모드를 먼저 활성화하세요.");
+      return;
+    }
+    handleAdd();
+  }}
+>
+  추가
+</Button>
+
           <Button
             variant="contained"
             color={isEditMode ? 'secondary' : 'warning'}
@@ -967,42 +987,42 @@ const arrived = delayedDate2 < todayUS;
   variant="contained"
   color="error"
   size="small"
+  disabled={!isEditMode}   // 🔥 수정 모드 OFF면 삭제 불가
   onClick={async () => {
-    // 삭제 모드 진입
+    if (!isEditMode) {
+      alert("수정 모드를 먼저 활성화하세요.");
+      return;
+    }
+
+    // 기존 삭제 로직 그대로
     if (!deleteMode) {
       setDeleteMode(true);
       alert("🗑 삭제 모드 활성화\n행을 클릭해서 선택하세요.");
       return;
     }
 
-    // 삭제 실행
     if (selectedInvs.length === 0) {
       alert("삭제할 항목이 없습니다.");
       setDeleteMode(false);
       return;
     }
 
-    if (!window.confirm(`${selectedInvs.length}개 항목을 삭제할까요?`)) {
-      return;
-    }
+    if (!window.confirm(`${selectedInvs.length}개 항목을 삭제할까요?`)) return;
 
-    // 🔥 실제 삭제
     for (const inv of selectedInvs) {
       await fetch(`${API_BASE}/api/invoices/inv/${inv}`, {
-        method: "DELETE"
+        method: "DELETE",
       });
     }
 
-    // 프론트에서도 삭제
     setRows(prev => prev.filter(r => !selectedInvs.includes(r.inv_no)));
-
-    // 초기화
     setSelectedInvs([]);
     setDeleteMode(false);
   }}
 >
   {deleteMode ? "삭제 실행" : "삭제"}
 </Button>
+
 
         </Box>
       )}

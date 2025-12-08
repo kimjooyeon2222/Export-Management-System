@@ -265,82 +265,97 @@ console.log("🔥 URL inv:", JSON.stringify(inv));
 
         {/* 관리자 전용 버튼 */}
         {userRole === "admin" && (
-          <Box sx={{ display: "flex", gap: 1 }}>
-            {/* 엑셀 업로드 버튼 */}
-            <Button variant="contained" color="info" size="small" component="label">
-              엑셀 업로드
-              <input
-                type="file"
-                accept=".xlsx, .xls"
-                hidden
-                onChange={handleExcelUpload}
-              />
-            </Button>
+  <Box sx={{ display: "flex", gap: 1 }}>
 
-            <Button variant="contained" color="success" size="small" onClick={handleAdd}>
-              추가
-            </Button>
+    {/* 🔵 엑셀 업로드 버튼 (수정모드 아니면 disabled) */}
+    <Button
+      variant="contained"
+      color="info"
+      size="small"
+      component="label"
+      disabled={!isEditMode}
+    >
+      엑셀 업로드
+      <input
+        type="file"
+        accept=".xlsx, .xls"
+        hidden
+        onChange={handleExcelUpload}
+        disabled={!isEditMode}
+      />
+    </Button>
 
-            <Button
-              variant="contained"
-              color={isEditMode ? "secondary" : "warning"}
-              size="small"
-              onClick={() => {
-                setIsEditMode((prev) => {
-                  const newMode = !prev;
-                  alert(
-                    newMode
-                      ? "🔧 수정 모드가 활성화되었습니다.\n셀을 클릭하면 데이터를 편집할 수 있습니다."
-                      : "✅ 수정 모드가 종료되었습니다.\n표는 다시 읽기 전용이 됩니다."
-                  );
-                  return newMode;
-                });
-              }}
-            >
-              {isEditMode ? "수정 종료" : "수정 모드"}
-            </Button>
+    {/* 🟢 행 추가 버튼 (수정모드에서만 가능) */}
+    <Button
+      variant="contained"
+      color="success"
+      size="small"
+      onClick={handleAdd}
+      disabled={!isEditMode}
+    >
+      추가
+    </Button>
 
-            <Button
-  variant="contained"
-  color="error"
-  size="small"
-  onClick={async () => {
-    // 삭제 모드 진입
-    if (!deleteMode) {
-      setDeleteMode(true);
-      alert("🗑 삭제 모드 활성화\n행을 클릭해서 선택하세요.");
-      return;
-    }
+    {/* 🟠 수정 모드 버튼 — 그대로 유지 */}
+    <Button
+      variant="contained"
+      color={isEditMode ? "secondary" : "warning"}
+      size="small"
+      onClick={() => {
+        setIsEditMode((prev) => {
+          const newMode = !prev;
+          alert(
+            newMode
+              ? "🔧 수정 모드가 활성화되었습니다.\n셀을 클릭하면 데이터를 편집할 수 있습니다."
+              : "✅ 수정 모드가 종료되었습니다.\n표는 다시 읽기 전용이 됩니다."
+          );
+          return newMode;
+        });
+      }}
+    >
+      {isEditMode ? "수정 종료" : "수정 모드"}
+    </Button>
 
-    // 삭제할 항목 없으면 삭제 모드 종료
-    if (selectedRows.length === 0) {
-      alert("삭제할 항목이 없습니다.");
-      setDeleteMode(false);
-      return;
-    }
+    {/* 🔴 삭제 버튼 (수정모드 아닐 때는 disabled) */}
+    <Button
+      variant="contained"
+      color="error"
+      size="small"
+      disabled={!isEditMode}
+      onClick={async () => {
+        if (!isEditMode) return;
 
-    if (!window.confirm(`${selectedRows.length}개 항목을 삭제할까요?`)) {
-      return;
-    }
+        if (!deleteMode) {
+          setDeleteMode(true);
+          alert("🗑 삭제 모드 활성화\n행을 클릭해서 선택하세요.");
+          return;
+        }
 
-    // 🔥 선택된 모든 row 삭제
-    for (const id of selectedRows) {
-      await fetch(`${API}/api/packing/${id}`, { method: "DELETE" });
-    }
+        if (selectedRows.length === 0) {
+          alert("삭제할 항목이 없습니다.");
+          setDeleteMode(false);
+          return;
+        }
 
-    // 화면에서도 제거
-    setRows(prev => prev.filter(r => !selectedRows.includes(r.id)));
+        if (!window.confirm(`${selectedRows.length}개 항목을 삭제할까요?`)) {
+          return;
+        }
 
-    // 초기화
-    setSelectedRows([]);
-    setDeleteMode(false);
-  }}
->
-  {deleteMode ? "삭제 실행" : "삭제"}
-</Button>
+        for (const id of selectedRows) {
+          await fetch(`${API}/api/packing/${id}`, { method: "DELETE" });
+        }
 
-          </Box>
-        )}
+        setRows(prev => prev.filter(r => !selectedRows.includes(r.id)));
+        setSelectedRows([]);
+        setDeleteMode(false);
+      }}
+    >
+      {deleteMode ? "삭제 실행" : "삭제"}
+    </Button>
+
+  </Box>
+)}
+
       </Box>
 
       {/* 테이블 */}
