@@ -291,7 +291,24 @@ def get_invoice_by_inv_no(inv_no):
 
     if not invoice:
         return jsonify({"error": "Invoice not found"}), 404
-    status = calc_status(invoice.etd, invoice.eta)
+
+    # 🔥 딜레이된 날짜를 ETA처럼 처리
+    eta_value = invoice.delayed_date
+
+    # status 계산 (delayed_date 기준)
+    today = datetime.today().date()
+    if eta_value:
+        eta_date = datetime.strptime(eta_value, "%Y-%m-%d").date()
+    else:
+        eta_date = None
+
+    if not eta_date:
+        status = "부산항 미입고"
+    elif eta_date < today:
+        status = "입고완료"
+    else:
+        status = "운항중"
+
     return jsonify({
         "id": invoice.id,
         "inv_no": invoice.inv_no,
@@ -300,14 +317,18 @@ def get_invoice_by_inv_no(inv_no):
         "item_type": invoice.item_type,
         "cont_no": invoice.cont_no,
         "bl_no": invoice.bl_no,
+
+        # 🔥 ETA 대신 delayed_date 사용!!
+        "eta": invoice.delayed_date,
         "etd": invoice.etd,
-        "eta": invoice.eta,
-        "status": status,      # ⭐⭐⭐⭐ 추가된 줄
+
+        "status": status,
         "delayed_date": invoice.delayed_date,
         "count_days": invoice.count_days,
         "needs_help": invoice.needs_help,
         "remark": invoice.remark,
     })
+
 @app.route("/api/packing/max-id", methods=["GET"])
 def get_packing_max_id():
     max_id = db.session.query(db.func.max(PackingList.id)).scalar()
