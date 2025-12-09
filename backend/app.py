@@ -837,13 +837,11 @@ def get_ev_setting():
 
     if not setting:
         return jsonify({
-            "target_stock": 0,
             "writer": "",
             "us_date": None
         })
 
     return jsonify({
-        "target_stock": setting.target_stock,
         "writer": setting.writer,
         "us_date": setting.us_date.strftime("%Y-%m-%d") if setting.us_date else None
     })
@@ -857,7 +855,6 @@ def update_ev_setting():
     if not setting:
         setting = EvSetting()
 
-    setting.target_stock = data.get("target_stock")
     setting.writer = data.get("writer")
 
     us_date = data.get("us_date")

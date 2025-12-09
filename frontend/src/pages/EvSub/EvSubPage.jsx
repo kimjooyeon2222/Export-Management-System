@@ -271,7 +271,7 @@ const formatNumber = (num) =>
   // 작성자 + 북미 날짜
   const [writer, setWriter] = useState("");
   const [usDate, setUsDate] = useState("");
-const [targetStockSetting, setTargetStockSetting] = useState(0);
+
 
   // 과부족 패널 토글
   const [showStockPanel, setShowStockPanel] = useState(false);
@@ -419,20 +419,7 @@ const [targetStockSetting, setTargetStockSetting] = useState(0);
     ※ 과부족 상태 ※
   </Typography>
 
-  {editMode ? (
-    <TextField
-      label="적정재고 기준"
-      size="small"
-      type="number"
-      value={targetStockSetting}
-      onChange={(e) => setTargetStockSetting(Number(e.target.value))}
-      sx={{ width: 150 }}
-    />
-  ) : (
-    <Typography sx={{ fontSize: 16, fontWeight: "bold", color: "#555" }}>
-      적정재고 기준: {formatNumber(targetStockSetting)}
-    </Typography>
-  )}
+ 
 </Box>
 
 
@@ -463,7 +450,8 @@ const [targetStockSetting, setTargetStockSetting] = useState(0);
 
       <TableBody>
   {inventoryRows.map((row, idx) => {
-    const proper = targetStockSetting; 
+    const proper = row.target_stock ?? 0;
+
     const transit = 0;                  
     const total = row.actual_stock + transit;
 
@@ -492,8 +480,9 @@ const [targetStockSetting, setTargetStockSetting] = useState(0);
         </TableCell>
 
         <TableCell align="center">
-          {formatNumber(proper)}
-        </TableCell>
+  {formatNumber(row.target_stock)}
+</TableCell>
+
 
         <TableCell align="center">
           {formatNumber(transit)}

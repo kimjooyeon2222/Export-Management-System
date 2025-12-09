@@ -236,7 +236,6 @@ class EvSetting(db.Model):
     __tablename__ = "ev_setting"
 
     id = db.Column(db.Integer, primary_key=True)
-    target_stock = db.Column(db.Integer, nullable=False)
     writer = db.Column(db.String(50))
     us_date = db.Column(db.Date)
 
@@ -267,6 +266,7 @@ class EvInventory(db.Model):
     box_qty = db.Column(db.Integer, nullable=False)
 
     actual_stock = db.Column(db.Integer, default=0)
+    target_stock= db.Column(db.Integer, default=0)
 
     updated_at = db.Column(
         db.DateTime,
@@ -282,6 +282,7 @@ class EvInventory(db.Model):
             "item_code": self.item_code,
             "box_qty": self.box_qty,
             "actual_stock": self.actual_stock,
+            "target_stock": self.target_stock,   # ⭐ 필수 추가
             "updated_at": self.updated_at,
         }
 # ===========================================
