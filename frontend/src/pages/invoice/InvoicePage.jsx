@@ -514,7 +514,7 @@ if (showUpcoming) {
   return (
     <Box sx={{ bgcolor: '#fff', height: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* 타이틀 */}
-      <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'black', fontSize: '1.3rem', pl: 3, pt: 2 }}>
+      <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'black', fontSize: '1.3rem', pl: 3, pt: 2, mb:1 }}>
         수출일정 통합관리부
       </Typography>
 
