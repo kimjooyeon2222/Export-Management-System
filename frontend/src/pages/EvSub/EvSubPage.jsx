@@ -462,57 +462,65 @@ const [targetStockSetting, setTargetStockSetting] = useState(0);
       </TableHead>
 
       <TableBody>
-        {[
-          {
-            company: "ABC",
-            name: "PLUG",
-            code: "111-222",
-            box: 100,
-            current: 1200,
-            proper: 1000,
-            transit: 300
-          },
-          {
-            company: "XYZ",
-            name: "GASKET",
-            code: "333-444",
-            box: 200,
-            current: 600,
-            proper: 900,
-            transit: 50
-          }
-        ].map((row, idx) => {
-          const total = row.transit + row.current;
-          const status = getStatus(row.current, row.proper);
+  {inventoryRows.map((row, idx) => {
+    const proper = targetStockSetting; 
+    const transit = 0;                  
+    const total = row.actual_stock + transit;
 
-          return (
-            <TableRow key={idx}>
-              <TableCell align="center" sx={{ fontWeight: "bold" }}>{row.company}</TableCell>
-              <TableCell align="center" sx={{ fontWeight: "bold" }}>{row.name}</TableCell>
-              <TableCell align="center" sx={{ fontWeight: "bold" }}>{row.code}</TableCell>
-              <TableCell align="center">{row.box.toLocaleString()}</TableCell>
-              <TableCell align="center">{row.current.toLocaleString()}</TableCell>
-              <TableCell align="center">{row.proper.toLocaleString()}</TableCell>
-              <TableCell align="center">{row.transit.toLocaleString()}</TableCell>
-              <TableCell align="center">{total.toLocaleString()}</TableCell>
+    const status = getStatus(row.actual_stock, proper);
 
-              <TableCell align="center">
-                <Box
-                  component="span"
-                  sx={{
-                    px: 1.2,
-                    borderRadius: 1,
-                    fontWeight: "bold",
-                    color: statusColor(status)
-                  }}
-                >
-                  {status}
-                </Box>
-              </TableCell>
-            </TableRow>
-          );
-        })}
-      </TableBody>
+    return (
+      <TableRow key={idx}>
+        <TableCell align="center" sx={{ fontWeight: "bold" }}>
+          {row.company}
+        </TableCell>
+
+        <TableCell align="center" sx={{ fontWeight: "bold" }}>
+          {row.item_name}
+        </TableCell>
+
+        <TableCell align="center" sx={{ fontWeight: "bold" }}>
+          {row.item_code}
+        </TableCell>
+
+        <TableCell align="center">
+          {formatNumber(row.box_qty)}
+        </TableCell>
+
+        <TableCell align="center">
+          {formatNumber(row.actual_stock)}
+        </TableCell>
+
+        <TableCell align="center">
+          {formatNumber(proper)}
+        </TableCell>
+
+        <TableCell align="center">
+          {formatNumber(transit)}
+        </TableCell>
+
+        <TableCell align="center">
+          {formatNumber(total)}
+        </TableCell>
+
+        <TableCell align="center">
+          <Box
+            component="span"
+            sx={{
+              px: 1.2,
+              borderRadius: 1,
+              fontWeight: "bold",
+              color: statusColor(status)
+            }}
+          >
+            {status}
+          </Box>
+        </TableCell>
+      </TableRow>
+    );
+  })}
+</TableBody>
+
     </Table>
   </Paper>
 )}
