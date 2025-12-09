@@ -16,6 +16,36 @@ import { useNavigate } from "react-router-dom";
 import HorizontalScroll from "./HorizontalScroll";
 
 export default function EvSubPage() {
+
+/* ----------------------------------
+      🔹 한국 / 미국 날짜 변환 함수
+---------------------------------- */
+function parseKRDate(dateStr) {
+  if (!dateStr) return null;
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d, -9, 0, 0)); // 한국 00:00
+}
+
+function parseUSDate(dateStr) {
+  if (!dateStr) return null;
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d, 6, 0, 0)); // 미국 00:00
+}
+
+
+/* ----------------------------------
+      🔹 미국 Alabama 기준 "오늘 00:00"
+---------------------------------- */
+function todayUS() {
+  const nowUS = new Date().toLocaleString("en-US", {
+    timeZone: "America/Chicago",
+  });
+
+  const d = new Date(nowUS);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
   function getChicagoOffset(date) {
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: "America/Chicago",
@@ -223,29 +253,24 @@ const formatNumber = (num) =>
   // 운송 스케줄 계산
   // ============================
   const getScheduleStatus = (etd, eta) => {
-  if (!todayAlabama) return "";
+  const today = todayUS(); // 미국 00시 기준
 
-  const today = todayAlabama;
-  const etdDate = etd ? new Date(etd) : null;
-  const etaUS = eta ? toAlabamaMidnight(eta) : null;
-  // ETA < TODAY → 입고완료
-  if (etaUS && etaUS <= today) {
-    return "입고완료";
-  }
+  const etdKR = etd ? parseKRDate(etd) : null;
+  const etaUS = eta ? parseUSDate(eta) : null;
+
+  // ETA <= today → 입고완료
+  if (etaUS && etaUS <= today) return "입고완료";
 
   // ETA 없음 → 부산항 미입고
-  if (!eta || eta === "일정 없음") {
-    return "부산항 미입고";
-  }
+  if (!eta || eta === "일정 없음") return "부산항 미입고";
 
-  // ETD > TODAY → 선적대기중
-  if (etd && etdDate > today) {
-    return "선적대기중";
-  }
+  // ETD > today → 선적대기중
+  if (etdKR && etdKR > today) return "선적대기중";
 
-  // 나머지 → 운항중
+  // 그 외 → 운항중
   return "운항중";
 };
+
 
 
   // ============================
