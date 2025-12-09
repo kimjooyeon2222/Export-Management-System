@@ -705,7 +705,7 @@ const saveAxleData = async () => {
             size="small"
             value={row.inv_no}
             onChange={async (e) => {
-  const inv = e.target.value;
+  const inv = e.target.value.trim();
 
   updateScheduleCell(row.tempId, "inv_no", inv);
 
