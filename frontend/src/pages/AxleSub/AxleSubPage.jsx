@@ -18,6 +18,18 @@ import { v4 as uuidv4 } from "uuid";
 
 
 export default function AxleSubPage() {
+    const axleCompanyGroups = [
+  { name: "윤영테크", range: [0, 1] }, // PLUG, GASKET
+  { name: "대영이엔피", range: [2, 2] }, // DOWEL PIN
+  { name: "신우신", range: [3, 3] }     // PLATE
+];
+
+const axleCompanyColors = {
+  "윤영테크": "#FFD966",
+  "대영이엔피": "#A9D18E",
+  "신우신": "#9BC2E6"
+};
+
     /* ----------------------------------
       🔹 날짜 변환 (ETD/ETA 표준화)
 ---------------------------------- */
@@ -628,6 +640,7 @@ const saveAxleData = async () => {
 
       {/* 운송 스케줄 */}
       <Paper sx={{ p: 2, mb: 4, border: "2px solid #777" }}>
+        
   <Typography sx={{ fontWeight: "bold", fontSize: 18, mb: 2 }}>
     ※ 운송 스케줄 현황 ※
   </Typography>
@@ -678,19 +691,120 @@ const saveAxleData = async () => {
         - 행삭제
       </Button>
     </Box>
-  <Table size="small" sx={{ "& *": { fontWeight: "bold" } }}>
-  <TableHead sx={{ bgcolor: "#ffe599", borderTop: "2px solid #000" }}>
-  <TableRow>
-    <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>INV#</TableCell>
-    <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold"  }}>ETD</TableCell>
-    <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold"  }}>ETA</TableCell>
-    <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold"  }}>상태</TableCell>
-    <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold"  }}>PLUG</TableCell>
-    <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold"  }}>GASKET</TableCell>
-    <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold"  }}>DOWEL PIN</TableCell>
-    <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold"  }}>PLATE</TableCell>
+<Table
+  size="small"
+  sx={{
+    mt: 2,
+    position: "relative",
+    borderCollapse: "collapse",
+    borderSpacing: 0,
+
+    /* 기본 border 제거는 border-top만 없애야 함 */
+    "& th, & td": {
+      borderTop: "0 !important",
+      padding: "6px 8px !important",
+    },
+
+    /* 행×행 경계선은 여기서 추가 */
+    "& td": {
+      borderBottom: "1px solid #e0e0e0 !important",
+    },
+
+    "& th": {
+      borderBottom: "1px solid #e0e0e0 !important",
+      fontWeight: "bold !important",
+    },
+
+    /* 업체 헤더라면(첫 thead 줄) 위쪽 선 아예 제거 */
+    "& thead tr:first-of-type th": {
+      borderTop: "0 !important",
+      borderBottom: "1px solid #b7b7b7 !important",
+    }
+  }}
+>
+
+
+  {/* 상단 흰색 오버레이 — 빈칸 만드는 원인이었음 → 유지하되 충돌 수정 */}
+  <Box
+    sx={{
+      position: "absolute",
+      top: 0,
+      left: 0,
+      width: "100%",
+      height: "3px",
+      bgcolor: "#ffffff",
+      zIndex: 20,
+      pointerEvents: "none",
+    }}
+  />
+
+
+  <TableHead>
+
+  {/* 🔥 업체별 대형 헤더 */}
+  <TableRow sx={{ bgcolor: "#ffffff !important" }}>
+    <TableCell colSpan={4} />
+
+    {/* PLUG + GASKET → 윤영테크 */}
+    <TableCell
+      colSpan={2}
+      align="center"
+      sx={{
+        fontWeight: "bold",
+        fontSize: "16px",
+        bgcolor: "#FFD966",
+        color: "#000",
+        borderBottom: "2px solid #b7b7b7"
+      }}
+    >
+      윤영테크
+    </TableCell>
+
+    {/* DOWEL PIN → 대영이엔피 */}
+    <TableCell
+      colSpan={1}
+      align="center"
+      sx={{
+        fontWeight: "bold",
+        fontSize: "16px",
+        bgcolor: "#A9D18E",
+        color: "#000",
+        borderBottom: "2px solid #b7b7b7"
+      }}
+    >
+      대영이엔피
+    </TableCell>
+
+    {/* PLATE → 신우신 */}
+    <TableCell
+      colSpan={1}
+      align="center"
+      sx={{
+        fontWeight: "bold",
+        fontSize: "16px",
+        bgcolor: "#9BC2E6",
+        color: "#000",
+        borderBottom: "2px solid #b7b7b7"
+      }}
+    >
+      신우신
+    </TableCell>
   </TableRow>
+
+  {/* 🔥 기존 품명 헤더 — 네가 준 코드 그대로 유지 */}
+  <TableRow sx={{ bgcolor: "#ffe599", borderTop: "2px solid #000" }}>
+    <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>INV#</TableCell>
+    <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>ETD</TableCell>
+    <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>ETA</TableCell>
+    <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>상태</TableCell>
+    <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>PLUG</TableCell>
+    <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>GASKET</TableCell>
+    <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>DOWEL PIN</TableCell>
+    <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>PLATE</TableCell>
+  </TableRow>
+
 </TableHead>
+
 
 
    <TableBody>
