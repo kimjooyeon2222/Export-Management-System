@@ -181,6 +181,7 @@ def get_all_packing():
 # ============================================
 @app.route("/api/invoice/<string:inv_no>/packing", methods=["GET"])
 def get_packing_by_inv(inv_no):
+    
     print("🔥 Flask 받은 inv_no:", repr(inv_no))
 
     invoice = Invoice.query.filter_by(inv_no=inv_no).first_or_404()

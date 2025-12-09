@@ -18,33 +18,35 @@ import { v4 as uuidv4 } from "uuid";
 
 
 export default function AxleSubPage() {
-    function getChicagoOffset(date) {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/Chicago",
-    timeZoneName: "short",
-  }).formatToParts(date);
+    /* ----------------------------------
+      🔹 날짜 변환 (ETD/ETA 표준화)
+---------------------------------- */
 
-  const tz = parts.find(p => p.type === "timeZoneName").value;
-  return tz === "CDT" ? -5 : -6;
-}
-function toAlabamaMidnight(dateStr) {
+// 🔸 한국 날짜를 "한국 00:00" 기준 UTC로 변환 (ETD용)
+function parseKRDate(dateStr) {
   if (!dateStr) return null;
-
   const [y, m, d] = dateStr.split("-").map(Number);
-  const utc = Date.UTC(y, m - 1, d, 0, 0, 0);
-  const offset = getChicagoOffset(new Date(utc));
-  const ts = utc - offset * 3600 * 1000;
-  return new Date(ts);
+  return new Date(Date.UTC(y, m - 1, d, -9, 0, 0));  // 한국은 UTC+9 → -9 적용
 }
-function getTodayInAlabama() {
-  const now = new Date();
-  const offset = getChicagoOffset(now);
-  const utc = now.getTime() + now.getTimezoneOffset() * 60000;
-  const ts = utc - offset * 3600 * 1000;
-  const d = new Date(ts);
-  d.setHours(0,0,0,0);
+
+// 🔸 미국 날짜를 "미국 00:00" 기준 UTC로 변환 (ETA용)
+function parseUSDate(dateStr) {
+  if (!dateStr) return null;
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d, 6, 0, 0));   // Chicago UTC-6 → +6 적용
+}
+
+// 🔸 "지금" 기준으로 미국 Alabama 날짜 00:00 만들기
+function todayUS() {
+  const nowUS = new Date().toLocaleString("en-US", {
+    timeZone: "America/Chicago",
+  });
+
+  const d = new Date(nowUS);
+  d.setHours(0, 0, 0, 0);
   return d;
 }
+
 
     const getForgingStatusStyle = (status) => {
   if (status === "입고완료") {
@@ -135,12 +137,22 @@ const fetchPackingQty = async (inv_no) => {
 };
 
 
-const [todayAlabama, setTodayAlabama] = useState(null);
-useEffect(() => {
-  setTodayAlabama(new Date(getTodayInAlabama()));
-}, []);
+    const getScheduleStatus = (etd, eta) => {
+  const today = todayUS();   // 미국 Alabama 기준 00:00
+
+  const etdKR = etd ? parseKRDate(etd) : null;   // 한국시간
+  const etaUS = eta ? parseUSDate(eta) : null;   // 미국시간
+
+  if (etaUS && etaUS <= today) return "입고완료";
+  if (!eta || eta === "일정 없음") return "부산항 미입고";
+  if (etdKR && etdKR > today) return "선적대기중";
+
+  return "운항중";
+};
+
+// 🔥 운항중 수량 계산 (오늘 날짜 기준)
 const calcInTransit = (itemName) => {
-  if (!todayAlabama || !Array.isArray(scheduleRows)) return 0;
+  if (!Array.isArray(scheduleRows)) return 0;
 
   const key = keyMapForAxle[itemName?.toUpperCase()];
   if (!key) return 0;
@@ -150,23 +162,6 @@ const calcInTransit = (itemName) => {
     .reduce((sum, row) => sum + (Number(row[key]) || 0), 0);
 };
 
-
-
-
-    const getScheduleStatus = (etd, eta) => {
-  if (!todayAlabama) return "";
-
-  const today = todayAlabama;   // "2025-12-04" → Date 객체
-
- const etaUS = eta ? toAlabamaMidnight(eta) : null;
-const etdUS = etd ? toAlabamaMidnight(etd) : null;
-
-if (etaUS && etaUS <= today) return "입고완료";
-if (!eta || eta === "일정 없음") return "부산항 미입고";
-if (etdUS && etdUS > today) return "선적대기중";
-
-return "운항중";
-};
 
 const updateScheduleCell = (tempId, field, value) => {
   setScheduleRows(prev =>
