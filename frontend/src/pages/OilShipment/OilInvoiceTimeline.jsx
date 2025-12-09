@@ -1,8 +1,7 @@
 import React, { useMemo } from "react";
 import { TableRow, TableCell, TextField } from "@mui/material";
 
-export default function OilInvoiceTimeline(   
-    {
+export default function OilInvoiceTimeline({
   invoiceInfo,
   items,
   onUpdateHeader,
@@ -10,69 +9,74 @@ export default function OilInvoiceTimeline(
   editMode,
   calendarDays
 }) {
+  /* ----------------------------------
+        🔹 한국 / 미국 날짜 변환 함수
+  ---------------------------------- */
+  function parseKRDate(dateStr) {
+    if (!dateStr) return null;
+    const [y, m, d] = dateStr.split("-").map(Number);
+    return new Date(Date.UTC(y, m - 1, d, -9, 0, 0)); // 한국 00:00
+  }
 
-const normalizeDate = (str) => {
-  if (!str) return null;
+  function parseUSDate(dateStr) {
+    if (!dateStr) return null;
+    const [y, m, d] = dateStr.split("-").map(Number);
+    return new Date(Date.UTC(y, m - 1, d, 6, 0, 0)); // 미국 00:00
+  }
 
-  if (!isNaN(Date.parse(str))) return str;
+  /* ----------------------------------
+        🔹 문자열 → YYYY-MM-DD 변환
+  ---------------------------------- */
+  const normalizeDate = (str) => {
+    if (!str) return null;
 
-  const match = str.match(/(\d{1,2})월\s*(\d{1,2})일/);
-  if (!match) return null;
+    if (!isNaN(Date.parse(str))) return str;
 
-  const month = match[1].padStart(2, "0");
-  const day = match[2].padStart(2, "0");
+    const match = str.match(/(\d{1,2})월\s*(\d{1,2})일/);
+    if (!match) return null;
 
-  const year = new Date().getFullYear();
-  return `${year}-${month}-${day}`;
-};
+    const month = match[1].padStart(2, "0");
+    const day = match[2].padStart(2, "0");
 
-const toMidnight = (date, timeZone = "America/Chicago") => {
-  const local = new Date(date).toLocaleString("en-US", { timeZone });
-  const d = new Date(local);
-  d.setHours(0, 0, 0, 0);
-  return d;
-};
-const todayUS = toMidnight(new Date(), "America/Chicago");
+    const year = new Date().getFullYear();
+    return `${year}-${month}-${day}`;
+  };
 
-
-
-function getChicagoOffset(date) {
-  // date 기준 Chicago offset (DST 대응)
-  const options = { timeZone: "America/Chicago", timeZoneName: "short" };
-  const parts = new Intl.DateTimeFormat("en-US", options).formatToParts(date);
-  const zoneName = parts.find(p => p.type === "timeZoneName").value;
-
-  // CST → UTC-6, CDT → UTC-5
-  return zoneName === "CDT" ? -5 : -6;
-}
-function getUSToday() {
-  const now = new Date();
-
-  // 지금 시점의 Chicago 날짜를 얻기 위한 offset 계산
-  const offsetHours = getChicagoOffset(now);
-
-  // 지금 시간 기준 UTC timestamp
-  const utc = now.getTime() + now.getTimezoneOffset() * 60000;
-
-  // 미국 날짜 timestamp
-  const chicagoTimestamp = utc - offsetHours * 3600 * 1000;
-
-  const chicagoDate = new Date(chicagoTimestamp);
-  chicagoDate.setHours(0, 0, 0, 0);
-
-  return chicagoDate;
-}
+  /* ----------------------------------
+        🔹 미국 기준 오늘 00:00
+  ---------------------------------- */
+  function todayUS() {
+    const nowUS = new Date().toLocaleString("en-US", {
+      timeZone: "America/Chicago",
+    });
+    const d = new Date(nowUS);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+  const today = todayUS();
 
 
-  // seq → qty 매핑
+  /* ----------------------------------
+        🔹 ETA 비교용 날짜 생성
+  ---------------------------------- */
+  const etaDate = invoiceInfo.eta
+    ? parseUSDate(normalizeDate(invoiceInfo.eta))
+    : null;
+
+  // ETA가 미국 날짜(today)보다 미래면 빨간색 + 배경색
+  const isIncoming = etaDate && etaDate > today;
+
+
+  /* ----------------------------------
+        🔹 seq → qty 매핑
+  ---------------------------------- */
   const seqMap = useMemo(() => {
-  const map = {};
-  items.forEach((it) => {
-    // 🔥 모든 seq 처리 (1 ~ oilList.length)
-    map[it.seq] = it.qty;
-  });
-  return map;
-}, [items]);
+    const map = {};
+    items.forEach((it) => {
+      map[it.seq] = it.qty;
+    });
+    return map;
+  }, [items]);
 
 
   return (
@@ -120,11 +124,7 @@ function getUSToday() {
       <TableCell
         align="center"
         sx={{
-          backgroundColor:
-            invoiceInfo.eta &&
-            toMidnight(normalizeDate(invoiceInfo.eta), "America/Chicago") >= todayUS
-              ? "#ffe6eb"
-              : "inherit",
+          backgroundColor: isIncoming ? "#ffe6eb" : "inherit",
         }}
       >
         {editMode ? (
@@ -136,18 +136,8 @@ function getUSToday() {
         ) : (
           <span
             style={{
-              color:
-                invoiceInfo.eta &&
-                toMidnight(normalizeDate(invoiceInfo.eta), "America/Chicago") >= todayUS
-
-                  ? "red"
-                  : "inherit",
-              fontWeight:
-                invoiceInfo.eta &&
-                toMidnight(normalizeDate(invoiceInfo.eta), "America/Chicago") >= todayUS
-
-                  ? "bold"
-                  : "normal",
+              color: isIncoming ? "red" : "inherit",
+              fontWeight: isIncoming ? "bold" : "normal",
             }}
           >
             {invoiceInfo.eta || "-"}
@@ -155,21 +145,21 @@ function getUSToday() {
         )}
       </TableCell>
 
-      {calendarDays.map(day => (
-  <TableCell key={day} align="center" sx={{ backgroundColor: "#f1f8e9" }}>
-    {editMode ? (
-      <TextField
-        size="small"
-        value={seqMap[day] || ""}
-        onChange={(e) => onUpdateSeq(invoiceInfo.inv, day, e.target.value)}
-        sx={{ width: 45 }}
-      />
-    ) : (
-      seqMap[day] || "-"
-    )}
-  </TableCell>
-))}
-
+      {/* Calendar seq cells */}
+      {calendarDays.map((day) => (
+        <TableCell key={day} align="center" sx={{ backgroundColor: "#f1f8e9" }}>
+          {editMode ? (
+            <TextField
+              size="small"
+              value={seqMap[day] || ""}
+              onChange={(e) => onUpdateSeq(invoiceInfo.inv, day, e.target.value)}
+              sx={{ width: 45 }}
+            />
+          ) : (
+            seqMap[day] || "-"
+          )}
+        </TableCell>
+      ))}
     </TableRow>
   );
 }
