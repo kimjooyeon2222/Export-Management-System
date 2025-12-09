@@ -16,6 +16,9 @@ import { useNavigate } from "react-router-dom";
 import HorizontalScroll from "./HorizontalScroll";
 
 export default function EvSubPage() {
+    
+
+
 // 🔥 회사별 컬럼 구간 매핑
 const companyGroups = [
   { name: "금강기업", range: [0, 5] },
@@ -107,24 +110,22 @@ const loadEvData = async () => {
     // 1) EV Setting
     const resSetting = await fetch(`${API_BASE}/api/ev-setting`);
     const setting = await resSetting.json();
-
     setWriter(setting.writer || "");
     setUsDate(setting.us_date || "");
 
-    // 2) EV Inventory
+    // 2) EV Inventory (ev_inventory)
     const resInv = await fetch(`${API_BASE}/api/ev-inventory`);
     const inventory = await resInv.json();
-    setInventoryRows(inventory);   // ← 따로 state 추가해야 함
+    setInventoryRows(inventory);
 
-    // 3) EV Schedule
+    // 3) EV Schedule (ev_schedule)
     const resSchedule = await fetch(`${API_BASE}/api/ev-schedule`);
     const schedules = await resSchedule.json();
 
-    // scheduleRows에 로드
     setScheduleRows(
-      schedules.map((row, idx) => ({
-        ...row,
-        tempId: idx + 1, // React Key용
+      schedules.map((r) => ({
+        ...r,
+        tempId: crypto.randomUUID(),   // ★ Axle와 동일하게 tempId 생성
       }))
     );
 
@@ -270,6 +271,7 @@ const formatNumber = (num) =>
   // 작성자 + 북미 날짜
   const [writer, setWriter] = useState("");
   const [usDate, setUsDate] = useState("");
+const [targetStockSetting, setTargetStockSetting] = useState(0);
 
   // 과부족 패널 토글
   const [showStockPanel, setShowStockPanel] = useState(false);
@@ -411,9 +413,28 @@ const formatNumber = (num) =>
       ===================================== */}
       {showStockPanel && (
   <Paper sx={{ p: 2, mb: 4, border: "2px solid #777" }}>
-    <Typography sx={{ fontWeight: "bold", fontSize: 18, mb: 2 }}>
-      ※ 과부족 상태 ※
+    {/* 과부족 상태 제목 + 적정재고 입력 */}
+<Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
+  <Typography sx={{ fontWeight: "bold", fontSize: 18 }}>
+    ※ 과부족 상태 ※
+  </Typography>
+
+  {editMode ? (
+    <TextField
+      label="적정재고 기준"
+      size="small"
+      type="number"
+      value={targetStockSetting}
+      onChange={(e) => setTargetStockSetting(Number(e.target.value))}
+      sx={{ width: 150 }}
+    />
+  ) : (
+    <Typography sx={{ fontSize: 16, fontWeight: "bold", color: "#555" }}>
+      적정재고 기준: {formatNumber(targetStockSetting)}
     </Typography>
+  )}
+</Box>
+
 
     <Table size="small">
       <TableHead
@@ -506,6 +527,22 @@ const formatNumber = (num) =>
     ※ 운송 스케줄 현황 ※
   </Typography>
 
+
+  {/* 🔥🔥 버튼을 제목 바로 아래, 우측 상단에 배치 */}
+  {editMode && (
+    <Box sx={{ display: "flex", justifyContent: "flex-end", mt: -3, mb: 1 }}>
+      <Box sx={{ display: "flex", gap: 1 }}>
+        <Button variant="contained" color="success" size="small">
+          + 행추가
+        </Button>
+        <Button variant="contained" color="error" size="small">
+          - 행삭제
+        </Button>
+      </Box>
+    </Box>
+
+  )}
+  
   {/* 🔥🔥 이 부분 추가!! */}
   <HorizontalScroll>
     <Box sx={{ minWidth: 4000 }}> 
