@@ -515,6 +515,7 @@ const formatNumber = (num) =>
   size="small"
   sx={{
     mt: 2,
+    position: "relative",  // ← 추가!!!
     borderCollapse: "collapse !important",
     borderSpacing: "0px !important",
 
@@ -526,12 +527,24 @@ const formatNumber = (num) =>
   }}
 >
 
+<Box
+  sx={{
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "3px",
+    bgcolor: "#ffffff",
+    zIndex: 10
+  }}
+/>
+
 
 
       <TableHead>
 
   {/* 🔥 업체 그룹 헤더 동적 생성 */}
-  <TableRow sx={{ bgcolor: "#ffe599" }}>
+  <TableRow sx={{ bgcolor: "#ffffff !important"}}>
     <TableCell colSpan={4} /> {/* INV / ETD / ETA / 상태 */ }
 
     {companyGroups.map((g, idx) => {
