@@ -71,33 +71,41 @@ const updateHeader = async (invKey, field, value) => {
 
   const dbField = dbFieldMap[field];
 
-  setScheduleRows((prev) =>
-    prev.map((row) => {
-      if (row.inv_no === invKey || row.id === invKey) {
+  // 🔥 1) PO는 개행 → 콤마로 변환
+  let processedValue = value;
 
-        // 🔥 inv# 입력 시 inv_no 자체도 바꿔주기
-        const updatedRow = { ...row, [dbField]: value };
-        if (field === "inv") {
-          updatedRow.inv_no = value;
-        }
-        return updatedRow;
-      }
-      return row;
-    })
+  if (field === "po") {
+    // 개행 → 콤마
+    const list = value.split("\n").map(v => v.trim()).filter(v => v !== "");
+    processedValue = list.join(",");
+  }
+
+  setScheduleRows(prev =>
+    prev.map(row =>
+      row.inv_no === invKey || row.id === invKey
+        ? {
+            ...row,
+            [dbField]: processedValue,
+            ...(field === "inv" ? { inv_no: processedValue } : {})
+          }
+        : row
+    )
   );
 
-  // 🔥 INV 입력 시 자동 invoice 정보를 채움
+  // 🔥 INV 입력 시 자동 invoice 정보 채워 넣기
   if (field === "inv") {
     const res = await fetch(`${API_BASE}/api/oil-invoice/${value}`);
     const data = await res.json();
 
     if (!data.error) {
-      setScheduleRows((prev) =>
-        prev.map((row) =>
+      setScheduleRows(prev =>
+        prev.map(row =>
           row.inv_no === value
             ? {
                 ...row,
-                po_no: data.po_no || "",
+                po_no: Array.isArray(data.po_no)
+                  ? data.po_no.join(",")    // DB 저장용 문자열
+                  : data.po_no || "",
                 etd: data.etd || "",
                 eta: data.eta || "",
               }
@@ -107,6 +115,7 @@ const updateHeader = async (invKey, field, value) => {
     }
   }
 };
+
 
 
 
@@ -224,11 +233,38 @@ const updateRow = async (index, field, value) => {
 
 
 // 전체 저장(BULK)
+// 전체 저장(BULK)
 const saveAll = async () => {
+  // 🔥 저장 전 PO 필드 정리 (가장 중요!)
+  const cleanedRows = scheduleRows.map(row => {
+    let po = row.po_no || "";
+
+    // 1) 배열이면 join
+    if (Array.isArray(po)) {
+      po = po.join(",");
+    }
+
+    // 2) 개행 있으면 콤마로 변환
+    po = po.replace(/\n/g, ",");
+
+    // 3) 콤마 기준 트림 + 중복 제거
+    po = po
+      .split(",")
+      .map(v => v.trim())
+      .filter(v => v !== "")
+      .join(",");
+
+    return {
+      ...row,
+      po_no: po
+    };
+  });
+
+  // 🔥 cleanedRows만 DB에 저장
   const res = await fetch(`${API_BASE}/api/oil-schedule/bulk`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(scheduleRows),
+    body: JSON.stringify(cleanedRows),
   });
 
   const data = await res.json();
@@ -240,6 +276,7 @@ const saveAll = async () => {
 
   alert("저장 완료!");
   loadOilSchedule();
+  setEditMode(false);
 };
 
 

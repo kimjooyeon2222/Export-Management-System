@@ -591,27 +591,35 @@ def save_oil_schedule_bulk():
 
 #특정 INV 입력 시 자동로드 API 
 
+
+# GET /api/oil-invoice/<inv_no>
 # GET /api/oil-invoice/<inv_no>
 @app.route("/api/oil-invoice/<inv_no>", methods=["GET"])
 def get_oil_invoice(inv_no):
     # 1) invoice 테이블에서 inv_no 조회
     inv = Invoice.query.filter_by(inv_no=inv_no).first()
-
     if not inv:
         return jsonify({"error": "Invoice not found"}), 404
 
-    # 2) packing_list에서 invoice_id 로 PO 번호 조회
-    packing = PackingList.query.filter_by(invoice_id=inv.id).first()
+    # 2) packing_list에서 같은 invoice_id 로 여러 개 PO 불러오기
+    packings = PackingList.query.filter_by(invoice_id=inv.id).all()
 
-    po_no = packing.po_no if packing else None
+    # 🔥 중복 제거 + 순서 유지
+    po_unique = []
+    seen = set()
+    for p in packings:
+        if p.po_no not in seen:
+            seen.add(p.po_no)
+            po_unique.append(p.po_no)
 
-    # 3) invoice + packing_list 데이터 함께 반환
+    # 3) invoice + 모든 PO + etd/eta 반환
     return jsonify({
         "inv_no": inv.inv_no,
-        "po_no": po_no,
+        "po_no": po_unique,     # 🔥 중복 제거된 리스트로 반환
         "etd": inv.etd,
         "eta": inv.eta
     })
+
 
 
 # GET /api/oil-items

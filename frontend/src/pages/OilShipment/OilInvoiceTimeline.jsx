@@ -95,17 +95,31 @@ export default function OilInvoiceTimeline({
       </TableCell>
 
       {/* PO */}
-      <TableCell align="center">
-        {editMode ? (
-          <TextField
-            size="small"
-            value={invoiceInfo.po || ""}
-            onChange={(e) => onUpdateHeader("po", e.target.value)}
-          />
-        ) : (
-          invoiceInfo.po || "-"
-        )}
-      </TableCell>
+      {/* PO */}
+<TableCell align="center">
+  {editMode ? (
+    <TextField
+      size="small"
+      multiline
+      value={
+        Array.isArray(invoiceInfo.po)
+          ? invoiceInfo.po.join("\n")      // 배열 → 개행 문자열
+          : invoiceInfo.po || ""
+      }
+      onChange={(e) =>
+        onUpdateHeader("po", e.target.value)
+      }
+    />
+  ) : (
+    <span style={{ whiteSpace: "pre-line" }}>
+      {Array.isArray(invoiceInfo.po)
+        ? invoiceInfo.po.join("\n")        // 배열 → 개행 문자열
+        : (invoiceInfo.po || "-").split(",").join("\n")
+}
+    </span>
+  )}
+</TableCell>
+
 
       {/* ETD */}
       <TableCell align="center">

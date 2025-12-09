@@ -121,7 +121,7 @@ class OilScheduleRow(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     inv_no = db.Column(db.String(100))
-    po_no = db.Column(db.String(100))
+    po_no = db.Column(db.String(255))
 
     etd = db.Column(db.String(20))
     eta = db.Column(db.String(20))
