@@ -16,13 +16,39 @@ import { useNavigate } from "react-router-dom";
 import HorizontalScroll from "./HorizontalScroll";
 
 export default function EvSubPage() {
+// 🔥 회사별 컬럼 구간 매핑
+const companyGroups = [
+  { name: "금강기업", range: [0, 5] },
+  { name: "동일인더스트리", range: [6, 13] },
+  { name: "삼성금속", range: [14, 14] },
+  { name: "와이엠", range: [15, 15] },
+  { name: "유신정밀공업", range: [16, 16] },
+  { name: "화승알엔에이", range: [17, 19] },
+  { name: "평화산업", range: [20, 21] },
+  { name: "풍성아이엔디", range: [22, 25] },
+  { name: "대일 CST", range: [26, 27] }
+];
+// 업체별 헤더 색상 (이미지 기반 정확한 색상)
+const companyColors = {
+  "금강기업": "#D64545",
+  "동일인더스트리": "#ED7D31",
+  "삼성금속": "#FFD966",
+  "와이엠": "#A9D18E",
+  "유신정밀공업": "#9BC2E6",
+  "화승알엔에이": "#74A8D4",
+  "평화산업": "#B4A7D6",
+  "풍성아이엔디": "#D5A6BD",
+  "대일 CST": "#A64D79"
+};
+
 
 /* ----------------------------------
       🔹 한국 / 미국 날짜 변환 함수
 ---------------------------------- */
 function parseKRDate(dateStr) {
   if (!dateStr) return null;
-  return new Date(`${dateStr}T00:00:00+09:00`);
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d, -9, 0, 0));  // 한국 00시 고정
 }
 
 
@@ -200,12 +226,12 @@ const statusColor = (status) => {
 
     // 운송 스케줄용 품명 28개
 const PART_NAMES = [
-  "PIN DOWEL",
+  "PIN DOWEL(10140)",
   "PLUG TAPER",
   "STUD",
   "BOLT HEXAGON SOCKET HEAD",
   "BOLT HEXAGON SOCKET HEAD",
-  "PIN DOWEL",
+  "PIN DOWEL(04100)",
   "DOWEL PIN 1",
   "DOWEL PIN 2",
   "OIL NIPPLE",
@@ -485,21 +511,72 @@ const formatNumber = (num) =>
     <Box sx={{ minWidth: 4000 }}> 
       {/* ← 여기에서 전체 테이블 가로 사이즈 확보 (28개 품목 때문에 길어짐) */}
 
-      <Table size="small" sx={{ mt: 2 }}>
-        <TableHead sx={{ bgcolor: "#ffe599" }}>
-          <TableRow>
-            <TableCell align="center">INV#</TableCell>
-            <TableCell align="center">ETD</TableCell>
-            <TableCell align="center">ETA</TableCell>
-            <TableCell align="center">상태</TableCell>
+      <Table
+  size="small"
+  sx={{
+    mt: 2,
+    borderCollapse: "collapse !important",
+    borderSpacing: "0px !important",
 
-            {PART_NAMES.map((name, idx) => (
-              <TableCell key={idx} align="center" sx={{ fontWeight: "bold" }}>
-                {name}
-              </TableCell>
-            ))}
-          </TableRow>
-        </TableHead>
+    "& td, & th": {
+      border: "0px solid transparent !important",
+      padding: "0 !important",
+      margin: 0,
+    }
+  }}
+>
+
+
+
+      <TableHead>
+
+  {/* 🔥 업체 그룹 헤더 동적 생성 */}
+  <TableRow sx={{ bgcolor: "#ffe599" }}>
+    <TableCell colSpan={4} /> {/* INV / ETD / ETA / 상태 */ }
+
+    {companyGroups.map((g, idx) => {
+      const [start, end] = g.range;
+      const span = end - start + 1;
+
+      return (
+        <TableCell
+  key={idx}
+  colSpan={span}
+  align="center"
+  sx={{
+    fontWeight: "bold",
+    fontSize: "16px",
+    bgcolor: companyColors[g.name],  // ← 업체별 색상 적용!
+    color: "#000",
+    
+    borderBottom: "2px solid #b7b7b7",
+    
+  }}
+>
+  {g.name}
+</TableCell>
+
+      );
+    })}
+  </TableRow>
+
+  {/* 🔥 품명 헤더 */}
+  <TableRow sx={{ bgcolor: "#ffe599" }}>
+    <TableCell align="center">INV#</TableCell>
+    <TableCell align="center">ETD</TableCell>
+    <TableCell align="center">ETA</TableCell>
+    <TableCell align="center">상태</TableCell>
+
+    {PART_NAMES.map((name, idx) => (
+      <TableCell key={idx} align="center" sx={{ fontWeight: "bold" }}>
+        {name}
+      </TableCell>
+    ))}
+  </TableRow>
+
+</TableHead>
+
+
 
         <TableBody>
           {scheduleRows.map(row => (
