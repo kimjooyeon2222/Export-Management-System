@@ -20,6 +20,10 @@ import { useNavigate } from "react-router-dom";
 
 export default function ForgingPage() {
 
+function formatKRDate(date) {
+  const local = new Date(date.getTime() + 9 * 60 * 60 * 1000);
+  return local.toISOString().split("T")[0];
+}
 
 
   const [showStockPanel, setShowStockPanel] = useState(false);
@@ -162,9 +166,9 @@ function parseUSDate(dateValue) {
 function parseKRDate(dateStr) {
   if (!dateStr) return null;
   const [y, m, d] = dateStr.split("-").map(Number);
-  return new Date(Date.UTC(y, m - 1, d, -9, 0, 0)); 
-  // 한국 00:00은 UTC -9시간
+  return new Date(Date.UTC(y, m - 1, d, -9, 0, 0));  // 한국 00시 고정
 }
+
 
 
 useEffect(() => {
@@ -1090,7 +1094,8 @@ eta: data?.eta ? parseUSDate(data.eta) : null,
           {/* 🔹 ETD (입력칸 제거, 자동 표시만) */}
           <TableCell align="center">
   <Typography sx={{ fontWeight: "bold", fontSize: "15px" }}>
-    {row.etd ? row.etd.toISOString().split("T")[0] : ""}
+    {row.etd ? formatKRDate(row.etd) : ""}
+
 
   </Typography>
 </TableCell>

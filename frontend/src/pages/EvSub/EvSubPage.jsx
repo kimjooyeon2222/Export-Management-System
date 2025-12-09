@@ -22,9 +22,9 @@ export default function EvSubPage() {
 ---------------------------------- */
 function parseKRDate(dateStr) {
   if (!dateStr) return null;
-  const [y, m, d] = dateStr.split("-").map(Number);
-  return new Date(Date.UTC(y, m - 1, d, -9, 0, 0)); // 한국 00:00
+  return new Date(`${dateStr}T00:00:00+09:00`);
 }
+
 
 function parseUSDate(dateStr) {
   if (!dateStr) return null;

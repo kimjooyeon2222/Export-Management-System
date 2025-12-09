@@ -13,10 +13,12 @@ export default function OilInvoiceTimeline({
         🔹 한국 / 미국 날짜 변환 함수
   ---------------------------------- */
   function parseKRDate(dateStr) {
-    if (!dateStr) return null;
-    const [y, m, d] = dateStr.split("-").map(Number);
-    return new Date(Date.UTC(y, m - 1, d, -9, 0, 0)); // 한국 00:00
-  }
+  if (!dateStr) return null;
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d, -9, 0, 0));  // 한국 00시 고정
+}
+
+
 
   function parseUSDate(dateStr) {
     if (!dateStr) return null;

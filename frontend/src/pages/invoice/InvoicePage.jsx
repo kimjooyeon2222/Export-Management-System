@@ -194,12 +194,13 @@ const [etaEnd, setEtaEnd] = useState("");
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5001";
 
-function parseKRDate(str) {
-  if (!str) return null;
-  const [y, m, d] = str.split("-").map(Number);
-  return new Date(Date.UTC(y, m - 1, d, -9, 0, 0)); 
-  // Seoul = UTC+9 → UTC-9 == Korea 00:00
+function parseKRDate(dateStr) {
+  if (!dateStr) return null;
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d, -9, 0, 0));  // 한국 00시 고정
 }
+
+
 
   // 기본 데이터
   const [rows, setRows] = useState([]);

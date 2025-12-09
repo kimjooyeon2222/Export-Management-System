@@ -26,8 +26,10 @@ export default function AxleSubPage() {
 function parseKRDate(dateStr) {
   if (!dateStr) return null;
   const [y, m, d] = dateStr.split("-").map(Number);
-  return new Date(Date.UTC(y, m - 1, d, -9, 0, 0));  // 한국은 UTC+9 → -9 적용
+  return new Date(Date.UTC(y, m - 1, d, -9, 0, 0));  // 한국 00시 고정
 }
+
+
 
 // 🔸 미국 날짜를 "미국 00:00" 기준 UTC로 변환 (ETA용)
 function parseUSDate(dateStr) {
