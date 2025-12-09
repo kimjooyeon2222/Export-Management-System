@@ -57,13 +57,17 @@ const itemToExporters = {
 
 
 export default function InvoicePage() {
-  // 날짜를 해당 지역(timezone)의 "자정 00:00"으로 맞추는 함수
-const toMidnight = (date, timeZone = "America/Chicago") => {
-  const local = new Date(date).toLocaleString("en-US", { timeZone });
-  const d = new Date(local);
-  d.setHours(0, 0, 0, 0);
-  return d;
-};
+  function parseUSDate(str) {
+  if (!str) return null;
+  const [y, m, d] = str.split("-").map(Number);
+  // 미국 Chicago 기준 00시 = UTC+6
+  return new Date(Date.UTC(y, m - 1, d, 6, 0, 0));
+}
+
+
+
+
+const [refreshTick, setRefreshTick] = useState(0);   // ← 반드시 추가!
 
   // 🔥 타입별 placeholder 매핑
 const placeholderMap = {
@@ -75,7 +79,7 @@ const placeholderMap = {
 
 };
 
-  const todayUS = toMidnight(new Date(), "America/Chicago");
+
 
 
   const [searchType, setSearchType] = useState("po");
@@ -190,6 +194,13 @@ const [etaEnd, setEtaEnd] = useState("");
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5001";
 
+function parseKRDate(str) {
+  if (!str) return null;
+  const [y, m, d] = str.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d, -9, 0, 0)); 
+  // Seoul = UTC+9 → UTC-9 == Korea 00:00
+}
+
   // 기본 데이터
   const [rows, setRows] = useState([]);
   useEffect(() => {
@@ -203,11 +214,24 @@ const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5001";
 }, []);
 
 
+
 useEffect(() => {
   if (!isEditMode) {
     scrollToBottom();
   }
 }, [rows, isEditMode]);   // ← isEditMode도 dependency로 추가
+
+ const todayUS = React.useMemo(() => {
+  // 한국 시간이 아니라 미국 시간으로 변환
+  const nowUS = new Date().toLocaleString("en-US", {
+    timeZone: "America/Chicago"
+  });
+
+  const d = new Date(nowUS);
+  d.setHours(0, 0, 0, 0);   // ⭐ 미국 기준 "오늘 00:00"
+  return d;
+}, [rows, etdStart, etaEnd, showUpcoming]);
+
 
   // CRUD 기능
 
@@ -398,16 +422,6 @@ else if (searchType === "vendor") {
   setSearchResult(uniqueByInv);
 };
 
-
-
-  // 미국 앨라배마(Chicago) 시간으로 날짜 변환
-const getUSDate = (dateStr) =>
-  new Date(
-    new Date(dateStr).toLocaleString("en-US", {
-      timeZone: "America/Chicago",
-    })
-  );
-
 // 🔥 한국식 날짜("11월 06일") → YYYY-MM-DD 변환
 const normalizeDate = (str) => {
   if (!str) return null;
@@ -426,17 +440,7 @@ const normalizeDate = (str) => {
   return `${year}-${month}-${day}`;
 };
 
-// 한국시간(ETD용)
-const getKoreaDate = (dateStr) =>
-  new Date(new Date(dateStr).toLocaleString("en-US", { timeZone: "Asia/Seoul" }));
 
-// 미국 앨라배마 시간(ETA, 공장도착일용)
-const getAlabamaDate = (dateStr) =>
-  new Date(new Date(dateStr).toLocaleString("en-US", { timeZone: "America/Chicago" }));
-
-
-
-  const parseDate = (str) => new Date(str);
 
   // 필터링 로직 (수출자 / 품목 버튼 반영)
   let filteredRows = rows.filter((r) => {
@@ -446,8 +450,8 @@ const getAlabamaDate = (dateStr) =>
     if (showUpcoming) {
   // 🔥 delayed_date가 있으면 그 날짜로 필터링
 const baseDate = r.delayed_date
-  ? toMidnight(normalizeDate(r.delayed_date), "America/Chicago")
-  : toMidnight(normalizeDate(r.eta), "America/Chicago");
+  ? parseUSDate(normalizeDate(r.delayed_date))
+  : parseUSDate(normalizeDate(r.eta));
 
 const daysToArrival = Math.floor((baseDate - todayUS) / (1000 * 60 * 60 * 24));
 
@@ -457,21 +461,23 @@ const daysToArrival = Math.floor((baseDate - todayUS) / (1000 * 60 * 60 * 24));
 }
 
 
+
  // --- 날짜 필터링 정확한 버전 ---
 // 기간 필터
 if (etdStart) {
-  const etdDate = toMidnight(normalizeDate(r.etd), "Asia/Seoul");   // 한국시간 00:00
-  const startDate = toMidnight(etdStart, "Asia/Seoul");
+  const etdDate = parseKRDate(normalizeDate(r.etd));   // 한국시간 00:00
+  const startDate = parseKRDate(etdStart);
 
   if (etdDate < startDate) return false;
 }
 
 if (etaEnd) {
-  const etaDate = toMidnight(normalizeDate(r.eta), "America/Chicago"); // 미국시간 00:00
-  const endDate = toMidnight(etaEnd, "America/Chicago");
+  const etaDate = parseUSDate(normalizeDate(r.eta));
+  const endDate = parseUSDate(etaEnd);
 
   if (etaDate > endDate) return false;
 }
+
 
 
 
@@ -492,12 +498,12 @@ if (etaEnd) {
 if (showUpcoming) {
   filteredRows = filteredRows.sort((a, b) => {
     const aDate = a.delayed_date
-      ? getAlabamaDate(normalizeDate(a.delayed_date))
-      : getAlabamaDate(normalizeDate(a.eta));
+      ? parseUSDate(normalizeDate(a.delayed_date))
+      : parseUSDate(normalizeDate(a.eta));
 
     const bDate = b.delayed_date
-      ? getAlabamaDate(normalizeDate(b.delayed_date))
-      : getAlabamaDate(normalizeDate(b.eta));
+      ? parseUSDate(normalizeDate(b.delayed_date))
+      : parseUSDate(normalizeDate(b.eta));
 
     return aDate - bDate;
   });
@@ -685,13 +691,13 @@ if (showUpcoming) {
 // === 도착 여부: delayed_date가 오늘 이전이면 무조건 도착 ===
 
 // delayed_date 또는 ETA 중 실제 도착일 적용
-const etaDate2 = toMidnight(normalizeDate(merged.eta), "America/Chicago");
+const etaDate2 = parseUSDate(normalizeDate(merged.eta));
 
 const delayedDate2 = merged.delayed_date
-  ? toMidnight(normalizeDate(merged.delayed_date), "America/Chicago")
+  ? parseUSDate(normalizeDate(merged.delayed_date))
   : etaDate2;
 
-const arrived = delayedDate2 < todayUS;
+const arrived = delayedDate2 <= todayUS;
 
 
 
@@ -996,6 +1002,8 @@ const arrived = delayedDate2 < todayUS;
                 } else {
                   alert('✅ 수정 모드가 종료되었습니다.\n이제 표는 읽기 전용 상태입니다.');
                 }
+                 // 🔥 색상 다시 적용하도록 강제 refresh
+        setRefreshTick(t => t + 1);
                 return newMode;
               });
             }}
@@ -1129,15 +1137,17 @@ const arrived = delayedDate2 < todayUS;
       <TableBody>
         {filteredRows.map((row, i) => {
           // === 날짜 정규화 ===
-          const etdDate = toMidnight(normalizeDate(row.etd), "Asia/Seoul");
-          const etaDate = toMidnight(normalizeDate(row.eta), "America/Chicago");
+          const etdDate = parseKRDate(normalizeDate(row.etd));
+         const etaDate = parseUSDate(normalizeDate(row.eta));
+
 
           const delayedDate = row.delayed_date
-            ? toMidnight(normalizeDate(row.delayed_date), "America/Chicago")
-            : etaDate;
+  ? parseUSDate(normalizeDate(row.delayed_date))
+  : etaDate;
 
           // === ETA까지 남은 날짜 ===
-          const daysToETA = Math.floor((etaDate - todayUS) / (1000 * 60 * 60 * 24));
+          const daysToArrival = Math.floor((delayedDate - todayUS) / (1000 * 60 * 60 * 24));
+
 
           // === ETA vs 실제 도착일 ===
           const diffDays = Math.floor((delayedDate - etaDate) / (1000 * 60 * 60 * 24));
@@ -1146,9 +1156,9 @@ const arrived = delayedDate2 < todayUS;
 
           // === 색상 스타일 ===
           let delayedStyle = {};
-          if (daysToETA < 0) {
+          if (daysToArrival < 0) {
             delayedStyle = { bgcolor: "#d6eaff" };
-          } else if (daysToETA >= 0 && daysToETA <= 5) {
+          } else if (daysToArrival >= 0 && daysToArrival <= 5 <= 5) {
             delayedStyle = {
               bgcolor: "#ffcccc",
               color: "#b71c1c",
@@ -1253,28 +1263,44 @@ const arrived = delayedDate2 < todayUS;
   <TableBody>
     {filteredRows.map((row, i) => {
       // 동일 코드 (정렬 OFF에서도 로직 그대로 유지)
-      const etdDate = toMidnight(normalizeDate(row.etd), "Asia/Seoul");
-      const etaDate = toMidnight(normalizeDate(row.eta), "America/Chicago");
+      const etdDate = parseKRDate(normalizeDate(row.etd));
+const etaDate = parseUSDate(normalizeDate(row.eta));
 
-      const delayedDate = row.delayed_date
-        ? toMidnight(normalizeDate(row.delayed_date), "America/Chicago")
-        : etaDate;
+const delayedDate = row.delayed_date
+  ? parseUSDate(normalizeDate(row.delayed_date))
+  : etaDate;
 
-      const daysToETA = Math.floor((etaDate - todayUS) / (1000 * 60 * 60 * 24));
 
-      const diffDays = Math.floor((delayedDate - etaDate) / (1000 * 60 * 60 * 24));
-      const countText = `${diffDays}일`;
-      const countNum = diffDays;
 
-      let delayedStyle = {};
-      if (daysToETA < 0) delayedStyle = { bgcolor: "#d6eaff" };
-      else if (daysToETA >= 0 && daysToETA <= 5)
-        delayedStyle = {
-          bgcolor: "#ffcccc",
-          color: "#b71c1c",
-          fontWeight: "bold",
-        };
-      else delayedStyle = { bgcolor: "#ffcccc" };
+
+
+
+      // === delayed_date 기준 남은 날짜 ===
+const daysToArrival = Math.floor((delayedDate - todayUS) / (1000 * 60 * 60 * 24));
+
+// === 색상 스타일 ===
+let delayedStyle = {};
+  // === ETA vs 실제 도착일 ===
+          const diffDays = Math.floor((delayedDate - etaDate) / (1000 * 60 * 60 * 24));
+          const countText = `${diffDays}일`;
+          const countNum = diffDays;
+if (daysToArrival < 0) {
+  // 이미 도착 완료
+  delayedStyle = { bgcolor: "#d6eaff" };
+} 
+else if (daysToArrival >= 0 && daysToArrival <= 5) {
+  // 금일 이후 + 5일 이내 도착
+  delayedStyle = {
+    bgcolor: "#ffcccc",
+    color: "#b71c1c",
+    fontWeight: "bold",
+  };
+} 
+else {
+  // 5일 이후 도착, 연한 빨강
+  delayedStyle = { bgcolor: "#ffcccc" };
+}
+
 
       const countStyle =
         countNum >= 10

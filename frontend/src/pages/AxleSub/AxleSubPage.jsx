@@ -161,7 +161,7 @@ const calcInTransit = (itemName) => {
  const etaUS = eta ? toAlabamaMidnight(eta) : null;
 const etdUS = etd ? toAlabamaMidnight(etd) : null;
 
-if (etaUS && etaUS < today) return "입고완료";
+if (etaUS && etaUS <= today) return "입고완료";
 if (!eta || eta === "일정 없음") return "부산항 미입고";
 if (etdUS && etdUS > today) return "선적대기중";
 

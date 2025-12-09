@@ -66,10 +66,11 @@ export default function ExportCombo() {
           fontSize: 15,
           border: "1px solid #ddd",
           textTransform: "none",
+          
           "&:hover": { background: "#fafafa" }
         }}
       >
-        수출통합관리
+        수출품목
       </Button>
 
       {/* 드롭다운 메뉴 */}

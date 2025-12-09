@@ -122,7 +122,7 @@ function getUSToday() {
         sx={{
           backgroundColor:
             invoiceInfo.eta &&
-            toMidnight(normalizeDate(invoiceInfo.eta), "America/Chicago") > todayUS
+            toMidnight(normalizeDate(invoiceInfo.eta), "America/Chicago") >= todayUS
               ? "#ffe6eb"
               : "inherit",
         }}
@@ -138,13 +138,13 @@ function getUSToday() {
             style={{
               color:
                 invoiceInfo.eta &&
-                toMidnight(normalizeDate(invoiceInfo.eta), "America/Chicago") > todayUS
+                toMidnight(normalizeDate(invoiceInfo.eta), "America/Chicago") >= todayUS
 
                   ? "red"
                   : "inherit",
               fontWeight:
                 invoiceInfo.eta &&
-                toMidnight(normalizeDate(invoiceInfo.eta), "America/Chicago") > todayUS
+                toMidnight(normalizeDate(invoiceInfo.eta), "America/Chicago") >= todayUS
 
                   ? "bold"
                   : "normal",

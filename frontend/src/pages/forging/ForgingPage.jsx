@@ -216,7 +216,7 @@ useEffect(() => {
         status = "부산항 미입고";
       }
       // ETA 지났으면 입고완료      
-      else if (etaDate < today) {
+      else if (etaDate <= today) {
         status = "입고완료";
       }
       // ETD가 있고 미래면 선적대기중

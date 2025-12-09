@@ -229,7 +229,7 @@ const formatNumber = (num) =>
   const etdDate = etd ? new Date(etd) : null;
   const etaUS = eta ? toAlabamaMidnight(eta) : null;
   // ETA < TODAY → 입고완료
-  if (etaUS && etaUS < today) {
+  if (etaUS && etaUS <= today) {
     return "입고완료";
   }
 
