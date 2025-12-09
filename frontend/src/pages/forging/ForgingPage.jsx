@@ -19,43 +19,20 @@ import { useNavigate } from "react-router-dom";
 
 
 export default function ForgingPage() {
-function toKoreaMidnight(dateStr) {
-  if (!dateStr) return null;
-  return new Date(`${dateStr}T00:00:00+09:00`);
-}
-function toAlabamaMidnight(dateStr) {
-  if (!dateStr) return null;
-
-  // 입력값이 YYYY-MM-DD 라고 가정
-  const [y, m, d] = dateStr.split("-").map(Number);
-
-  // 미국 Chicago 00:00 → UTC = +6시간
-  const utcTS = Date.UTC(y, m - 1, d, 6, 0, 0);
-
-  return new Date(utcTS);
-}
 
 
 
   const [showStockPanel, setShowStockPanel] = useState(false);
 
 // 📌 미국 Alabama(중부시간) 기준 '오늘 00:00' 생성
-function getTodayInAlabama() {
-  // Alabama(Chicago) 현재 날짜를 문자열로 얻음
-  const formatter = new Intl.DateTimeFormat("en-US", {
+function todayUS() {
+  const nowUS = new Date().toLocaleString("en-US", {
     timeZone: "America/Chicago",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
   });
 
-  const parts = formatter.formatToParts(new Date());
-  const y = parts.find((p) => p.type === "year").value;
-  const m = parts.find((p) => p.type === "month").value;
-  const d = parts.find((p) => p.type === "day").value;
-
-  // 실제 알라배마 날짜의 00:00을 UTC 기준으로 만들어줌
-  return new Date(Date.UTC(y, m - 1, d, 6, 0, 0)); // 00:00 CST = 06:00 UTC
+  const d = new Date(nowUS);
+  d.setHours(0, 0, 0, 0);
+  return d;
 }
 
 
@@ -175,17 +152,20 @@ useEffect(() => {
   loadItems();
 }, []);
 
-function parseDBDate(dateValue) {
+function parseUSDate(dateValue) {
   if (!dateValue) return null;
 
-  // timestamp or ISO string → Date 객체 변환
-  const d = new Date(dateValue);
-  if (!isNaN(d)) return d;  // 이미 정상 Date
-
-  // YYYY-MM-DD 형태라면 수동 변환
-  const [y, m, dd] = dateValue.split("-").map(Number);
-  return new Date(Date.UTC(y, m - 1, dd, 6, 0, 0));
+  const [y, m, d] = dateValue.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d, 6, 0, 0)); // 미국 00:00 = UTC+6
 }
+
+function parseKRDate(dateStr) {
+  if (!dateStr) return null;
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d, -9, 0, 0)); 
+  // 한국 00:00은 UTC -9시간
+}
+
 
 useEffect(() => {
   async function loadRows() {
@@ -193,8 +173,9 @@ useEffect(() => {
     const dbRows = await res.json();
 
     const fixedRows = dbRows.map(r => {
-      const etd = parseDBDate(r.etd);
-      const eta = parseDBDate(r.eta);
+      const etd = parseKRDate(r.etd);
+      const eta = parseUSDate(r.eta);
+
 
       return {
         ...r,
@@ -203,7 +184,7 @@ useEffect(() => {
       };
     });
 
-    const today = getTodayInAlabama();
+    const today = todayUS();
 
     const recalculated = fixedRows.map(r => {
       const etdDate = r.etd;
@@ -944,9 +925,9 @@ const getStatusStyle = (status) => {
     const res = await fetch(`${API_BASE}/api/invoice/${inv}`);
     const data = await res.json();
 
-    const today = getTodayInAlabama();
-    const etd = data?.etd ? toKoreaMidnight(data.etd) : null;
-    const eta = data?.eta ? toAlabamaMidnight(data.eta) : null;
+    const today = todayUS();
+    const etd = data?.etd ? parseKRDate(data.etd) : null;
+    const eta = data?.eta ? parseUSDate(data.eta) : null;
 
 
     let status = "";
@@ -955,11 +936,11 @@ if (!data?.eta || data.eta === "일정 없음") {
   status = "부산항 미입고";
 } 
 else {
-  const etdDate = data?.etd ? toAlabamaMidnight(data.etd) : null;
-  const etaDate = data?.eta ? toAlabamaMidnight(data.eta) : null;
-  const today = getTodayInAlabama();
+  const etdDate = data?.etd ? parseKRDate(data.etd) : null;
+  const etaDate = data?.eta ? parseUSDate(data.eta) : null;
+  const today = todayUS();
 
-  if (etaDate < today) {
+  if (etaDate <= today) {
     status = "입고완료";
   } else if (etdDate > today) {
     status = "선적대기중";
@@ -977,8 +958,9 @@ else {
               ...r,
               no: data?.no || "",
               status,
-              etd: data?.etd ? toKoreaMidnight(data.etd) : null,
-eta: data?.eta ? toAlabamaMidnight(data.eta) : null,
+              etd: data?.etd ? parseKRDate(data.etd) : null,
+eta: data?.eta ? parseUSDate(data.eta) : null,
+
 
               month_depart: data?.etd
                 ? `${new Date(data.etd).getMonth() + 1}월`
