@@ -16,7 +16,7 @@ const dashboard = {
   children: [
     {
       id: 'dashboard',
-      title:"수출통합관리시스템",
+      title:"수출통합관리 시스템",
       type: 'item',
       url: '/dashboard/default',
       icon: icons.IosShareIcon,

@@ -8,6 +8,9 @@ export default function ExportCombo() {
   const [anchor, setAnchor] = useState(null);
   const open = Boolean(anchor);
 
+  // ✔ 선택된 드롭다운 메뉴 텍스트 저장 (초기: 수출품목)
+  const [selectedLabel, setSelectedLabel] = useState("수출품목");
+
   // 전체 메뉴
   const menuList = [
     { label: "INVOICE TRK", path: "/invoice" },
@@ -16,11 +19,9 @@ export default function ExportCombo() {
     { label: "AXLE서브품", path: "/axle-sub" },
     { label: "EV서브품", path: "/ev-sub" },
     { label: "브라켓", path: "/bracket" },
-    { label: "공구대차(종료)", path: "/cart" },
     { label: "수출품 사진", path: "/photo" }
   ];
 
-  // 🔥 드롭다운에 INVOICE TRK 제외
   const dropdownMenus = menuList.filter(m => m.label !== "INVOICE TRK");
 
   return (
@@ -28,69 +29,98 @@ export default function ExportCombo() {
       sx={{
         display: "flex",
         alignItems: "center",
-    
-        gap: 2,
+        gap: 0.3,
         ml: 2
       }}
     >
-      {/* 🔥 INVOICE TRK 버튼 (클릭 가능) */}
+      {/* INVOICE TRK 버튼 */}
       <Button
-  onClick={() => navigate("/invoice")}
-  sx={{
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#2a2c2c",
-    textTransform: "none",
-    minWidth: 140,        // ⬅️ 버튼 너비 늘림 (필요시 160으로 늘리면 됨)
-    whiteSpace: "nowrap", // ⬅️ 줄바꿈 방지
-    "&:hover": { background: "#e3f2fd" }
-  }}
->
-  INVOICE TRK
-</Button>
+        onClick={() => navigate("/invoice")}
+        sx={{
+          fontSize: 15,
+          fontWeight: 700,
+          color: "#333",
+          textTransform: "none",
+          minWidth: 140,
+          whiteSpace: "nowrap",
+          border: "1px solid #cfcfcf",
+          borderRadius: "6px",
+          backgroundColor: "#fafafa",
+          "&:hover": {
+            backgroundColor: "#e9f3ff",
+            borderColor: "#90caf9"
+          }
+        }}
+      >
+        INVOICE TRK
+      </Button>
 
-
-      {/* 🔥 GAP */}
       <Box sx={{ width: 8 }}></Box>
 
-      {/* 🔥 수출통합관리 드롭다운 버튼 */}
+      {/* ✔ 수출품목 드롭다운 버튼 */}
       <Button
         onClick={(e) => setAnchor(e.currentTarget)}
         endIcon={<ArrowDropDownIcon />}
         sx={{
-          fontWeight: "bold",
-          bgcolor: "#fff",
-          width: 160,
-          justifyContent: "space-between",
-          color: "#2a2c2c",
+          fontWeight: 700,
+          bgcolor: "#fafafa",
+          width: 150,
+          justifyContent: "center",
+          color: "#333",
           fontSize: 15,
-          border: "1px solid #ddd",
+          border: "1px solid #cfcfcf",
+          borderRadius: "6px",
           textTransform: "none",
-          
-          "&:hover": { background: "#fafafa" }
+
+          "& .MuiButton-endIcon": {
+            position: "absolute",
+            right: 8,
+            color: "#555"
+          },
+
+          "&:hover": {
+            backgroundColor: "#e9f3ff",
+            borderColor: "#90caf9"
+          }
         }}
       >
-        수출품목
+        {selectedLabel}
       </Button>
 
-      {/* 드롭다운 메뉴 */}
+      {/* ▼ 드롭다운 메뉴 */}
       <Menu
         open={open}
         anchorEl={anchor}
         onClose={() => setAnchor(null)}
+        PaperProps={{
+          style: {
+            minWidth: 150,  // 🔥 버튼 width와 동일
+          }
+        }}
       >
         {dropdownMenus.map(item => (
           <MenuItem
             key={item.path}
             onClick={() => {
+              setSelectedLabel(item.label);
               navigate(item.path);
               setAnchor(null);
             }}
+
             sx={{
-              fontWeight: "bold",
-              fontSize: "0.95rem",
-              py: 1.2,
-              color: "#555"
+              fontWeight: 600,
+              fontSize: "16px",
+
+              // 🔥 가운데 정렬 적용
+              display: "flex",
+              justifyContent: "center",
+              textAlign: "center",
+
+              py: 1.3,
+              color: "#444",
+              "&:hover": {
+                backgroundColor: "#f2f6ff"
+              }
             }}
           >
             {item.label}
