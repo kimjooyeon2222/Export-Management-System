@@ -1075,6 +1075,57 @@ def save_br_schedule_bulk():
     db.session.commit()
     return jsonify({"message": "saved"})
 
+@app.route("/api/br/auto-load/<inv_no>", methods=["GET"])
+def br_auto_load(inv_no):
+    try:
+        # 1) invoice 조회
+        invoice = Invoice.query.filter_by(inv_no=inv_no).first()
+        if not invoice:
+            return jsonify({"error": "Invoice not found"}), 404
+
+        today = datetime.today().date()
+
+        # ETA = delayed_date 우선 사용
+        eta_value = invoice.delayed_date or invoice.eta
+        eta_date = None
+        if eta_value:
+            eta_date = datetime.strptime(eta_value, "%Y-%m-%d").date()
+
+        # ETD
+        etd_date = None
+        if invoice.etd:
+            etd_date = datetime.strptime(invoice.etd, "%Y-%m-%d").date()
+
+        # 상태 계산
+        if not eta_date:
+            status = "부산항 미입고"
+        elif eta_date < today:
+            status = "입고완료"
+        elif etd_date and etd_date > today:
+            status = "선적대기중"
+        else:
+            status = "운항중"
+
+        # 2) packing_list에서 qty 합산
+        pack_rows = PackingList.query.filter_by(invoice_id=invoice.id).all()
+
+        qty_map = {}
+        for r in pack_rows:
+            qty_map[r.part_no] = qty_map.get(r.part_no, 0) + int(r.qty or 0)
+
+        # 3) 응답 반환
+        return jsonify({
+            "inv_no": invoice.inv_no,
+            "etd": invoice.etd,
+            "eta": eta_value,
+            "status": status,
+            "qty_map": qty_map
+        })
+
+    except Exception as e:
+        print("BRACKET auto-load API 오류:", e)
+        return jsonify({"error": str(e)}), 500
+
 # ============================================
 # 서버 실행
 # ============================================

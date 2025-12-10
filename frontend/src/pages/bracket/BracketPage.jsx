@@ -16,6 +16,41 @@ import { v4 as uuidv4 } from "uuid";
 import { useNavigate } from "react-router-dom";
 
 export default function BracketPage() {
+      const [scheduleRows, setScheduleRows] = useState([]);
+    
+
+    // ================================================
+// 🔥 BRACKET 품번 기준으로 packing_list 합산하는 함수
+// ================================================
+async function calcBracketQty(invNo) {
+  const API_BASE = import.meta.env.VITE_API_URL;
+
+  try {
+    // packing_list 불러오기 (특정 INV)
+    const res = await fetch(`${API_BASE}/api/packing-list/by-inv/${invNo}`);
+    const items = await res.json();
+
+    let LH = 0;
+    let RH = 0;
+
+    items.forEach(item => {
+      if (item.part_no === "55228-T00800") {
+        LH += Number(item.qty || 0);
+      }
+      if (item.part_no === "55228-T00830") {
+        RH += Number(item.qty || 0);
+      }
+    });
+
+    return { LH, RH };
+
+  } catch (err) {
+    console.error("🚨 BRACKET qty 계산 오류:", err);
+    return { LH: 0, RH: 0 };
+  }
+}
+
+
     // 🔥 페이지 로딩 시 DB에서 데이터 불러오기
 useEffect(() => {
   const API_BASE = import.meta.env.VITE_API_URL;
@@ -46,16 +81,34 @@ if (Array.isArray(inv)) {
 
 
       // 3) 스케줄 불러오기
-      const schRes = await fetch(`${API_BASE}/api/br-schedule`);
-      const schedule = await schRes.json();
-      if (Array.isArray(schedule)) {
-        setScheduleRows(
-          schedule.map((row) => ({
-            tempId: uuidv4(),
-            ...row,
-          }))
-        );
-      }
+      // 3) BRACKET 스케줄 불러오기 + qty 자동 적용
+const schRes = await fetch(`${API_BASE}/api/br-schedule`);
+const schedule = await schRes.json();
+
+let updated = [];
+
+for (const row of schedule) {
+  // ETA/ETD 기반 상태 체크
+  const status = getScheduleStatus(row.etd, row.eta);
+
+  // 운항중일 때만 qty 계산
+  let qty = { LH: 0, RH: 0 };
+  if (status === "운항중") {
+    qty = await calcBracketQty(row.inv_no);
+  }
+
+  updated.push({
+    tempId: uuidv4(),
+    ...row,
+    bracket_LH: qty.LH,
+    bracket_RH: qty.RH,
+    status,
+  });
+}
+
+setScheduleRows(updated);
+
+   
     } catch (err) {
       console.error("🚨 로딩 오류:", err);
     }
@@ -64,6 +117,16 @@ if (Array.isArray(inv)) {
   loadAll();
 }, []);
 
+// 🔥 스케줄 로드 후 INV 기반 자동 데이터 로딩
+useEffect(() => {
+  if (scheduleRows.length === 0) return;
+
+  scheduleRows.forEach(row => {
+    if (row.inv_no) {
+      handleAutoLoad(row.tempId, row.inv_no);
+    }
+  });
+}, [scheduleRows.length]);
 
     // ⭐ 전체 저장 함수
 const handleSave = async () => {
@@ -139,7 +202,7 @@ const getStatusBoxStyle = (status) => {
     const bracketCompanyColors = {
   "디케이메탈": "#FFD966",
 };
-    {/* 북미 날짜 → 월 초/중순/말 변환 */}
+ 
 const getPeriod = (dateStr) => {
   if (!dateStr) return "";
   const d = new Date(dateStr);
@@ -258,7 +321,7 @@ const getPeriod = (dateStr) => {
       id: 1,
       company: "디케이메탈",
       item_name: "BRACKET-MTG; LH MCT",
-      item_code: "55228T00800",
+      item_code: "55228-T00800",
       actual_stock: 0,
       target_stock: 0,
     },
@@ -266,7 +329,7 @@ const getPeriod = (dateStr) => {
       id: 2,
       company: "디케이메탈",
       item_name: "BRACKET-MTG; RH MCT",
-      item_code: "55228T00830",
+      item_code: "55228-T00830",
       actual_stock: 0,
       target_stock: 0,
     },
@@ -282,6 +345,43 @@ const getPeriod = (dateStr) => {
     );
   }, [targetStock]);
 
+async function handleAutoLoad(tempId, invNo) {
+  if (!invNo.trim()) return;
+
+  const API_BASE = import.meta.env.VITE_API_URL;
+
+  try {
+    const res = await fetch(`${API_BASE}/api/br/auto-load/${invNo}`);
+    const data = await res.json();
+
+    if (data.error) return;
+
+    const { etd, eta, status, qty_map } = data;
+
+    // LH / RH 계산
+    const LH = qty_map["55228-T00800"] || 0;
+    const RH = qty_map["55228-T00830"] || 0;
+
+    // scheduleRows 업데이트
+    setScheduleRows(prev =>
+      prev.map(row =>
+        row.tempId === tempId
+          ? {
+              ...row,
+              inv_no: invNo,
+              etd,
+              eta,
+              status,
+              bracket_LH: LH,
+              bracket_RH: RH,
+            }
+          : row
+      )
+    );
+  } catch (err) {
+    console.error("🔥 BRACKET 자동로드 오류:", err);
+  }
+}
   const getStatus = (actual, target) => {
     if (actual >= target * 1.13) return "초과";
     if (actual >= target && actual > target * 0.96) return "양호";
@@ -308,7 +408,7 @@ const getPeriod = (dateStr) => {
         운항 스케줄
   ---------------------------------- */
 
-  const [scheduleRows, setScheduleRows] = useState([]);
+
 
   const addRow = () => {
     setScheduleRows((prev) => [
@@ -461,78 +561,84 @@ const getPeriod = (dateStr) => {
 
         <Table size="small" sx={{ "& *": { fontWeight: "bold", fontSize: "15px" } }}>
           <TableHead sx={{ bgcolor: "#ffe599", borderTop: "2px solid #000" }}>
-            <TableRow>
-              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>업체명</TableCell>
-              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>품명</TableCell>
-              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>품번</TableCell>
-              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>실사자료</TableCell>
-              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>적정재고</TableCell>
-              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>판단결과</TableCell>
-            </TableRow>
-          </TableHead>
+  <TableRow>
+    <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>업체명</TableCell>
+    <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>품명</TableCell>
+    <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>품번</TableCell>
+    <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>실사자료</TableCell>
+    <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>적정재고</TableCell>
+
+    {/* ⭐ 추가되는 두 컬럼 */}
+    <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>운항중</TableCell>
+    <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>운항중 + 실사자료</TableCell>
+
+    <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>판단결과</TableCell>
+  </TableRow>
+</TableHead>
+
 
           <TableBody>
-            {bracketRows.map((row) => {
-              const target = row.target_stock;
-              const actual = row.actual_stock;
+  {bracketRows.map((row) => {
+    const actual = Number(row.actual_stock || 0);
+    const target = Number(row.target_stock || 0);
 
-              return (
-                <TableRow key={row.id}>
-                  <TableCell align="center">
-  <Box
-    sx={{
-      display: "inline-block",
-      px: 1.5,
-      py: 0.4,
-      borderRadius: "6px",
-      fontWeight: "bold",
-      fontSize: "15px",
-      bgcolor: bracketCompanyColors[row.company] || "#ddd",
-      color: getContrastTextColor(bracketCompanyColors[row.company]),
-      minWidth: "90px",
-      textAlign: "center",
-    }}
-  >
-    {row.company}
-  </Box>
-</TableCell>
-                  <TableCell align="center"  sx={{ fontWeight: "bold", fontSize: "15px" }}>{row.item_name} </TableCell>
-                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>{row.item_code}  </TableCell>
+    // ⭐ 운항중 qty 계산
+    const inTransit = scheduleRows
+      .filter(r => getScheduleStatus(r.etd, r.eta) === "운항중")
+      .reduce((sum, r) => {
+        if (row.item_code === "55228-T00800") return sum + (r.bracket_LH || 0);
+        if (row.item_code === "55228-T00830") return sum + (r.bracket_RH || 0);
+        return sum;
+      }, 0);
 
-                  <TableCell align="center"  sx={{ fontWeight: "bold", fontSize: "15px" }}>
-                    {editMode ? (
-                      <TextField
-                        size="small"
-                        type="number"
-                        value={row.actual_stock}
-                        onChange={(e) =>
-                          setBracketRows((prev) =>
-                            prev.map((r) =>
-                              r.id === row.id
-                                ? { ...r, actual_stock: Number(e.target.value) }
-                                : r
-                            )
-                          )
-                        }
-                        sx={{ width: 100 }}
-                      />
-                    ) : (
-                      formatNumber(row.actual_stock)
-                    )}
-                  </TableCell>
+    // ⭐ 운항중 + 실사자료
+    const total = actual + inTransit;
 
-                  <TableCell align="center"  sx={{ fontWeight: "bold", fontSize: "15px" }}>{formatNumber(target)}</TableCell>
+    // ⭐ 판단결과는 total 기준
+    const status = getStatus(total, target);
 
-                  <TableCell align="center">
-  <Box sx={getStatusBoxStyle(getStatus(actual, target))}>
-    {getStatus(actual, target)}
-  </Box>
-</TableCell>
+    return (
+      <TableRow key={row.id}>
+        <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
+          <Box
+            sx={{
+              display: "inline-block",
+              px: 1.5,
+              py: 0.4,
+              borderRadius: "6px",
+              fontWeight: "bold",
+              bgcolor: bracketCompanyColors[row.company] || "#ddd",
+              color: getContrastTextColor(bracketCompanyColors[row.company]),
+            }}
+          >
+            {row.company}
+          </Box>
+        </TableCell>
 
-                </TableRow>
-              );
-            })}
-          </TableBody>
+        <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>{row.item_name}</TableCell>
+        <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>{row.item_code}</TableCell>
+
+        {/* 실사자료 */}
+        <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>{formatNumber(actual)}</TableCell>
+
+        {/* 적정재고 */}
+        <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>{formatNumber(target)}</TableCell>
+
+        {/* ⭐ 운항중 */}
+        <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>{formatNumber(inTransit)}</TableCell>
+
+        {/* ⭐ 운항중 + 실사자료 */}
+        <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>{formatNumber(total)}</TableCell>
+
+        {/* ⭐ 판단결과 */}
+        <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
+          <Box sx={getStatusBoxStyle(status)}>{status}</Box>
+        </TableCell>
+      </TableRow>
+    );
+  })}
+</TableBody>
+
         </Table>
       </Paper>
 
@@ -621,9 +727,11 @@ const getPeriod = (dateStr) => {
                     <TextField
                       size="small"
                       value={row.inv_no}
-                      onChange={(e) =>
-                        updateScheduleCell(row.tempId, "inv_no", e.target.value)
-                      }
+                     onChange={(e) => {
+  const value = e.target.value;
+  updateScheduleCell(row.tempId, "inv_no", value);
+  handleAutoLoad(row.tempId, value);   // ★ 자동 불러오기 실행
+}}
                       sx={{ width: 90 }}
                     />
                   ) : (
