@@ -615,18 +615,23 @@ if (showUpcoming) {
 </Box>
 
           <TextField
-            variant="outlined"
-            size="small"
-            value={poNumber}
-            onChange={(e) => setPoNumber(e.target.value)}
-            placeholder={placeholderMap[searchType]}   // 🔥 자동 placeholder 전환
-            sx={{
-              bgcolor: 'white',
-              borderRadius: 1,
-              width: '240px',
-              '& input': { fontSize: '1rem', fontWeight: 500 }
-            }}
-          />
+  variant="outlined"
+  size="small"
+  value={poNumber}
+  onChange={(e) => setPoNumber(e.target.value)}
+  placeholder={placeholderMap[searchType]}
+  onKeyDown={(e) => {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
+  }}
+  sx={{
+    bgcolor: 'white',
+    borderRadius: 1,
+    width: '240px',
+    '& input': { fontSize: '1rem', fontWeight: 500 }
+  }}
+/>
           <Button
             variant="contained"
             sx={{

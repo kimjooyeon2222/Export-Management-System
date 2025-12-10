@@ -27,7 +27,7 @@ export default function EvSubPage() {
       return { bgcolor: "#f4cccc", color: "#990000", fontWeight: "bold", px: 1.2, borderRadius: "6px" };
     case "적정재고미달":
       return { bgcolor: "#fff2cc", color: "#7f6000", fontWeight: "bold", px: 1.2, borderRadius: "6px" };
-    default:
+    default:a
       return { bgcolor: "#eeeeee", color: "#000", fontWeight: "bold", px: 1.2, borderRadius: "6px" };
   }
 };
@@ -280,6 +280,7 @@ const saveSchedule = async () => {
 
 
 
+
 // 🔥 회사별 컬럼 구간 매핑
 const companyGroups = [
   { name: "금강기업", range: [0, 5] },
@@ -497,34 +498,34 @@ const statusColor = (status) => {
 
     // 운송 스케줄용 품명 28개
 const PART_NAMES = [
-  "PIN DOWEL(10140)",
+  "PIN DOWEL (10140)",
   "PLUG TAPER",
   "STUD",
-  "BOLT HEXAGON SOCKET HEAD(06121)",
-  "BOLT HEXAGON SOCKET HEAD(06141)",
-  "PIN DOWEL(04100)",
+  "BOLT HEXAGON SOCKET HEAD (06121)",
+  "BOLT HEXAGON SOCKET HEAD (06141)",
+  "PIN DOWEL (04100)",
   "DOWEL PIN 1",
   "DOWEL PIN 2",
   "OIL NIPPLE",
   "RESOLVER PIN DOWEL",
-  "NIPPLE_NO.1(DO364)",
-  "NIPPLE_NO.2(DO364)",
-  "NIPPLE_NO.1(NI364)",
-  "NIPPLE_NO.2(NI364)",
-  "PIN DOWEL(10200)",
+  "NIPPLE_NO.1 (DO364)",
+  "NIPPLE_NO.2 (DO364)",
+  "NIPPLE_NO.1 (NI364)",
+  "NIPPLE_NO.2 (NI364)",
+  "PIN DOWEL (10200)",
   "M5 X 14 BOLT ASSY",
   "WASHER WAVE",
   "PIPE COOLING -D",
-  "PIPE COOLINGD(1XAB0)",
-  "PIPE COOLINGD(1XCA0)",
+  "PIPE COOLINGD (1XAB0)",
+  "PIPE COOLINGD (1XCA0)",
   "BRK'T ASS'Y MOTOR MTG,LH",
   "BRK'T ASS'Y MOTOR MTG,RH",
-  "KNOCK BUSH(10090)",
-  "KNOCK BUSH(08130)",
-  "STUD(08256K)",
-  "STUD(08206K)",
-  "보호용 캡(GNT-1)",
-  "보호용 캡(MRCAP)"
+  "KNOCK BUSH (10090)",
+  "KNOCK BUSH (08130)",
+  "STUD (08256K)",
+  "STUD (08206K)",
+  "보호용 캡 (GNT-1)",
+  "보호용 캡 (MRCAP)"
 ];
 
 const formatNumber = (num) =>
@@ -730,36 +731,36 @@ const total = row.actual_stock + transit;
 </TableCell>
 
 
-        <TableCell align="center" sx={{ fontWeight: "bold" }}>
+        <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
           {row.item_name}
         </TableCell>
 
-        <TableCell align="center" sx={{ fontWeight: "bold" }}>
+        <TableCell align="center" sx={{ fontWeight: "bold",fontSize: "15px" }}>
           {row.item_code}
         </TableCell>
 
-        <TableCell align="center">
+        <TableCell align="center" sx={{ fontWeight: "bold",fontSize: "15px" }}>
           {formatNumber(row.box_qty)}
         </TableCell>
 
-        <TableCell align="center">
+        <TableCell align="center" sx={{ fontWeight: "bold",fontSize: "15px" }}>
           {formatNumber(row.actual_stock)}
         </TableCell>
 
-        <TableCell align="center">
+        <TableCell align="center" sx={{ fontWeight: "bold" ,fontSize: "15px"}}>
   {formatNumber(row.target_stock)}
 </TableCell>
 
 
-        <TableCell align="center">
+        <TableCell align="center" sx={{ fontWeight: "bold",fontSize: "15px" }}>
           {formatNumber(transit)}
         </TableCell>
 
-        <TableCell align="center">
+        <TableCell align="center" sx={{ fontWeight: "bold",fontSize: "15px" }}>
           {formatNumber(total)}
         </TableCell>
 
-        <TableCell align="center">
+        <TableCell align="center" sx={{ fontWeight: "bold",fontSize: "15px" }}>
           <Box component="span" sx={getStockStatusStyle(status)}>
   {status}
 </Box>
@@ -869,16 +870,21 @@ borderSpacing: "0 !important",
 
   {/* 🔥 품명 헤더 */}
   <TableRow sx={{ bgcolor: "#ffe599" }}>
-    <TableCell align="center">INV#</TableCell>
-    <TableCell align="center">ETD</TableCell>
-    <TableCell align="center">ETA</TableCell>
-    <TableCell align="center">상태</TableCell>
+    <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>INV#</TableCell>
+    <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>ETD</TableCell>
+    <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>ETA</TableCell>
+    <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>상태</TableCell>
 
     {PART_NAMES.map((name, idx) => (
-      <TableCell key={idx} align="center" sx={{ fontWeight: "bold" }}>
-        {name}
-      </TableCell>
-    ))}
+  <TableCell
+    key={idx}
+    align="center"
+    sx={{ fontWeight: "bold", fontSize: "15px" }}
+  >
+    {name}
+  </TableCell>
+))}
+
   </TableRow>
 
 </TableHead>
@@ -899,7 +905,7 @@ borderSpacing: "0 !important",
 
 
       {/* INV# (수정가능) */}
-      <TableCell align="center">
+      <TableCell align="center"  sx={{ fontSize: "15px", fontWeight:"bold" }}>
   {editMode ? (
     <TextField
       size="small"
@@ -914,12 +920,12 @@ borderSpacing: "0 !important",
 
 
       {/* ETD (수정 불가, 표시만) */}
-      <TableCell align="center">
+      <TableCell align="center" sx={{ fontSize: "15px", fontWeight:"bold" }}>
         {row.etd}
       </TableCell>
 
       {/* ETA — 기존 색깔 박스 유지 */}
-      <TableCell align="center">
+      <TableCell align="center"  sx={{ fontSize: "15px", fontWeight:"bold" }}>
         {getScheduleStatus(row.etd, row.eta) === "운항중" ? (
           <Box sx={getForgingStatusStyle("운항중")}>
             {row.eta}
@@ -930,7 +936,7 @@ borderSpacing: "0 !important",
       </TableCell>
 
       {/* 상태 — 기존 스타일 박스 유지 */}
-      <TableCell align="center">
+      <TableCell align="center"  sx={{ fontSize: "15px", fontWeight:"bold" }}>
         <Box sx={getForgingStatusStyle(getScheduleStatus(row.etd, row.eta))}>
           {getScheduleStatus(row.etd, row.eta)}
         </Box>
@@ -938,7 +944,7 @@ borderSpacing: "0 !important",
 
       {/* 28개 품목 qty → 수정칸 없음 (숫자만 출력) */}
       {PART_NAMES.map((pname, idx) => (
-        <TableCell key={idx} align="center">
+        <TableCell key={idx} align="center"  sx={{ fontSize: "15px", fontWeight: "bold" }}>
           {formatNumber(row[pname] || 0)}
         </TableCell>
       ))}
