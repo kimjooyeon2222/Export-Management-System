@@ -18,6 +18,19 @@ import { v4 as uuidv4 } from "uuid";
 
 
 export default function AxleSubPage() {
+    // 배경색 HEX → 글자색 자동 결정 (흰색/검정)
+const getContrastTextColor = (bgColor) => {
+  if (!bgColor) return "#000";
+
+  const r = parseInt(bgColor.substr(1, 2), 16);
+  const g = parseInt(bgColor.substr(3, 2), 16);
+  const b = parseInt(bgColor.substr(5, 2), 16);
+
+  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+
+  return yiq >= 128 ? "#000" : "#fff";  // 밝으면 검정, 어두우면 흰색
+};
+
     const axleCompanyGroups = [
   { name: "윤영테크", range: [0, 1] }, // PLUG, GASKET
   { name: "대영이엔피", range: [2, 2] }, // DOWEL PIN
@@ -584,7 +597,25 @@ const saveAxleData = async () => {
 
   return (
     <TableRow key={row.id}>
-      <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold"  }}>{row.company}</TableCell>
+      <TableCell align="center">
+  <Box
+    sx={{
+      display: "inline-block",
+      px: 1.5,
+      py: 0.4,
+      borderRadius: "6px",
+      fontWeight: "bold",
+      fontSize: "15px",
+      bgcolor: axleCompanyColors[row.company] || "#ddd",
+      color: getContrastTextColor(axleCompanyColors[row.company]),
+      minWidth: "90px",
+      textAlign: "center"
+    }}
+  >
+    {row.company}
+  </Box>
+</TableCell>
+
       <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold"  }}>{row.item_name}</TableCell>
       <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold"  }}>{row.item_code}</TableCell>
       <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold"  }}>{formatNumber(row.box_qty)}</TableCell>

@@ -17,6 +17,21 @@ import { useNavigate } from "react-router-dom";
 import HorizontalScroll from "./HorizontalScroll";
 
 export default function EvSubPage() {
+    const getContrastTextColor = (bgColor) => {
+  if (!bgColor) return "#000";
+
+  // 배경 HEX → RGB 변환
+  const r = parseInt(bgColor.substr(1, 2), 16);
+  const g = parseInt(bgColor.substr(3, 2), 16);
+  const b = parseInt(bgColor.substr(5, 2), 16);
+
+  // YIQ 대비 계산
+  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+
+  return yiq >= 128 ? "#000" : "#fff"; // 밝으면 검정, 어두우면 흰색
+};
+
+
       // ============================
   // 운송 스케줄 계산
   // ============================
@@ -652,9 +667,22 @@ const formatNumber = (num) =>
 
     return (
       <TableRow key={idx}>
-        <TableCell align="center" sx={{ fontWeight: "bold" }}>
-          {row.company}
-        </TableCell>
+        <TableCell align="center">
+  <Box
+    sx={{
+      display: "inline-block",
+      px: 1.5,
+      py: 0.3,
+      borderRadius: "6px",
+      fontWeight: "bold",
+      bgcolor: companyColors[row.company] || "#ddd",
+      color: getContrastTextColor(companyColors[row.company])
+    }}
+  >
+    {row.company}
+  </Box>
+</TableCell>
+
 
         <TableCell align="center" sx={{ fontWeight: "bold" }}>
           {row.item_name}
