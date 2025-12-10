@@ -975,8 +975,105 @@ def get_ev_packing_full(inv_no):
         return jsonify({"error": str(e)}), 500
 
 
+# ============================================
+# 🔵 BRACKET INVENTORY API
+# ============================================
+
+from models import BrInventory, BrSchedule, BrSetting
 
 
+@app.route("/api/br-inventory", methods=["GET"])
+def get_br_inventory():
+    rows = BrInventory.query.all()
+    return jsonify([r.to_dict() for r in rows])
+
+
+@app.route("/api/br-inventory/<int:id>", methods=["PUT"])
+def update_br_inventory(id):
+    row = BrInventory.query.get_or_404(id)
+    data = request.json
+
+    for k, v in data.items():
+        setattr(row, k, v)
+
+    db.session.commit()
+    return jsonify({"message": "updated"})
+
+
+@app.route("/api/br-inventory", methods=["POST"])
+def create_br_inventory():
+    data = request.json
+    row = BrInventory(**data)
+    db.session.add(row)
+    db.session.commit()
+    return jsonify({"id": row.id}), 201
+
+# ============================================
+# 🔵 BRACKET SETTING API
+# ============================================
+
+@app.route("/api/br-setting", methods=["GET"])
+def get_br_setting():
+    setting = BrSetting.query.first()
+
+    if not setting:
+        return jsonify({
+            "target_stock": 0,
+            "writer": "",
+            "us_date": None
+        })
+
+    return jsonify({
+        "target_stock": setting.target_stock,
+        "writer": setting.writer,
+        "us_date": setting.us_date.strftime("%Y-%m-%d") if setting.us_date else None
+    })
+
+
+@app.route("/api/br-setting", methods=["PUT"])
+def update_br_setting():
+    data = request.json
+
+    setting = BrSetting.query.first()
+    if not setting:
+        setting = BrSetting()
+
+    setting.target_stock = data.get("target_stock")
+    setting.writer = data.get("writer")
+
+    us_date = data.get("us_date")
+    if us_date and us_date not in ["", None]:
+        setting.us_date = datetime.strptime(us_date, "%Y-%m-%d").date()
+
+    db.session.add(setting)
+    db.session.commit()
+
+    return jsonify({"message": "updated"})
+
+# ============================================
+# 🔵 BRACKET SCHEDULE API
+# ============================================
+
+@app.route("/api/br-schedule", methods=["GET"])
+def get_br_schedule():
+    rows = BrSchedule.query.all()
+    return jsonify([r.to_dict() for r in rows])
+
+
+@app.route("/api/br-schedule/bulk", methods=["POST"])
+def save_br_schedule_bulk():
+    rows = request.json  # React에서 보낸 배열
+
+    # 기존 전체 삭제 후
+    BrSchedule.query.delete()
+
+    # 새로 저장
+    for r in rows:
+        row = BrSchedule(inv_no=r.get("inv_no"))
+        db.session.add(row)
+
+    db.session.commit()
+    return jsonify({"message": "saved"})
 
 # ============================================
 # 서버 실행

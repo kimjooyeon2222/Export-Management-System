@@ -16,6 +16,104 @@ import { v4 as uuidv4 } from "uuid";
 import { useNavigate } from "react-router-dom";
 
 export default function BracketPage() {
+    // 🔥 페이지 로딩 시 DB에서 데이터 불러오기
+useEffect(() => {
+  const API_BASE = import.meta.env.VITE_API_URL;
+
+  async function loadAll() {
+    try {
+      // 1) BRACKET 세팅 불러오기
+      const settingRes = await fetch(`${API_BASE}/api/br-setting`);
+      const setting = await settingRes.json();
+      if (setting) {
+        setWriter(setting.writer || "");
+        setUsDate(setting.us_date || "");
+        setTargetStock(setting.target_stock || 0);
+      }
+
+      
+      // 2) BRACKET 인벤토리 불러오기
+const invRes = await fetch(`${API_BASE}/api/br-inventory`);
+const inv = await invRes.json();
+if (Array.isArray(inv)) {
+  setBracketRows(
+    inv.map(row => ({
+      ...row,
+      target_stock: setting.target_stock || 0   // ⭐ 중요!
+    }))
+  );
+}
+
+
+      // 3) 스케줄 불러오기
+      const schRes = await fetch(`${API_BASE}/api/br-schedule`);
+      const schedule = await schRes.json();
+      if (Array.isArray(schedule)) {
+        setScheduleRows(
+          schedule.map((row) => ({
+            tempId: uuidv4(),
+            ...row,
+          }))
+        );
+      }
+    } catch (err) {
+      console.error("🚨 로딩 오류:", err);
+    }
+  }
+
+  loadAll();
+}, []);
+
+
+    // ⭐ 전체 저장 함수
+const handleSave = async () => {
+  if (!editMode) return;
+
+  try {
+    const API_BASE = import.meta.env.VITE_API_URL;
+
+    // 1) BRACKET 세팅 저장 (작성자 / 날짜 / 적정재고)
+    await fetch(`${API_BASE}/api/br-setting`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        writer,
+        us_date: usDate,
+        target_stock: targetStock,
+      }),
+    });
+
+    // 2) 각 품목(actual_stock) 저장
+    for (const row of bracketRows) {
+      await fetch(`${API_BASE}/api/br-inventory/${row.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          actual_stock: row.actual_stock,
+        }),
+      });
+    }
+
+    // 3) 스케줄 저장
+    const schedulePayload = scheduleRows.map((row) => ({
+      inv_no: row.inv_no,
+    }));
+
+    await fetch(`${API_BASE}/api/br-schedule/bulk`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(schedulePayload),
+    });
+
+    alert("저장 완료!");
+    setEditMode(false);
+
+  } catch (err) {
+    console.error("🚨 저장 오류:", err);
+    alert("저장 중 오류 발생");
+  }
+};
+
     // ★ 판단결과 박스 스타일 (AxleSub 동일)
 const getStatusBoxStyle = (status) => {
   const map = {
@@ -279,9 +377,13 @@ const getPeriod = (dateStr) => {
           {editMode ? "수정모드 종료" : "수정모드 활성화"}
         </Button>
 
-        <Button variant="contained" disabled={!editMode}>
-          저장
-        </Button>
+        <Button
+  variant="contained"
+  disabled={!editMode}
+  onClick={handleSave}
+>
+  저장
+</Button>
       </Box>
 
       {/* 작성자 + 날짜 */}
