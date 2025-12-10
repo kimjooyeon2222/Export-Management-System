@@ -148,6 +148,16 @@ export default function ExportCombo() {
           <MenuItem
             key={item.path}
             onClick={() => {
+                if (item.label === "수출품 사진") {
+      // 🔥 외부 Google Drive 폴더로 연결
+      window.open(
+        "https://drive.google.com/drive/folders/1-dRvoG81-yMONR3NseliqnQGyQnjFSAD",
+        "_blank"
+      );
+      setAnchor(null);
+      return;
+    }
+
               navigate(item.path);
               setAnchor(null);
             }}
