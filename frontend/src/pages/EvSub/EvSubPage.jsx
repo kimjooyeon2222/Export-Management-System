@@ -17,6 +17,34 @@ import { useNavigate } from "react-router-dom";
 import HorizontalScroll from "./HorizontalScroll";
 
 export default function EvSubPage() {
+    // ==========================================
+// 🔥 품번 → 스케줄 표 컬럼(PART_NAMES 이름) 찾기
+// ==========================================
+const findPartNameByPartNo = (part_no) => {
+  for (const label of PART_NAMES) {
+    if (EV_PART_MAP[label]?.part_no === part_no) {
+      return label;
+    }
+  }
+  return null;
+};
+
+// ==========================================
+// 🔥 EV 운항중 qty 합계 계산
+// ==========================================
+const calcInTransitEV = (part_no) => {
+  if (!Array.isArray(scheduleRows)) return 0;
+
+  const partName = findPartNameByPartNo(part_no);
+  if (!partName) return 0;
+
+  return scheduleRows
+    .filter(r => getScheduleStatus(r.etd, r.eta) === "운항중") // 운항중 조건
+    .reduce((sum, r) => sum + (Number(r[partName]) || 0), 0);
+};
+
+
+    
     const getContrastTextColor = (bgColor) => {
   if (!bgColor) return "#000";
 
@@ -660,8 +688,11 @@ const formatNumber = (num) =>
   {inventoryRows.map((row, idx) => {
     const proper = row.target_stock ?? 0;
 
-    const transit = 0;                  
-    const total = row.actual_stock + transit;
+    // 🔥 운항중 qty 자동 계산
+const transit = calcInTransitEV(row.item_code);
+
+// 🔥 운항중 + 실사자료
+const total = row.actual_stock + transit;
 
     const status = getStatus(row.actual_stock, proper);
 
