@@ -63,8 +63,7 @@ export default function DashboardDefault() {
     { label: 'AXLE서브품', color: '#FDD835', textColor: '#000' },
     { label: 'EV서브품', color: '#43A047' },
     { label: '브라켓', color: '#1976D2' },
-    { label: '공구대차(종료)', color: '#8E24AA' },
-    { label: '수출품 사진', color: '#2E7D32' }
+    { label: '수출품 사진', color: '#8E24AA' }
   ];
 
   return (
