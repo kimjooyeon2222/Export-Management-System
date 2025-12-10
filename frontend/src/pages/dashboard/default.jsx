@@ -141,6 +141,10 @@ export default function DashboardDefault() {
                  else if (btn.label === '브라켓') {
                      navigate('/bracket');
                  }
+                 else if (btn.label === '수출품 사진') {
+                    window.open('https://drive.google.com/drive/folders/1-dRvoG81-yMONR3NseliqnQGyQnjFSAD', '_blank');
+                 }
+
 
                  else {
                    alert(`${btn.label} 페이지는 준비 중입니다.`);
