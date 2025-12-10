@@ -16,6 +16,41 @@ import { v4 as uuidv4 } from "uuid";
 import { useNavigate } from "react-router-dom";
 
 export default function BracketPage() {
+    // ★ 판단결과 박스 스타일 (AxleSub 동일)
+const getStatusBoxStyle = (status) => {
+  const map = {
+    "초과":     { bg: "#EAD1DC", color: "#741B47" },  // 연한 보라톤
+    "양호":     { bg: "#D9EAD3", color: "#38761D" },  // 연한 녹색
+    "위험":     { bg: "#F4CCCC", color: "#990000" },  // 연한 빨강
+    "적정재고미달": { bg: "#FCE5CD", color: "#B45F06" }, // 연한 주황톤
+  };
+
+  const s = map[status] || { bg: "#eee", color: "#333" };
+
+  return {
+    display: "inline-block",
+    padding: "3px 8px",
+    borderRadius: "6px",
+    fontWeight: "bold",
+    fontSize: "15px",
+    backgroundColor: s.bg,
+    color: s.color,
+  };
+};
+
+    const bracketCompanyColors = {
+  "디케이메탈": "#FFD966",
+};
+    {/* 북미 날짜 → 월 초/중순/말 변환 */}
+const getPeriod = (dateStr) => {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  const m = d.getMonth() + 1;
+  const day = d.getDate();
+  if (day <= 10) return `${m}월 초`;
+  if (day <= 20) return `${m}월 중순`;
+  return `${m}월 말`;
+};
   const navigate = useNavigate();
 
   /* ----------------------------------
@@ -292,8 +327,9 @@ export default function BracketPage() {
 
       {/* 제목 */}
       <Typography variant="h5" sx={{ fontSize: 18, fontWeight: "bold", mb: 2 }}>
-        BRACKET 재고 및 운송 스케줄 관리
-      </Typography>
+  BRACKET 재고 및 운송 스케줄 관리
+  {usDate ? ` (${getPeriod(usDate)})` : ""}
+</Typography>
 
       {/* =========================================
           과부족 상태표
@@ -340,7 +376,24 @@ export default function BracketPage() {
 
               return (
                 <TableRow key={row.id}>
-                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>{row.company}</TableCell>
+                  <TableCell align="center">
+  <Box
+    sx={{
+      display: "inline-block",
+      px: 1.5,
+      py: 0.4,
+      borderRadius: "6px",
+      fontWeight: "bold",
+      fontSize: "15px",
+      bgcolor: bracketCompanyColors[row.company] || "#ddd",
+      color: getContrastTextColor(bracketCompanyColors[row.company]),
+      minWidth: "90px",
+      textAlign: "center",
+    }}
+  >
+    {row.company}
+  </Box>
+</TableCell>
                   <TableCell align="center"  sx={{ fontWeight: "bold", fontSize: "15px" }}>{row.item_name} </TableCell>
                   <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>{row.item_code}  </TableCell>
 
@@ -368,12 +421,12 @@ export default function BracketPage() {
 
                   <TableCell align="center"  sx={{ fontWeight: "bold", fontSize: "15px" }}>{formatNumber(target)}</TableCell>
 
-                  <TableCell
-                    align="center"
-                    sx={{ color: statusColor(getStatus(actual, target)) ,fontWeight: "bold", fontSize: "15px" }}
-                  >
-                    {getStatus(actual, target)}
-                  </TableCell>
+                  <TableCell align="center">
+  <Box sx={getStatusBoxStyle(getStatus(actual, target))}>
+    {getStatus(actual, target)}
+  </Box>
+</TableCell>
+
                 </TableRow>
               );
             })}
