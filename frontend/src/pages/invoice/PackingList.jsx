@@ -411,16 +411,21 @@ console.log("🔥 URL inv:", JSON.stringify(inv));
     cursor: isEditMode && userRole === "admin" ? "pointer" : "default",
   }}
   onClick={() => {
-    // 수정 모드 아닐 때 → 아무것도 안 함
+
+    // 🔥 삭제 모드일 때는 수정 로직을 아예 막기
+    if (deleteMode) return;
+
+    // 🔥 수정 모드 아닐 때 → 아무것도 안 함
     if (!isEditMode || userRole !== "admin") return;
 
-    // UNIT 은 클릭 시 prompt 금지 → select 로만 수정
+    // 🔥 UNIT 은 클릭 시 prompt 금지 → select 로만 수정
     if (field === "unit") return;
 
-    // 기본 prompt 방식 유지
+    // 🔥 기본 prompt 방식 유지
     const value = prompt(`${field} 수정`, String(row[field] || ""));
     if (value !== null) handleEdit(row.id, field, value);
-  }}
+}}
+
 >
 
   {/* 🔥 UNIT만 드롭다운 + 직접입력 적용 */}
