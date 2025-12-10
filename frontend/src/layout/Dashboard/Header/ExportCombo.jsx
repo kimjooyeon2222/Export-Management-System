@@ -90,7 +90,52 @@ export default function ExportCombo() {
       >
         {selectedLabel}
       </Button>
+  {/* 🔥 수출품목 버튼 오른쪽 신규 버튼 2개 추가 */}
+      <Box sx={{ width: 8 }}></Box>
 
+      <Button
+        onClick={() => alert("BTN1 clicked")}
+        sx={{
+          fontSize: 15,
+          fontWeight: 700,
+          color: "#333",
+          textTransform: "none",
+          minWidth: 140,
+          whiteSpace: "nowrap",
+          border: "1px solid #cfcfcf",
+          borderRadius: "6px",
+          backgroundColor: "#fafafa",
+          "&:hover": {
+            backgroundColor: "#e9f3ff",
+            borderColor: "#90caf9"
+          }
+        }}
+      >
+        BTN1
+      </Button>
+
+      <Box sx={{ width: 8 }}></Box>
+
+      <Button
+        onClick={() => alert("BTN2 clicked")}
+        sx={{
+          fontSize: 15,
+          fontWeight: 700,
+          color: "#333",
+          textTransform: "none",
+          minWidth: 140,
+          whiteSpace: "nowrap",
+          border: "1px solid #cfcfcf",
+          borderRadius: "6px",
+          backgroundColor: "#fafafa",
+          "&:hover": {
+            backgroundColor: "#e9f3ff",
+            borderColor: "#90caf9"
+          }
+        }}
+      >
+        BTN2
+      </Button>
 
       {/* ▼ 드롭다운 메뉴 */}
       <Menu
