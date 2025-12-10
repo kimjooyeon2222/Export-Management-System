@@ -19,6 +19,56 @@ import { useNavigate } from "react-router-dom";
 
 
 export default function ForgingPage() {
+  const getForgingJudgeStyle = (status) => {
+  switch (status) {
+    case "초과":
+      return {
+        bgcolor: "#ead1dc",     // 연보라 배경
+        color: "#99004d",       // 진보라 글씨
+        fontWeight: "bold",
+        borderRadius: "6px",
+        px: 1.2,
+        display: "inline-block"
+      };
+    case "양호":
+      return {
+        bgcolor: "#d9ead3",     // 연연두 배경
+        color: "#274e13",       // 짙은 초록 글씨
+        fontWeight: "bold",
+        borderRadius: "6px",
+        px: 1.2,
+        display: "inline-block"
+      };
+    case "위험":
+      return {
+        bgcolor: "#f4cccc",     // 연분홍 배경
+        color: "#990000",       // 진빨강 글씨
+        fontWeight: "bold",
+        borderRadius: "6px",
+        px: 1.2,
+        display: "inline-block"
+      };
+    case "적정재고미달":
+      return {
+        bgcolor: "#fff2cc",      // 연노랑 배경
+        color: "#7f6000",        // 갈색 글씨
+        fontWeight: "bold",
+        borderRadius: "6px",
+        px: 1.2,
+        display: "inline-block"
+      };
+    default:
+      return {
+        bgcolor: "#eeeeee",
+        color: "#000",
+        fontWeight: "bold",
+        borderRadius: "6px",
+        px: 1.2,
+        display: "inline-block"
+      };
+  }
+};
+
 
 function formatKRDate(date) {
   const local = new Date(date.getTime() + 9 * 60 * 60 * 1000);
@@ -751,23 +801,12 @@ const getStatusStyle = (status) => {
         </TableCell>
 
         {/* 판정 */}
-        <TableCell
-          align="center"
-          sx={{
-            fontSize: 16,
-            fontWeight: "bold",
-            color:
-              status === "초과"
-                ? "purple"
-                : status === "양호"
-                ? "green"
-                : status === "위험"
-                ? "red"
-                : "orange",
-          }}
-        >
-          {status}
-        </TableCell>
+        <TableCell align="center">
+  <Box sx={getForgingJudgeStyle(status)}>
+    {status}
+  </Box>
+</TableCell>
+
       </TableRow>
     );
   })}

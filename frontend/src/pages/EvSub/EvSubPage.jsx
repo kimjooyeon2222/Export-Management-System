@@ -17,6 +17,21 @@ import { useNavigate } from "react-router-dom";
 import HorizontalScroll from "./HorizontalScroll";
 
 export default function EvSubPage() {
+    const getStockStatusStyle = (status) => {
+  switch (status) {
+    case "초과":
+      return { bgcolor: "#ead1dc", color: "#99004d", fontWeight: "bold", px: 1.2, borderRadius: "6px" };
+    case "양호":
+      return { bgcolor: "#d9ead3", color: "#274e13", fontWeight: "bold", px: 1.2, borderRadius: "6px" };
+    case "위험":
+      return { bgcolor: "#f4cccc", color: "#990000", fontWeight: "bold", px: 1.2, borderRadius: "6px" };
+    case "적정재고미달":
+      return { bgcolor: "#fff2cc", color: "#7f6000", fontWeight: "bold", px: 1.2, borderRadius: "6px" };
+    default:
+      return { bgcolor: "#eeeeee", color: "#000", fontWeight: "bold", px: 1.2, borderRadius: "6px" };
+  }
+};
+
     // ==========================================
 // 🔥 품번 → 스케줄 표 컬럼(PART_NAMES 이름) 찾기
 // ==========================================
@@ -745,17 +760,10 @@ const total = row.actual_stock + transit;
         </TableCell>
 
         <TableCell align="center">
-          <Box
-            component="span"
-            sx={{
-              px: 1.2,
-              borderRadius: 1,
-              fontWeight: "bold",
-              color: statusColor(status)
-            }}
-          >
-            {status}
-          </Box>
+          <Box component="span" sx={getStockStatusStyle(status)}>
+  {status}
+</Box>
+
         </TableCell>
       </TableRow>
     );
