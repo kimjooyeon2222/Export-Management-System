@@ -975,66 +975,6 @@ def get_ev_packing_full(inv_no):
         return jsonify({"error": str(e)}), 500
 
 
-@app.route("/api/ev-schedule/save", methods=["POST"])
-def save_ev_schedule():
-    try:
-        data = request.json  # React에서 넘어온 scheduleRows 배열
-
-        if not isinstance(data, list):
-            return jsonify({"error": "Invalid format"}), 400
-
-        # 기존 스케줄 삭제 (전체 초기화)
-        EvSchedule.query.delete()
-
-        # PART_NAMES 배열을 Python에서도 사용해야 함
-        PART_NAMES = [
-            "PIN DOWEL(10140)", "PLUG TAPER", "STUD",
-            "BOLT HEXAGON SOCKET HEAD(06121)",
-            "BOLT HEXAGON SOCKET HEAD(06141)",
-            "PIN DOWEL(04100)", "DOWEL PIN 1", "DOWEL PIN 2",
-            "OIL NIPPLE", "RESOLVER PIN DOWEL",
-            "NIPPLE_NO.1(DO364)", "NIPPLE_NO.2(DO364)",
-            "NIPPLE_NO.1(NI364)", "NIPPLE_NO.2(NI364)",
-            "PIN DOWEL(10200)", "M5 X 14 BOLT ASSY",
-            "WASHER WAVE", "PIPE COOLING -D",
-            "PIPE COOLINGD(1XAB0)", "PIPE COOLINGD(1XCA0)",
-            "BRK'T ASS'Y MOTOR MTG,LH", "BRK'T ASS'Y MOTOR MTG,RH",
-            "KNOCK BUSH(10090)", "KNOCK BUSH(08130)",
-            "STUD(08256K)", "STUD(08206K)",
-            "보호용 캡(GNT-1)", "보호용 캡(MRCAP)"
-        ]
-
-        for row in data:
-            rec = EvSchedule(
-                inv_no=row.get("inv_no"),
-                etd=row.get("etd"),
-                eta=row.get("eta"),
-                status=row.get("status")
-            )
-
-            # 품목 컬럼 동적 매핑
-            for pname in PART_NAMES:
-                # DB 컬럼명을 위해 안전한 이름으로 변환
-                col = (
-                    pname.replace(" ", "_")
-                        .replace("(", "")
-                        .replace(")", "")
-                        .replace("-", "_")
-                        .replace("'", "")
-                        .replace(".", "")
-                )
-
-                if hasattr(rec, col):
-                    setattr(rec, col, row.get(pname, 0))
-
-            db.session.add(rec)
-
-        db.session.commit()
-        return jsonify({"message": "saved"})
-
-    except Exception as e:
-        print("EV schedule save error:", e)
-        return jsonify({"error": str(e)}), 500
 
 
 

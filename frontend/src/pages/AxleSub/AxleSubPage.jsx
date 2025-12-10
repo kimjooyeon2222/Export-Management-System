@@ -18,6 +18,14 @@ import { v4 as uuidv4 } from "uuid";
 
 
 export default function AxleSubPage() {
+    const codeToKey = {
+  "52216-T00151": "plug",        // PLUG
+  "SMF660066T": "gasket",        // GASKET
+  "S1430308140": "dowel_pin",    // DOWEL PIN
+  "52119-T00350": "plate"        // PLATE
+};
+
+
     const getStockStatusStyle = (status) => {
   switch (status) {
     case "초과":
@@ -175,18 +183,7 @@ function todayUS() {
 };
 
       const API_BASE = import.meta.env.VITE_API_URL;
-    const keyMap = {
-  "PLUG": "plug",
-  "GASKET": "gasket",
-  "PLATE": "plate",
-  "PIN-DOWEL": "dowel_pin"   // ← 이게 핵심
-};
-const keyMapForAxle = {
-  "PLUG": "plug",
-  "GASKET": "gasket",
-  "DOWEL PIN": "dowel_pin",
-  "PLATE": "plate"
-};
+   
 
 const fetchPackingQty = async (inv_no) => {
   if (!inv_no) return { plug: 0, gasket: 0, dowel_pin: 0, plate: 0 };
@@ -195,16 +192,16 @@ const fetchPackingQty = async (inv_no) => {
     const res = await fetch(`${API_BASE}/api/packing-list/by-inv/${inv_no}`);
     const data = await res.json();
 
-    const getQty = (name) => {
-      const row = data.find(x => x.part_name?.toUpperCase() === name);
+    const getQtyByCode = (code) => {
+      const row = data.find(x => x.part_no?.toUpperCase() === code);
       return row ? Number(row.qty) : 0;
     };
 
     return {
-      plug: getQty("PLUG"),
-      gasket: getQty("GASKET"),
-      dowel_pin: getQty("PIN-DOWEL"),
-      plate: getQty("PLATE"),
+      plug: getQtyByCode("52216-T00151"),
+      gasket: getQtyByCode("SMF660066T"),
+      dowel_pin: getQtyByCode("S1430308140"),
+      plate: getQtyByCode("52119-T00350"),
     };
 
   } catch (err) {
@@ -212,6 +209,7 @@ const fetchPackingQty = async (inv_no) => {
     return { plug: 0, gasket: 0, dowel_pin: 0, plate: 0 };
   }
 };
+
 
 
     const getScheduleStatus = (etd, eta) => {
@@ -227,17 +225,15 @@ const fetchPackingQty = async (inv_no) => {
   return "운항중";
 };
 
-// 🔥 운항중 수량 계산 (오늘 날짜 기준)
-const calcInTransit = (itemName) => {
-  if (!Array.isArray(scheduleRows)) return 0;
-
-  const key = keyMapForAxle[itemName?.toUpperCase()];
+const calcInTransit = (row) => {
+  const key = codeToKey[row.item_code];
   if (!key) return 0;
 
   return scheduleRows
-    .filter(row => getScheduleStatus(row.etd, row.eta) === "운항중")
-    .reduce((sum, row) => sum + (Number(row[key]) || 0), 0);
+    .filter(r => getScheduleStatus(r.etd, r.eta) === "운항중")
+    .reduce((sum, r) => sum + (Number(r[key]) || 0), 0);
 };
+
 
 
 const updateScheduleCell = (tempId, field, value) => {
@@ -637,13 +633,14 @@ const saveAxleData = async () => {
 
       <TableBody>
         {axleRows.map((row) => {
-  const inTransit = calcInTransit(row.item_name);   // 운항중
+  const inTransit = calcInTransit(row);   // 운항중
   const existing = row.actual_stock;                // 기존재고
   const total = inTransit + existing;               // 총합
   const target =
-    row.item_name?.toUpperCase() === "DOWEL PIN"
-      ? targetStockSetting * 2
-      : targetStockSetting;
+  row.item_code === "S1430308140"
+    ? targetStockSetting * 2   // DOWEL PIN만 2배
+    : targetStockSetting;
+
 
   return (
     <TableRow key={row.id}>
