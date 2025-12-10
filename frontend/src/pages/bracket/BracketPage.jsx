@@ -465,16 +465,51 @@ const getPeriod = (dateStr) => {
         </Box>
 
         <Table size="small" sx={{ mt: 2 }}>
-          <TableHead sx={{ bgcolor: "#ffe599", borderTop: "2px solid #000" ,fontWeight: "bold", fontSize: "15px" }}>
-            <TableRow>
-              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>INV#</TableCell>
-              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>ETD</TableCell>
-              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>ETA</TableCell>
-              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>상태</TableCell>
-              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>LH MCT</TableCell>
-              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>RH MCT</TableCell>
-            </TableRow>
-          </TableHead>
+          <TableHead>
+
+  {/* 🔥 1행: LH/RH 위에만 디케이메탈 헤더 */}
+  <TableRow sx={{ bgcolor: "#ffffff !important" }}>
+    <TableCell colSpan={4} />  {/* INV / ETD / ETA / 상태 → 빈칸 */}
+    
+    <TableCell
+      colSpan={2}
+      align="center"
+      sx={{
+        fontWeight: "bold",
+        fontSize: "16px",
+        bgcolor: "#FFD966",
+        color: getContrastTextColor("#FFD966"),
+        borderBottom: "2px solid #b7b7b7"
+      }}
+    >
+      디케이메탈
+    </TableCell>
+  </TableRow>
+
+  {/* 🔥 2행: 기존 품명 헤더 */}
+  <TableRow sx={{ bgcolor: "#ffe599", borderTop: "2px solid #000" }}>
+    <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
+      INV#
+    </TableCell>
+    <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
+      ETD
+    </TableCell>
+    <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
+      ETA
+    </TableCell>
+    <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
+      상태
+    </TableCell>
+    <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
+      LH MCT
+    </TableCell>
+    <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
+      RH MCT
+    </TableCell>
+  </TableRow>
+
+</TableHead>
+
 
           <TableBody>
             {scheduleRows.map((row) => (
