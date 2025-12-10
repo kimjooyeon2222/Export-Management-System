@@ -139,6 +139,9 @@ export default function DashboardDefault() {
                  else if (btn.label === 'EV서브품') {
                      navigate('/ev-sub');
                  }
+                 else if (btn.label === '브라켓') {
+                     navigate('/bracket');
+                 }
 
                  else {
                    alert(`${btn.label} 페이지는 준비 중입니다.`);

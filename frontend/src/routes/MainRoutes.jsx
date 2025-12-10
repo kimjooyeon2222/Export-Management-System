@@ -22,6 +22,9 @@ const ForgingPage = Loadable(lazy(() => import('pages/forging/ForgingPage')));
 const OilShipmentSchedule = Loadable(
   lazy(() => import('pages/OilShipment/OilShipmentSchedule'))
 );
+const BracketPage = Loadable(lazy(() => import('pages/bracket/BracketPage')));
+
+
 import AxleSubPage from 'pages/AxleSub/AxleSubPage';
 import EvSubPage from 'pages/EvSub/EvSubPage';
 
@@ -81,11 +84,14 @@ const MainRoutes = {
        element: <AxleSubPage />
     },
     {
-       path: '/ev-sub',
+       path: 'ev-sub',
        element: <EvSubPage />
     },
+    {
+      path: 'bracket',
+      element: <BracketPage />
+    },
 
-    
 
 
   ]
