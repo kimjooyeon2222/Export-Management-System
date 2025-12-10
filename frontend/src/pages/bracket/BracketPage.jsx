@@ -321,15 +321,15 @@ export default function BracketPage() {
           )}
         </Box>
 
-        <Table size="small" sx={{ "& *": { fontWeight: "bold" } }}>
+        <Table size="small" sx={{ "& *": { fontWeight: "bold", fontSize: "15px" } }}>
           <TableHead sx={{ bgcolor: "#ffe599", borderTop: "2px solid #000" }}>
             <TableRow>
-              <TableCell align="center">업체명</TableCell>
-              <TableCell align="center">품명</TableCell>
-              <TableCell align="center">품번</TableCell>
-              <TableCell align="center">실사자료</TableCell>
-              <TableCell align="center">적정재고</TableCell>
-              <TableCell align="center">판단결과</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>업체명</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>품명</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>품번</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>실사자료</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>적정재고</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>판단결과</TableCell>
             </TableRow>
           </TableHead>
 
@@ -340,11 +340,11 @@ export default function BracketPage() {
 
               return (
                 <TableRow key={row.id}>
-                  <TableCell align="center">{row.company}</TableCell>
-                  <TableCell align="center">{row.item_name}</TableCell>
-                  <TableCell align="center">{row.item_code}</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>{row.company}</TableCell>
+                  <TableCell align="center"  sx={{ fontWeight: "bold", fontSize: "15px" }}>{row.item_name} </TableCell>
+                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>{row.item_code}  </TableCell>
 
-                  <TableCell align="center">
+                  <TableCell align="center"  sx={{ fontWeight: "bold", fontSize: "15px" }}>
                     {editMode ? (
                       <TextField
                         size="small"
@@ -366,11 +366,11 @@ export default function BracketPage() {
                     )}
                   </TableCell>
 
-                  <TableCell align="center">{formatNumber(target)}</TableCell>
+                  <TableCell align="center"  sx={{ fontWeight: "bold", fontSize: "15px" }}>{formatNumber(target)}</TableCell>
 
                   <TableCell
                     align="center"
-                    sx={{ color: statusColor(getStatus(actual, target)) }}
+                    sx={{ color: statusColor(getStatus(actual, target)) ,fontWeight: "bold", fontSize: "15px" }}
                   >
                     {getStatus(actual, target)}
                   </TableCell>
@@ -412,21 +412,21 @@ export default function BracketPage() {
         </Box>
 
         <Table size="small" sx={{ mt: 2 }}>
-          <TableHead sx={{ bgcolor: "#ffe599", borderTop: "2px solid #000" }}>
+          <TableHead sx={{ bgcolor: "#ffe599", borderTop: "2px solid #000" ,fontWeight: "bold", fontSize: "15px" }}>
             <TableRow>
-              <TableCell align="center">INV#</TableCell>
-              <TableCell align="center">ETD</TableCell>
-              <TableCell align="center">ETA</TableCell>
-              <TableCell align="center">상태</TableCell>
-              <TableCell align="center">LH MCT</TableCell>
-              <TableCell align="center">RH MCT</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>INV#</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>ETD</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>ETA</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>상태</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>LH MCT</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>RH MCT</TableCell>
             </TableRow>
           </TableHead>
 
           <TableBody>
             {scheduleRows.map((row) => (
               <TableRow key={row.tempId}>
-                <TableCell align="center">
+                <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
                   {editMode ? (
                     <TextField
                       size="small"
@@ -441,9 +441,9 @@ export default function BracketPage() {
                   )}
                 </TableCell>
 
-                <TableCell align="center">{row.etd}</TableCell>
+                <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>{row.etd}</TableCell>
 
-                <TableCell align="center">
+                <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
                   {getScheduleStatus(row.etd, row.eta) === "운항중" ? (
                     <Box sx={getForgingStatusStyle("운항중")}>{row.eta}</Box>
                   ) : (
@@ -451,17 +451,17 @@ export default function BracketPage() {
                   )}
                 </TableCell>
 
-                <TableCell align="center">
+                <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
                   <Box sx={getForgingStatusStyle(getScheduleStatus(row.etd, row.eta))}>
                     {getScheduleStatus(row.etd, row.eta)}
                   </Box>
                 </TableCell>
 
-                <TableCell align="center">
+                <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
                   {formatNumber(row.bracket_LH)}
                 </TableCell>
 
-                <TableCell align="center">
+                <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
                   {formatNumber(row.bracket_RH)}
                 </TableCell>
               </TableRow>
