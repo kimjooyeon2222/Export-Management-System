@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { EV_PART_MAP } from "./EVPartMap";
 
 import { 
   Box,
@@ -16,7 +17,209 @@ import { useNavigate } from "react-router-dom";
 import HorizontalScroll from "./HorizontalScroll";
 
 export default function EvSubPage() {
-    
+      // ============================
+  // 운송 스케줄 계산
+  // ============================
+  const getScheduleStatus = (etd, eta) => {
+  const today = todayUS(); // 미국 00시 기준
+
+  const etdKR = etd ? parseKRDate(etd) : null;
+  const etaUS = eta ? parseUSDate(eta) : null;
+
+  // ETA <= today → 입고완료
+  if (etaUS && etaUS <= today) return "입고완료";
+
+  // ETA 없음 → 부산항 미입고
+  if (!eta || eta === "일정 없음") return "부산항 미입고";
+
+  // ETD > today → 선적대기중
+  if (etdKR && etdKR > today) return "선적대기중";
+
+  // 그 외 → 운항중
+  return "운항중";
+};
+
+    const handleInvAutoLoad = async (tempId, inv) => {
+  if (!inv) return;
+
+  try {
+    // 1) Invoice 정보
+    const resInv = await fetch(`${API_BASE}/api/invoice/${inv}`);
+    const invData = await resInv.json();
+    if (invData.error) return;
+
+    const etd = invData.etd || "";
+    const eta = invData.eta || "";
+    const status = getScheduleStatus(etd, eta);
+
+    // 2) 통합 API
+    const resFull = await fetch(`${API_BASE}/api/ev/packing-full/${inv}`);
+    const fullData = await resFull.json();
+    if (fullData.error) return;
+
+    const qty_map = fullData.qty_map || {};
+
+    const normalize = (v) =>
+      (v || "").toString().trim().replace(/\s+/g, "").toUpperCase();
+
+    // 3) qty 맵핑
+    const newRowData = {};
+    PART_NAMES.forEach(label => {
+      const partNo = EV_PART_MAP[label]?.part_no;
+      if (!partNo) {
+        newRowData[label] = 0;
+        return;
+      }
+
+      const key = normalize(partNo);
+      newRowData[label] = status === "운항중" ? (qty_map[key] || 0) : 0;
+    });
+
+    // 4) 스케줄 업데이트
+    setScheduleRows(prev =>
+      prev.map(r =>
+        r.tempId === tempId
+          ? { ...r, etd, eta, status, ...newRowData }
+          : r
+      )
+    );
+
+  } catch (err) {
+    console.error("INV 자동로드 실패:", err);
+  }
+};
+
+
+const saveSchedule = async () => {
+  try {
+    const payload = scheduleRows.map(row => {
+      const cleanRow = {
+        inv_no: row.inv_no,
+        etd: row.etd,
+        eta: row.eta,
+        status: row.status,
+      };
+
+      PART_NAMES.forEach(name => {
+        cleanRow[name] = row[name] || 0;
+      });
+
+      return cleanRow;
+    });
+
+    const res = await fetch(`${API_BASE}/api/ev-schedule/save`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    alert("저장 완료!");
+
+  } catch (err) {
+    console.error("저장 실패:", err);
+    alert("저장 중 오류 발생");
+  }
+};
+
+
+
+   const handleInvChange = async (tempId, value) => {
+  const inv = value.trim();
+
+  // INV 즉시 반영
+  setScheduleRows(prev =>
+    prev.map(row =>
+      row.tempId === tempId ? { ...row, inv_no: inv } : row
+    )
+  );
+
+  if (!inv) return;
+
+  try {
+    // =========================
+    // 1) Invoice 정보 불러오기 (기존 로직 그대로 유지)
+    // =========================
+    const resInv = await fetch(`${API_BASE}/api/invoice/${inv}`);
+    const invData = await resInv.json();
+
+    if (invData.error) return;
+
+    const etd = invData.etd || "";
+    const eta = invData.eta || "";
+    const status = getScheduleStatus(etd, eta);
+
+    // =========================
+    // 2) 새로운 통합 API 호출
+    // =========================
+    const resFull = await fetch(`${API_BASE}/api/ev/packing-full/${inv}`);
+    const fullData = await resFull.json();
+
+    if (fullData.error) return;
+
+    // qty_map 사용 (딕셔너리)
+    const qty_map = fullData.qty_map || {};
+
+    // normalize
+    const normalize = (v) =>
+      (v || "").toString().trim().replace(/\s+/g, "").toUpperCase();
+
+    // =========================
+    // 3) qty 매핑 (운항중일 때만)
+    // =========================
+    const newRowData = {};
+
+    PART_NAMES.forEach(label => {
+      const partNo = EV_PART_MAP[label]?.part_no;
+
+      if (!partNo) {
+        newRowData[label] = 0;
+        return;
+      }
+
+      const key = normalize(partNo);
+      const qty = qty_map[key] || 0;
+
+      // 운항중일 때만 qty 표시
+      newRowData[label] = status === "운항중" ? qty : 0;
+    });
+
+    // =========================
+    // 4) 최종 업데이트 (기존 로직 그대로)
+    // =========================
+    setScheduleRows(prev =>
+      prev.map(row =>
+        row.tempId === tempId
+          ? { ...row, etd, eta, status, ...newRowData }
+          : row
+      )
+    );
+
+  } catch (err) {
+    console.error("INV 자동로드 실패:", err);
+  }
+};
+
+
+    const deleteRow = () => {
+  setScheduleRows(prev => prev.slice(0, -1));
+};
+
+
+  const addRow = () => {
+  const newRow = {
+    tempId: crypto.randomUUID(),
+    inv_no: "",
+    etd: "",
+    eta: "",
+    status: "",
+  };
+
+  PART_NAMES.forEach(name => newRow[name] = 0);
+
+  setScheduleRows(prev => [...prev, newRow]);
+};
+
+
 
 
 // 🔥 회사별 컬럼 구간 매핑
@@ -104,6 +307,15 @@ const toAlabamaMidnight = (dateStr) => {
     useEffect(() => {
   loadEvData();
 }, []);
+useEffect(() => {
+  if (scheduleRows.length > 0) {
+    scheduleRows.forEach(row => {
+      if (row.inv_no) {
+        handleInvAutoLoad(row.tempId, row.inv_no);
+      }
+    });
+  }
+}, [scheduleRows.length]);
 
 const loadEvData = async () => {
   try {
@@ -230,32 +442,33 @@ const PART_NAMES = [
   "PIN DOWEL(10140)",
   "PLUG TAPER",
   "STUD",
-  "BOLT HEXAGON SOCKET HEAD",
-  "BOLT HEXAGON SOCKET HEAD",
+  "BOLT HEXAGON SOCKET HEAD(06121)",
+  "BOLT HEXAGON SOCKET HEAD(06141)",
   "PIN DOWEL(04100)",
   "DOWEL PIN 1",
   "DOWEL PIN 2",
   "OIL NIPPLE",
   "RESOLVER PIN DOWEL",
-  "NIPPLE_NO.1",
-  "NIPPLE_NO.2",
-  "NIPPLE_NO.1",
-  "NIPPLE_NO.2",
-  "PIN DOWEL",
+  "NIPPLE_NO.1(DO364)",
+  "NIPPLE_NO.2(DO364)",
+  "NIPPLE_NO.1(NI364)",
+  "NIPPLE_NO.2(NI364)",
+  "PIN DOWEL(10200)",
   "M5 X 14 BOLT ASSY",
   "WASHER WAVE",
   "PIPE COOLING -D",
-  "PIPE COOLINGD",
-  "PIPE COOLINGD",
+  "PIPE COOLINGD(1XAB0)",
+  "PIPE COOLINGD(1XCA0)",
   "BRK'T ASS'Y MOTOR MTG,LH",
-  "BRK'T ASS'Y MOTOR MTG,LH",
-  "KNOCK BUSH",
-  "KNOCK BUSH",
-  "STUD",
-  "STUD",
-  "보호용 캡1",
-  "보호용 캡2"
+  "BRK'T ASS'Y MOTOR MTG,RH",
+  "KNOCK BUSH(10090)",
+  "KNOCK BUSH(08130)",
+  "STUD(08256K)",
+  "STUD(08206K)",
+  "보호용 캡(GNT-1)",
+  "보호용 캡(MRCAP)"
 ];
+
 const formatNumber = (num) =>
   typeof num === "number"
     ? num.toLocaleString()
@@ -277,27 +490,7 @@ const formatNumber = (num) =>
   const [showStockPanel, setShowStockPanel] = useState(false);
 
  
-  // ============================
-  // 운송 스케줄 계산
-  // ============================
-  const getScheduleStatus = (etd, eta) => {
-  const today = todayUS(); // 미국 00시 기준
 
-  const etdKR = etd ? parseKRDate(etd) : null;
-  const etaUS = eta ? parseUSDate(eta) : null;
-
-  // ETA <= today → 입고완료
-  if (etaUS && etaUS <= today) return "입고완료";
-
-  // ETA 없음 → 부산항 미입고
-  if (!eta || eta === "일정 없음") return "부산항 미입고";
-
-  // ETD > today → 선적대기중
-  if (etdKR && etdKR > today) return "선적대기중";
-
-  // 그 외 → 운항중
-  return "운항중";
-};
 
 
 
@@ -357,7 +550,7 @@ const formatNumber = (num) =>
           variant="contained"
           color="primary"
           disabled={!editMode}
-          onClick={() => alert("🛠 추후 DB 연동 예정")}
+          onClick={saveSchedule}
         >
           저장
         </Button>
@@ -529,10 +722,10 @@ const formatNumber = (num) =>
   {editMode && (
     <Box sx={{ display: "flex", justifyContent: "flex-end", mt: -3, mb: 1 }}>
       <Box sx={{ display: "flex", gap: 1 }}>
-        <Button variant="contained" color="success" size="small">
+        <Button variant="contained" color="success" size="small" onClick={addRow}>
           + 행추가
         </Button>
-        <Button variant="contained" color="error" size="small">
+        <Button variant="contained" color="error" size="small" onClick={deleteRow}>
           - 행삭제
         </Button>
       </Box>
@@ -554,8 +747,8 @@ const formatNumber = (num) =>
     borderSpacing: "0px !important",
 
     "& td, & th": {
-      border: "0px solid transparent !important",
-      padding: "0 !important",
+      borderCollapse: "separate !important",
+borderSpacing: "0 !important",
       margin: 0,
     }
   }}
@@ -626,36 +819,68 @@ const formatNumber = (num) =>
 
 
         <TableBody>
-          {scheduleRows.map(row => (
-            <TableRow key={row.tempId}>
-              <TableCell align="center">{row.inv_no}</TableCell>
-              <TableCell align="center">{row.etd}</TableCell>
-              <TableCell align="center">
-  {getScheduleStatus(row.etd, row.eta) === "운항중" ? (
-    <Box sx={getForgingStatusStyle("운항중")}>
-      {row.eta}
-    </Box>
+  {scheduleRows.map(row => (
+    <TableRow
+  key={row.tempId}
+  sx={{
+    borderBottom: "1px solid #ddd",   // 🔥 얇은 회색 라인
+    "& td": {
+      borderBottom: "1px solid #ddd"  // 각 셀마다 동일 적용
+    }
+  }}
+>
+
+
+      {/* INV# (수정가능) */}
+      <TableCell align="center">
+  {editMode ? (
+    <TextField
+      size="small"
+      value={row.inv_no || ""}
+      onChange={e => handleInvChange(row.tempId, e.target.value)}
+      sx={{ width: 120 }}
+    />
   ) : (
-    row.eta
+    <span>{row.inv_no || ""}</span>
   )}
 </TableCell>
 
 
-              <TableCell align="center">
-  <Box sx={getForgingStatusStyle(getScheduleStatus(row.etd, row.eta))}>
-    {getScheduleStatus(row.etd, row.eta)}
-  </Box>
-</TableCell>
+      {/* ETD (수정 불가, 표시만) */}
+      <TableCell align="center">
+        {row.etd}
+      </TableCell>
+
+      {/* ETA — 기존 색깔 박스 유지 */}
+      <TableCell align="center">
+        {getScheduleStatus(row.etd, row.eta) === "운항중" ? (
+          <Box sx={getForgingStatusStyle("운항중")}>
+            {row.eta}
+          </Box>
+        ) : (
+          row.eta
+        )}
+      </TableCell>
+
+      {/* 상태 — 기존 스타일 박스 유지 */}
+      <TableCell align="center">
+        <Box sx={getForgingStatusStyle(getScheduleStatus(row.etd, row.eta))}>
+          {getScheduleStatus(row.etd, row.eta)}
+        </Box>
+      </TableCell>
+
+      {/* 28개 품목 qty → 수정칸 없음 (숫자만 출력) */}
+      {PART_NAMES.map((pname, idx) => (
+        <TableCell key={idx} align="center">
+          {formatNumber(row[pname] || 0)}
+        </TableCell>
+      ))}
+
+    </TableRow>
+  ))}
+</TableBody>
 
 
-              {PART_NAMES.map((pname, idx) => (
-                <TableCell key={idx} align="center">
-                  {formatNumber(row[pname] || 0)}
-                </TableCell>
-              ))}
-            </TableRow>
-          ))}
-        </TableBody>
 
       </Table>
     </Box>
