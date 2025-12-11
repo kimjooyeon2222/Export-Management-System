@@ -117,7 +117,7 @@ export default function ExportCombo() {
       <Box sx={{ width: 8 }}></Box>
 
       <Button
-        onClick={() => alert("BTN2 clicked")}
+        onClick={() => alert("운송 페이지는 준비중입니다.")}
         sx={{
           fontSize: 15,
           fontWeight: 700,
@@ -134,7 +134,7 @@ export default function ExportCombo() {
           }
         }}
       >
-        BTN2
+        운송
       </Button>
 
       {/* ▼ 드롭다운 메뉴 */}
