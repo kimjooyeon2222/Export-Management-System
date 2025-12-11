@@ -12,6 +12,10 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 
+import EditIcon from '@mui/icons-material/Edit';
+import SaveIcon from '@mui/icons-material/Save';
+
+
 // project imports
 import MainCard from 'components/MainCard';
 import AnalyticEcommerce from 'components/cards/statistics/AnalyticEcommerce';
@@ -31,6 +35,7 @@ import avatar2 from 'assets/images/users/avatar-2.png';
 import avatar3 from 'assets/images/users/avatar-3.png';
 import avatar4 from 'assets/images/users/avatar-4.png';
 import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
 
 // avatar style
 const avatarSX = {
@@ -52,6 +57,13 @@ const actionSX = {
 // ==============================|| DASHBOARD - DEFAULT ||============================== //
 
 export default function DashboardDefault() {
+  const [editMode, setEditMode] = useState(false);
+const [note, setNote] = useState(
+  `1. 운송일정 업데이트
+2. 인보이스 추가
+3. 완료된 품목 반영하여 실사재고 업데이트 요청`
+);
+
   const today =  new Date();
   const navigate = useNavigate();
 
@@ -74,8 +86,22 @@ export default function DashboardDefault() {
       </Grid>
     {/* ✅ EMS 버튼 섹션 (비율 유지형, 축소 시도에도 일정한 간격 유지) */}
     <Grid item xs={12}>
-      <MainCard sx={{ mt: 2.5, p: 3, textAlign: 'center', width:'100%', maxWidth:'none', margin:'0 auto', position: 'relative' }}>
-        {/* 제목 + 날짜 */}
+
+   
+      <MainCard
+  sx={{
+    mt: 5.5,
+    p: 3,
+    width: "100%",        // 가로 전체
+    maxWidth: "1500px",   // ✨ 넓히기 (원하는 값으로 늘려도 됨: 1300px, 1500px 가능)
+    mx: "auto",           // 가운데 정렬
+    textAlign: 'center',
+    position: 'relative'
+  }}
+>
+
+
+     {/*   // 제목 + 날짜
         <Box sx={{ position: 'relative', mb: 4 }}>
           <Typography
             variant="h5"
@@ -106,7 +132,7 @@ export default function DashboardDefault() {
            </Typography>
         </Box>
 
-        {/* 버튼 그룹 */}
+       // 버튼 그룹 
         <Grid
           container
           spacing={2}
@@ -169,13 +195,143 @@ export default function DashboardDefault() {
         </Grid>
           ))}
         </Grid>
-      </MainCard>
-  
+    
+  */}
+ {/* 🔥 작은 수정 버튼 / 저장 버튼 */}
+  {!editMode ? (
+    <Button
+      variant="outlined"
+      onClick={() => setEditMode(true)}
+      sx={{
+        position: 'absolute',
+        top: '10px',
+        right: '15px',
+        minWidth: '35px',
+        padding: '3px',
+        borderColor: '#1976D2',
+        color: '#1976D2',
+        borderRadius: '6px',
+      }}
+    >
+      <EditIcon fontSize="small" />
+    </Button>
+  ) : (
+    <Button
+      variant="contained"
+      onClick={() => setEditMode(false)}
+      sx={{
+        position: 'absolute',
+        top: '10px',
+        right: '15px',
+        minWidth: '35px',
+        padding: '3px',
+        backgroundColor: '#1976D2',
+        borderRadius: '6px',
+      }}
+    >
+      <SaveIcon fontSize="small" />
+    </Button>
+  )}
+ {/* ✨ 메모장 영역 (수정모드 지원) */}
+<Box
+  sx={{
+    mt: 2.5,
+    p: 4,
+    width: '700px',
+    height: "350px",
 
+    backgroundColor: '#FFF8C6',
+    border: '1px solid #E5D884',
+    borderRadius: '8px',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    position: 'relative',
+    textAlign: 'left'
+  }}
+>
+
+  {/* 날짜 */}
+  <Typography
+    variant="subtitle2"
+    sx={{
+      position: 'absolute',
+      right: '20px',
+      top: '15px',
+      fontWeight: 'bold',
+      fontSize: '0.9rem',
+      color: '#5C5C5C'
+    }}
+  >
+    {today.toLocaleDateString()} (한국현지시각)
+  </Typography>
+
+  {/* 제목 */}
+  <Typography
+    variant="h6"
+    sx={{
+      fontWeight: 'bold',
+      mb: 2,
+      mt: 3,
+      textAlign: 'center'
+    }}
+  >
+    #업데이트 내용#
+  </Typography>
+
+  {/* 📌 수정모드 여부 */}
+  {editMode ? (
+    <>
+      <textarea
+        value={note}
+        onChange={(e) => setNote(e.target.value)}
+        style={{
+          width: '100%',
+          height: '180px',
+          padding: '12px',
+          borderRadius: '6px',
+          border: '1px solid #CCC',
+          fontSize: '1rem',
+          lineHeight: '1.4',
+          resize: 'vertical'
+        }}
+      />
+
+      {/* 저장 버튼 */}
+      <Button
+        variant="contained"
+        fullWidth
+        sx={{ mt: 2, backgroundColor: '#1976D2', fontWeight: 'bold' }}
+        onClick={() => setEditMode(false)}
+      >
+        저장하기
+      </Button>
+    </>
+  ) : (
+    <>
+      {/* 보기 모드 */}
+      <Typography
+        variant="body1"
+        sx={{
+          whiteSpace: 'pre-line',
+          fontSize: '1rem',
+          lineHeight: '1.6'
+        }}
+      >
+        {note}
+      </Typography>
+
+      
+    </>
+  )}
+
+</Box>
+
+
+  </MainCard>
 </Grid>
 
      
      
+<Grid container rowSpacing={4.5} columnSpacing={2.75}>
 
       {/* row 2 */}
       <Grid size={{ xs: 12, md: 7, lg: 8 }}>
@@ -216,6 +372,7 @@ export default function DashboardDefault() {
         <Grid container alignItems="center" justifyContent="space-between">
           <Grid>
             <Typography variant="h5">Analytics Report</Typography>
+          </Grid>
           </Grid>
         </Grid>
         <MainCard sx={{ mt: 2 }} content={false}>
