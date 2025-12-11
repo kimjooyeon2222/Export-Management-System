@@ -280,11 +280,11 @@ const isToday = (dateStr) => {
 
               <TableCell align="center" sx={{fontWeight:"bold", fontSize:"15px"}}>PO#</TableCell>
               {!showIncomingOnly && (
-  <TableCell align="center" sx={{fontWeight:"bold", fontSize:"15px"}}>북미발주일자</TableCell>
+  <TableCell align="center" sx={{fontWeight:"bold", fontSize:"15px"}}>북미 발주일자</TableCell>
 )}
-              <TableCell align="center" sx={{fontWeight:"bold", fontSize:"15px"}}>북미도착요청일자(A)</TableCell>
-              <TableCell align="center" sx={{fontWeight:"bold", fontSize:"15px"}}>오토텍발주일자</TableCell>
-              <TableCell align="center" sx={{fontWeight:"bold", fontSize:"15px"}}>(A)-(금일) 남은일수</TableCell>
+              <TableCell align="center" sx={{fontWeight:"bold", fontSize:"15px"}}>북미도착 요청일자(A)</TableCell>
+              <TableCell align="center" sx={{fontWeight:"bold", fontSize:"15px"}}>오토텍 발주일자</TableCell>
+              <TableCell align="center" sx={{fontWeight:"bold", fontSize:"15px"}}>(A)-(금일) 남은 일수</TableCell>
               {/* 담당자 숨김 */}
 {!showIncomingOnly && (
   <TableCell align="center" sx={{fontWeight:"bold", fontSize:"15px"}}>담당자</TableCell>
@@ -297,7 +297,7 @@ const isToday = (dateStr) => {
 {!showIncomingOnly && (
   <>
     <TableCell align="center" sx={{fontWeight:"bold", fontSize:"15px"}}>결재 목차</TableCell>
-    <TableCell align="center" sx={{fontWeight:"bold", fontSize:"15px"}}>운송방법</TableCell>
+    <TableCell align="center" sx={{fontWeight:"bold", fontSize:"15px"}}>운송 방법</TableCell>
   </>
 )}
             </TableRow>
