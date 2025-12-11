@@ -27,7 +27,7 @@ export default function EvSubPage() {
       return { bgcolor: "#f4cccc", color: "#990000", fontWeight: "bold", px: 1.2, borderRadius: "6px" };
     case "적정재고미달":
       return { bgcolor: "#fff2cc", color: "#7f6000", fontWeight: "bold", px: 1.2, borderRadius: "6px" };
-    default:a
+    default:
       return { bgcolor: "#eeeeee", color: "#000", fontWeight: "bold", px: 1.2, borderRadius: "6px" };
   }
 };
