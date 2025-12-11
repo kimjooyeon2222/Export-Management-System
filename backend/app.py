@@ -8,6 +8,8 @@ from models import OilScheduleRow
 from models import OilItemList
 from models import EvInventory, EvSchedule, EvSetting
 from models import POManagement, POSetting
+from models import DashboardMemo
+
 
 from flask import Flask, jsonify, request
 from flask_cors import CORS
@@ -1183,6 +1185,36 @@ def save_po_bulk():
 
     db.session.commit()
     return jsonify({"message": "saved"})
+
+@app.route("/memo", methods=["GET"])
+def get_dashboard_memo():
+    memo = DashboardMemo.query.first()
+
+    if memo:
+        return jsonify(memo.to_dict())
+    else:
+        return jsonify({"id": None, "text": ""})
+
+
+@app.route("/memo", methods=["POST"])
+def update_dashboard_memo():
+    data = request.json
+    new_text = data.get("text", "")
+
+    memo = DashboardMemo.query.first()
+
+    if memo:
+        memo.text = new_text
+    else:
+        memo = DashboardMemo(text=new_text)
+        db.session.add(memo)
+
+    db.session.commit()
+
+    return jsonify({"status": "success", "text": memo.text})
+
+
+
 
 # ============================================
 # 서버 실행

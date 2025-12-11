@@ -54,15 +54,40 @@ const actionSX = {
   transform: 'none'
 };
 
+
+
 // ==============================|| DASHBOARD - DEFAULT ||============================== //
 
 export default function DashboardDefault() {
-  const [editMode, setEditMode] = useState(false);
-const [note, setNote] = useState(
-  `1. 운송일정 업데이트
-2. 인보이스 추가
-3. 완료된 품목 반영하여 실사재고 업데이트 요청`
-);
+const API_BASE = import.meta.env.VITE_API_URL;
+
+const [editMode, setEditMode] = useState(false);
+const [note, setNote] = useState("");
+
+// ⭐ 페이지 로드시 메모 불러오기
+useEffect(() => {
+  fetch(`${API_BASE}/memo`)
+    .then(res => res.json())
+    .then(data => {
+      if (data.text) setNote(data.text);
+    })
+    .catch(err => console.error("메모 로딩 실패:", err));
+}, []);
+
+// ⭐ 저장 함수
+const saveMemo = async () => {
+  try {
+    await fetch(`${API_BASE}/memo`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: note })
+    });
+
+    alert("저장 완료!");
+  } catch (error) {
+    console.error("메모 저장 실패:", error);
+  }
+};
 
   const today =  new Date();
   const navigate = useNavigate();
@@ -201,7 +226,10 @@ const [note, setNote] = useState(
   {!editMode ? (
     <Button
       variant="outlined"
-      onClick={() => setEditMode(true)}
+      onClick={() => {
+ 
+  setEditMode(true);
+}}
       sx={{
         position: 'absolute',
         top: '10px',
@@ -218,7 +246,10 @@ const [note, setNote] = useState(
   ) : (
     <Button
       variant="contained"
-      onClick={() => setEditMode(false)}
+      onClick={() => {
+  saveMemo();   // ⭐ DB 저장
+  setEditMode(false);
+}}
       sx={{
         position: 'absolute',
         top: '10px',
@@ -300,7 +331,10 @@ const [note, setNote] = useState(
         variant="contained"
         fullWidth
         sx={{ mt: 2, backgroundColor: '#1976D2', fontWeight: 'bold' }}
-        onClick={() => setEditMode(false)}
+        onClick={() => {
+  saveMemo();   // ⭐ DB 저장
+  setEditMode(false);
+}}
       >
         저장하기
       </Button>
