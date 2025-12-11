@@ -7,6 +7,7 @@ os.environ.pop("JAWSDB_URL", None)
 from models import OilScheduleRow
 from models import OilItemList
 from models import EvInventory, EvSchedule, EvSetting
+from models import POManagement, POSetting
 
 from flask import Flask, jsonify, request
 from flask_cors import CORS
@@ -1125,6 +1126,63 @@ def br_auto_load(inv_no):
     except Exception as e:
         print("BRACKET auto-load API 오류:", e)
         return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/po/setting", methods=["GET"])
+def get_po_setting():
+    setting = POSetting.query.first()
+    if not setting:
+        return jsonify({"us_date": None})
+
+    return jsonify(setting.to_dict())
+
+
+@app.route("/api/po/setting", methods=["PUT"])
+def update_po_setting():
+    data = request.json
+
+    setting = POSetting.query.first()
+    if not setting:
+        setting = POSetting()
+
+    us_date = data.get("us_date")
+    if us_date:
+        setting.us_date = datetime.strptime(us_date, "%Y-%m-%d").date()
+
+    db.session.add(setting)
+    db.session.commit()
+
+    return jsonify({"message": "updated"})
+
+
+@app.route("/api/po", methods=["GET"])
+def get_po():
+    rows = POManagement.query.order_by(POManagement.id.asc()).all()
+    return jsonify([r.to_dict() for r in rows])
+
+
+@app.route("/api/po/bulk", methods=["POST"])
+def save_po_bulk():
+    rows = request.json
+
+    # 기존 데이터 삭제
+    POManagement.query.delete()
+
+    for r in rows:
+        row = POManagement(
+            po_no=r.get("po_no"),
+            order_date=to_date(r.get("order_date")),
+            request_date=to_date(r.get("request_date")),
+            ototek_date=to_date(r.get("ototek_date")),
+            manager=r.get("manager"),
+            company=r.get("company"),
+            subject=r.get("subject"),
+            method=r.get("method"),
+        )
+        db.session.add(row)
+
+    db.session.commit()
+    return jsonify({"message": "saved"})
 
 # ============================================
 # 서버 실행

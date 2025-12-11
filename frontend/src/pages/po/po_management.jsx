@@ -15,8 +15,62 @@ import {
   Paper
 } from "@mui/material";
 import { v4 as uuidv4 } from "uuid";
+const API_BASE = import.meta.env.VITE_API_URL;
 
 export default function POManagementPage() {
+  useEffect(() => {
+  loadPOData();
+  loadUsDate();   // ⭐ 북미 날짜 로드
+}, []);
+
+  const loadPOData = async () => {
+  try {
+    const res = await fetch(`${API_BASE}/api/po`);
+    const data = await res.json();
+    setPoRows(data);
+  } catch (err) {
+    console.error("불러오기 실패:", err);
+  }
+};
+
+const loadUsDate = async () => {
+  try {
+    const res = await fetch(`${API_BASE}/api/po/setting`);
+    const data = await res.json();
+    setUsDate(data.us_date || "");
+  } catch (err) {
+    console.error("us_date 불러오기 실패:", err);
+  }
+};
+
+
+  const handleSave = async () => {
+  try {
+    // 1) PO rows 저장
+    await fetch(`${API_BASE}/api/po/bulk`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(poRows),
+    });
+
+    // 2) 북미 날짜 저장
+    await fetch(`${API_BASE}/api/po/setting`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ us_date: usDate }),
+    });
+
+    alert("저장 완료!");
+    setEditMode(false);
+    loadPOData();
+    loadUsDate();
+
+  } catch (err) {
+    console.error(err);
+    alert("저장 중 오류 발생");
+  }
+};
+
   // 날짜 형식 변환: YYYY-MM-DD → MM-DD (요일)
 const formatDisplayDate = (dateStr) => {
   if (!dateStr) return "";
@@ -214,7 +268,7 @@ const isToday = (dateStr) => {
             {editMode ? "수정모드 종료" : "수정모드 활성화"}
           </Button>
 
-          <Button variant="contained" disabled={!editMode}>
+          <Button variant="contained" disabled={!editMode} onClick={handleSave} >
             저장
           </Button>
 
