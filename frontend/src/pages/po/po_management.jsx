@@ -88,34 +88,54 @@ const formatDisplayDate = (dateStr) => {
   };
 
   const getRemainingStyle = (days) => {
-    if (days >= 1 && days <= 45) {
-      return {
-        backgroundColor: "#f4cccc",
-        color: "#990000",
-        borderRadius: "6px",
-        padding: "3px 6px",
-        fontWeight: "bold"
-      };
-    }
-    return {};
-  };
+  if (days >= 1 && days <= 45) {
+    return {
+      backgroundColor: "#f4cccc",
+      color: "#990000",
+      borderRadius: "12px",
+      padding: "4px 10px",
+      fontWeight: "bold",
+      display: "inline-block",   // ⭐ 셀 전체가 아니라 글자만 감싸지게
+      minWidth: "40px",
+      textAlign: "center"
+    };
+  }
+  return {};
+};
 
-  const isToday = (dateStr) => {
-    if (!dateStr) return false;
-    const t = todayUS().toISOString().slice(0, 10);
-    return dateStr === t;
-  };
+
+
+const isToday = (dateStr) => {
+  if (!dateStr || typeof dateStr !== "string") return false;
+
+  // 날짜 형식이 YYYY-MM-DD인지 체크
+  const trimmed = dateStr.slice(0, 10);
+
+  // new Date() 유효성 검사
+  const parsed = new Date(trimmed);
+  if (isNaN(parsed)) return false;
+
+  const todayKR = new Date().toLocaleDateString("en-CA", {
+    timeZone: "Asia/Seoul",
+  }); // 한국 날짜 YYYY-MM-DD
+
+  return trimmed === todayKR;
+};
+
+
 
   const getOrderDateStyle = (dateStr) => {
-    return isToday(dateStr)
-      ? {
-          backgroundColor: "#d9ead3",
-          fontWeight: "bold",
-          borderRadius: "6px",
-          padding: "3px 6px"
-        }
-      : {};
-  };
+  return isToday(dateStr)
+    ? {
+        backgroundColor: "#d9ead3", // 색은 기존 초록색 유지
+        fontWeight: "bold",
+        borderRadius: "12px",       // pill 형태
+        padding: "4px 10px",        // 남은일수와 동일 padding
+        display: "inline-block",    // 전체 칸이 아니라 text만 칠해짐
+        textAlign: "center"
+      }
+    : {};
+};
 
   /* ----------------------------------
         운송방법 색상
@@ -219,7 +239,7 @@ const formatDisplayDate = (dateStr) => {
       </Box>
 
       {/* 날짜 입력 */}
-      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
+      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2,mt:1 }}>
         <TextField
           label="북미 기준 날짜 (YYYY-MM-DD)"
           size="small"
@@ -233,7 +253,7 @@ const formatDisplayDate = (dateStr) => {
       {/* 필터 버튼 */}
       <Button
         variant="outlined"
-        sx={{ mb: 2 }}
+        sx={{ mb: 2 , fontWeight:"bold", fontSize:"15px"}}
         onClick={() => setShowIncomingOnly((prev) => !prev)}
       >
        도착예정 필터
@@ -242,29 +262,37 @@ const formatDisplayDate = (dateStr) => {
       {/* 메인 테이블 */}
       <Paper sx={{ p: 2 }}>
         <Table size="small">
-          <TableHead sx={{ bgcolor: "#d9d9d9" }}>
+          <TableHead
+  sx={{
+    bgcolor: "#e6f3ff",
+    "& th": {
+      fontWeight: "bold",
+      fontSize: "15px"
+    }
+  }}
+>
             <TableRow>
 
-              <TableCell align="center">PO#</TableCell>
+              <TableCell align="center" sx={{fontWeight:"bold", fontSize:"15px"}}>PO#</TableCell>
               {!showIncomingOnly && (
-  <TableCell align="center">북미발주일자</TableCell>
+  <TableCell align="center" sx={{fontWeight:"bold", fontSize:"15px"}}>북미발주일자</TableCell>
 )}
-              <TableCell align="center">북미도착요청일자(A)</TableCell>
-              <TableCell align="center">오토텍발주일자</TableCell>
-              <TableCell align="center">(A)-(금일) 남은일수</TableCell>
+              <TableCell align="center" sx={{fontWeight:"bold", fontSize:"15px"}}>북미도착요청일자(A)</TableCell>
+              <TableCell align="center" sx={{fontWeight:"bold", fontSize:"15px"}}>오토텍발주일자</TableCell>
+              <TableCell align="center" sx={{fontWeight:"bold", fontSize:"15px"}}>(A)-(금일) 남은일수</TableCell>
               {/* 담당자 숨김 */}
 {!showIncomingOnly && (
-  <TableCell align="center">담당자</TableCell>
+  <TableCell align="center" sx={{fontWeight:"bold", fontSize:"15px"}}>담당자</TableCell>
 )}
 
 {/* ⭐ 업체는 항상 표시 */}
-<TableCell align="center">업체</TableCell>
+<TableCell align="center" sx={{fontWeight:"bold", fontSize:"15px"}}>업체</TableCell>
 
 {/* 결재목차 + 운송방법 숨김 */}
 {!showIncomingOnly && (
   <>
-    <TableCell align="center">결재 목차</TableCell>
-    <TableCell align="center">운송방법</TableCell>
+    <TableCell align="center" sx={{fontWeight:"bold", fontSize:"15px"}}>결재 목차</TableCell>
+    <TableCell align="center" sx={{fontWeight:"bold", fontSize:"15px"}}>운송방법</TableCell>
   </>
 )}
             </TableRow>
@@ -275,12 +303,14 @@ const formatDisplayDate = (dateStr) => {
               const days = calcRemainingDays(row.request_date);
 
               return (
-                <TableRow key={row.id}>
+                <TableRow key={row.id} sx={{ height: 42, fontWeight:"bold", fontSize:"15px"}}>
+
                   
                  
 
                   {/* PO 번호 */}
-                  <TableCell align="center">
+                  <TableCell align="center" sx={{ py: 1.2 ,fontWeight:"bold", fontSize:"15px"}}>
+
                     {editMode ? (
                       <TextField
                         size="small"
@@ -296,20 +326,33 @@ const formatDisplayDate = (dateStr) => {
 
                   {/* 북미발주일자 (오늘이면 강조) */}
                   {!showIncomingOnly && (
-  <TableCell align="center" sx={getOrderDateStyle(row.order_date)}>
-    {editMode ? (
-      <TextField
-        size="small"
-        value={row.order_date}
-        onChange={(e) => updateCell(row.id, "order_date", e.target.value)}
-      />
-    ) : (
-      formatDisplayDate(row.order_date)
-    )}
-  </TableCell>
+ <TableCell
+  align="center"
+  sx={{
+    py: 1.2,
+    fontWeight: "bold",
+    fontSize: "15px",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center"
+  }}
+>
+  {editMode ? (
+    <TextField
+      size="small"
+      value={row.order_date}
+      onChange={(e) => updateCell(row.id, "order_date", e.target.value)}
+    />
+  ) : (
+    <Box sx={getOrderDateStyle(row.order_date)}>
+      {formatDisplayDate(row.order_date)}
+    </Box>
+  )}
+</TableCell>
+
 )}
 
-               <TableCell align="center">
+               <TableCell align="center" sx={{fontWeight:"bold", fontSize:"15px"}}>
   {editMode ? (
     <TextField
       size="small"
@@ -325,7 +368,7 @@ const formatDisplayDate = (dateStr) => {
 
 
                   {/* 오토텍발주일자 */}
-                 <TableCell align="center">
+                 <TableCell align="center" sx={{fontWeight:"bold", fontSize:"15px"}}>
   {editMode ? (
     <TextField
       size="small"
@@ -338,13 +381,13 @@ const formatDisplayDate = (dateStr) => {
 </TableCell>
 
                   {/* 남은일수 */}
-                  <TableCell align="center">
+                  <TableCell align="center" sx={{fontWeight:"bold", fontSize:"15px"}}>
                     <Box sx={getRemainingStyle(days)}>{days}</Box>
                   </TableCell>
 
                   {/* 담당자 */}
                   {!showIncomingOnly && (
-  <TableCell align="center">
+  <TableCell align="center" sx={{fontWeight:"bold", fontSize:"15px"}}>
     {editMode ? (
       <TextField
         size="small"
@@ -356,7 +399,7 @@ const formatDisplayDate = (dateStr) => {
     )}
   </TableCell>
 )}
-                  <TableCell align="center">
+                  <TableCell align="center" sx={{fontWeight:"bold", fontSize:"15px"}}>
   {editMode ? (
     <TextField
       size="small"
@@ -371,7 +414,7 @@ const formatDisplayDate = (dateStr) => {
 
                   {/* 결재 목차 */}
                   {!showIncomingOnly && (
-  <TableCell align="center">
+  <TableCell align="center" sx={{fontWeight:"bold", fontSize:"15px"}}>
     {editMode ? (
       <TextField
         size="small"
@@ -387,7 +430,7 @@ const formatDisplayDate = (dateStr) => {
 
                   {/* 운송방법 */}
                  {!showIncomingOnly && (
-  <TableCell align="center">
+  <TableCell align="center" sx={{fontWeight:"bold", fontSize:"15px"}}>
     {editMode ? (
       <Select
         size="small"
