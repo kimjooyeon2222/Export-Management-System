@@ -83,7 +83,7 @@ const saveMemo = async () => {
       body: JSON.stringify({ text: note })
     });
 
-    alert("저장 완료!");
+    
   } catch (error) {
     console.error("메모 저장 실패:", error);
   }
@@ -173,7 +173,7 @@ const saveMemo = async () => {
     p: 4,
     width: '700px',
     height: "350px",
-
+    
     backgroundColor: '#FFF8C6',
     border: '1px solid #E5D884',
     borderRadius: '8px',
@@ -204,11 +204,12 @@ const saveMemo = async () => {
     sx={{
       fontWeight: 'bold',
       mb: 2,
-      mt: 3,
-      textAlign: 'center'
+      mt: -1.5,
+      textAlign: 'center',
+      fontSize: "18px"
     }}
   >
-    #업데이트 내용#
+    # 업데이트 내용 #
   </Typography>
 
   {/* 📌 수정모드 여부 */}
@@ -244,20 +245,26 @@ const saveMemo = async () => {
     </>
   ) : (
     <>
+
+    <Box sx={{justifyContent: "center", display:"flex"}}>
       {/* 보기 모드 */}
-      <Typography
+      <Typography 
         variant="body1"
         sx={{
           whiteSpace: 'pre-line',
-          fontSize: '1rem',
-          lineHeight: '1.6'
+          fontSize: '1.3rem',
+          lineHeight: '1.6',
+          fontWeight:"bold",
+          
+        
         }}
       >
         {note}
       </Typography>
 
-      
+         </Box>
     </>
+ 
   )}
 
 </Box>
