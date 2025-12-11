@@ -36,6 +36,13 @@ import avatar3 from 'assets/images/users/avatar-3.png';
 import avatar4 from 'assets/images/users/avatar-4.png';
 import { useNavigate } from 'react-router-dom';
 import React, { useState, useEffect } from 'react';
+import { useEditor, EditorContent } from "@tiptap/react";
+// TipTap imports
+import StarterKit from "@tiptap/starter-kit";
+import { TextStyle } from "@tiptap/extension-text-style";
+import Color from "@tiptap/extension-color";
+import HardBreak from "@tiptap/extension-hard-break";
+
 
 // avatar style
 const avatarSX = {
@@ -59,10 +66,52 @@ const actionSX = {
 // ==============================|| DASHBOARD - DEFAULT ||============================== //
 
 export default function DashboardDefault() {
+  
+
 const API_BASE = import.meta.env.VITE_API_URL;
 
 const [editMode, setEditMode] = useState(false);
 const [note, setNote] = useState("");
+const [redPen, setRedPen] = useState(false);
+
+// TipTap Editor 초기화
+const editor = useEditor({
+  extensions: [
+    StarterKit.configure({
+      // paragraph 절대 끄지 말 것!
+      hardBreak: false
+    }),
+    TextStyle,
+    Color.configure({ types: ['textStyle'] }),
+
+    HardBreak.extend({
+      addKeyboardShortcuts() {
+        return {
+          Enter: () => this.editor.commands.setHardBreak(),
+        };
+      },
+    }),
+  ],
+  content: note,
+  editable: editMode,
+  onUpdate({ editor }) {
+    setNote(editor.getHTML());
+  }
+});
+
+
+
+useEffect(() => {
+  if (editor && !editMode) {
+    editor.commands.setContent(note);
+  }
+}, [note, editor, editMode]);
+
+useEffect(() => {
+  if (editor) {
+    editor.setEditable(editMode);
+  }
+}, [editMode, editor]);
 
 // ⭐ 페이지 로드시 메모 불러오기
 useEffect(() => {
@@ -173,16 +222,17 @@ const saveMemo = async () => {
     p: 4,
     width: '700px',
     height: "350px",
-    
+    mx:"auto",
     backgroundColor: '#FFF8C6',
     border: '1px solid #E5D884',
     borderRadius: '8px',
     boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
     position: 'relative',
-    textAlign: 'left'
+    textAlign: 'left',
+    
+    
   }}
 >
-
   {/* 날짜 */}
   <Typography
     variant="subtitle2"
@@ -212,62 +262,95 @@ const saveMemo = async () => {
     # 업데이트 내용 #
   </Typography>
 
-  {/* 📌 수정모드 여부 */}
-  {editMode ? (
-    <>
-      <textarea
-        value={note}
-        onChange={(e) => setNote(e.target.value)}
-        style={{
-          width: '100%',
-          height: '180px',
-          padding: '12px',
-          borderRadius: '6px',
-          border: '1px solid #CCC',
-          fontSize: '1rem',
-          lineHeight: '1.4',
-          resize: 'vertical'
-        }}
-      />
+  {/* 보기모드 */}
+  {/* 보기 모드 */}
+{!editMode && (
+  <Box
+    sx={{
+      display: "flex",
+      justifyContent: "center",   // 가로 가운데
+      alignItems: "flex-start",
+      
+      mt: 1,
+    }}
+  >
+    <div
+      dangerouslySetInnerHTML={{ __html: note }}
+      style={{
+        display: "inline-block",     // 내용 박스를 가운데에 고정
+        textAlign: "left",
+        fontSize: "1.4rem",
+        lineHeight: "1.75rem",
+        fontWeight: 600,             // 굵게
+        whiteSpace: "pre-line",
+      }}
+    />
+  </Box>
+)}
 
-      {/* 저장 버튼 */}
+
+  {/* 수정모드 */}
+  {editMode && (
+    <>
+      {/* 🔥 빨간펜 토글 버튼 */}
+      <Button
+        variant={redPen ? "contained" : "outlined"}
+        sx={{
+          mb: 1,
+          borderColor: "#d32f2f",
+          color: redPen ? "#fff" : "#d32f2f",
+          backgroundColor: redPen ? "#d32f2f" : "transparent",
+        }}
+        onClick={() => {
+          setRedPen(!redPen);
+          if (!redPen) {
+            editor.chain().setColor("#d32f2f").run();
+          } else {
+            editor.chain().setColor("black").run();
+          }
+        }}
+      >
+        빨간펜
+      </Button>
+
+      {/* 에디터 */}
+      <Box
+          sx={{
+    border: "1px solid #ccc",
+    borderRadius: "6px",
+    padding: "12px",
+    backgroundColor: "#fff",
+    height: "180px",
+    overflowY: "auto",
+
+    // 🔥 줄 간격 문제 해결 핵심
+    "& p": {
+      margin: 0,     // 기본 마진 제거
+    },
+
+    "& p + p": {
+      marginTop: "4px", // Enter 시 줄바꿈 간격 최소화 (원하면 2px~6px 조절 가능)
+    }
+  }}
+      >
+        <EditorContent editor={editor} />
+      </Box>
+
       <Button
         variant="contained"
         fullWidth
         sx={{ mt: 2, backgroundColor: '#1976D2', fontWeight: 'bold' }}
         onClick={() => {
-  saveMemo();   // ⭐ DB 저장
-  setEditMode(false);
-}}
+          saveMemo();
+          setEditMode(false);
+        }}
       >
         저장하기
       </Button>
     </>
-  ) : (
-    <>
-
-    <Box sx={{justifyContent: "center", display:"flex"}}>
-      {/* 보기 모드 */}
-      <Typography 
-        variant="body1"
-        sx={{
-          whiteSpace: 'pre-line',
-          fontSize: '1.3rem',
-          lineHeight: '1.6',
-          fontWeight:"bold",
-          
-        
-        }}
-      >
-        {note}
-      </Typography>
-
-         </Box>
-    </>
- 
   )}
-
 </Box>
+
 
 
   </MainCard>
