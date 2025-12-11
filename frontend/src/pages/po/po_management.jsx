@@ -64,7 +64,7 @@ const formatDisplayDate = (dateStr) => {
     const d = new Date(usDate);
     const y = d.getFullYear();
     const m = d.getMonth() + 1;
-    return `${y}년 PO# INFO(${m}월)`;
+    return `PO# INFO (${y}년  ${m}월)`;
   };
 
   /* ----------------------------------
@@ -218,23 +218,7 @@ const isToday = (dateStr) => {
             저장
           </Button>
 
-          <Button
-            variant="contained"
-            color="success"
-            disabled={!editMode}
-            onClick={addRow}
-          >
-            + 행추가
-          </Button>
-
-          <Button
-            variant="contained"
-            color="error"
-            disabled={!editMode}
-            onClick={deleteRow}
-          >
-            - 행삭제
-          </Button>
+         
         </Box>
       </Box>
 
@@ -258,6 +242,27 @@ const isToday = (dateStr) => {
       >
        도착예정 필터
       </Button>
+{/* 행추가 / 행삭제 버튼: Paper 위 오른쪽 정렬 */}
+<Box sx={{ display: "flex", justifyContent: "flex-end", mt: 1, mb: 1 }}>
+  <Button
+    variant="contained"
+    color="success"
+    disabled={!editMode}
+    onClick={addRow}
+    sx={{ mr: 1 }}
+  >
+    + 행추가
+  </Button>
+
+  <Button
+    variant="contained"
+    color="error"
+    disabled={!editMode}
+    onClick={deleteRow}
+  >
+    - 행삭제
+  </Button>
+</Box>
 
       {/* 메인 테이블 */}
       <Paper sx={{ p: 2 }}>
@@ -432,16 +437,16 @@ const isToday = (dateStr) => {
                  {!showIncomingOnly && (
   <TableCell align="center" sx={{fontWeight:"bold", fontSize:"15px"}}>
     {editMode ? (
-      <Select
+      <Select sx={{fontWeight:"bold", fontSize:"15px"}}
         size="small"
         value={row.method}
         onChange={(e) =>
           updateCell(row.id, "method", e.target.value)
         }
       >
-        <MenuItem value="해운">해운</MenuItem>
-        <MenuItem value="항공">항공</MenuItem>
-        <MenuItem value="팀트럭">팀트럭</MenuItem>
+        <MenuItem value="해운" sx={{fontWeight:"bold", fontSize:"15px"}}>해운</MenuItem>
+        <MenuItem value="항공" sx={{fontWeight:"bold", fontSize:"15px"}}>항공</MenuItem>
+        <MenuItem value="팀트럭" sx={{fontWeight:"bold", fontSize:"15px"}}>팀트럭</MenuItem>
       </Select>
     ) : (
       <Box sx={getShipStyle(row.method)}>{row.method}</Box>
