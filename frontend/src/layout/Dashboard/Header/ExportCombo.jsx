@@ -94,7 +94,7 @@ export default function ExportCombo() {
       <Box sx={{ width: 8 }}></Box>
 
       <Button
-        onClick={() => alert("BTN1 clicked")}
+        onClick={() =>  navigate("/po-management")}
         sx={{
           fontSize: 15,
           fontWeight: 700,
@@ -111,7 +111,7 @@ export default function ExportCombo() {
           }
         }}
       >
-        BTN1
+        PO# 관리
       </Button>
 
       <Box sx={{ width: 8 }}></Box>

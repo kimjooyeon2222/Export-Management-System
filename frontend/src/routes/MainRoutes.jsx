@@ -17,13 +17,14 @@ const SamplePage = Loadable(lazy(() => import('pages/extra-pages/sample-page')))
 
 // render - Invoice Page, Packing List (추가)
 const InvoicePage = Loadable(lazy(() => import('pages/invoice/InvoicePage')));
-const PackingList = Loadable(lazy(() => import('pages/invoice/PackingList'))); // ✅ 추가
+const PackingList = Loadable(lazy(() => import('pages/invoice/PackingList'))); 
 const ForgingPage = Loadable(lazy(() => import('pages/forging/ForgingPage')));
 const OilShipmentSchedule = Loadable(
   lazy(() => import('pages/OilShipment/OilShipmentSchedule'))
 );
 const BracketPage = Loadable(lazy(() => import('pages/bracket/BracketPage')));
 
+const POManagementPage = Loadable(lazy(() => import('pages/po/po_management')));
 
 import AxleSubPage from 'pages/AxleSub/AxleSubPage';
 import EvSubPage from 'pages/EvSub/EvSubPage';
@@ -91,6 +92,11 @@ const MainRoutes = {
       path: 'bracket',
       element: <BracketPage />
     },
+    {
+       path: 'po-management',
+      element: <POManagementPage />
+    }
+
 
 
 
