@@ -277,7 +277,7 @@ const isToday = (dateStr) => {
       </Box>
 
       {/* 날짜 입력 */}
-      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2,mt:1 }}>
+      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2,mt:1, fontSize:"15px",fontWeight:"bold" }}>
         <TextField
           label="북미 기준 날짜 (YYYY-MM-DD)"
           size="small"
