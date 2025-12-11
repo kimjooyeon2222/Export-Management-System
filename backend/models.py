@@ -385,3 +385,4 @@ class BrSetting(db.Model):
             "us_date": self.us_date,
             "updated_at": self.updated_at,
         }
+        
