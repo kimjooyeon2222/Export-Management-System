@@ -1202,6 +1202,7 @@ const arrived = delayedDate2 <= todayUS;
                   key={idx}
                   align="center"
                   sx={{
+                    
                     fontSize: "1rem",
                     ...(deleteMode && selectedInvs.includes(row.inv_no) && {
                       bgcolor: "#ffcccc !important",
@@ -1252,7 +1253,7 @@ const arrived = delayedDate2 <= todayUS;
                   }}
                 >
                   {(idx === 5 || idx === 6 || idx === 12)
-                    ? (val || "").replace(/,\s*/g, "\n")
+                    ? (val || "").replace(/@/g, "\n") 
                     : val}
                 </TableCell>
               ))}
@@ -1386,7 +1387,7 @@ else {
               }}
             >
               {(idx === 5 || idx === 6 || idx === 12)
-                ? (val || "").replace(/,\s*/g, "\n")
+                ? (val || "").replace(/@/g, "\n") 
                 : val}
             </TableCell>
           ))}
