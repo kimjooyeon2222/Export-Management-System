@@ -233,36 +233,47 @@ const isToday = (dateStr) => {
           sx={{ width: 200 }}
         />
       </Box>
-
-      {/* 필터 버튼 */}
-      <Button
-        variant="outlined"
-        sx={{ mb: 2 , fontWeight:"bold", fontSize:"15px"}}
-        onClick={() => setShowIncomingOnly((prev) => !prev)}
-      >
-       도착예정 필터
-      </Button>
-{/* 행추가 / 행삭제 버튼: Paper 위 오른쪽 정렬 */}
-<Box sx={{ display: "flex", justifyContent: "flex-end", mt: 1, mb: 1 }}>
+{/* 필터 + 행추가/행삭제를 같은 라인에 배치 */}
+<Box 
+  sx={{ 
+    display: "flex", 
+    justifyContent: "space-between", 
+    alignItems: "center",
+    mt: 2,
+    mb: 1
+  }}
+>
+  {/* 왼쪽: 필터 버튼 */}
   <Button
-    variant="contained"
-    color="success"
-    disabled={!editMode}
-    onClick={addRow}
-    sx={{ mr: 1 }}
+    variant="outlined"
+    sx={{ fontWeight: "bold", fontSize:"15px", mb:0.5 }}
+    onClick={() => setShowIncomingOnly(prev => !prev)}
   >
-    + 행추가
+    도착예정 필터
   </Button>
 
-  <Button
-    variant="contained"
-    color="error"
-    disabled={!editMode}
-    onClick={deleteRow}
-  >
-    - 행삭제
-  </Button>
+  {/* 오른쪽: 행추가/행삭제 버튼 */}
+  <Box sx={{ display: "flex", gap: 1 }}>
+    <Button
+      variant="contained"
+      color="success"
+      disabled={!editMode}
+      onClick={addRow}
+    >
+      + 행추가
+    </Button>
+
+    <Button
+      variant="contained"
+      color="error"
+      disabled={!editMode}
+      onClick={deleteRow}
+    >
+      - 행삭제
+    </Button>
+  </Box>
 </Box>
+
 
       {/* 메인 테이블 */}
       <Paper sx={{ p: 2 }}>
