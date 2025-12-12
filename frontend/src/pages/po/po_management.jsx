@@ -453,8 +453,8 @@ const isToday = (dateStr) => {
         }}>
           
           {/* PO 번호 */}
-          <TableCell align="center" sx={{fontWeight: "bold", fontSize: "15px"
-}}>
+          <TableCell align="center" sx={{fontWeight: "bold", fontSize: "15px",  
+      borderBottom: "5px solid #c2c2c2"}}>
             {editMode ? (
               <TextField
                 size="small"
