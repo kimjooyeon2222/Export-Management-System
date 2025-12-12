@@ -156,7 +156,6 @@ const formatDisplayDate = (dateStr) => {
                 id: uuidv4(),
                 request_date: "",
                 ototek_date: "",
-                remaining_days: "",
                 company: ""
               }
             ]
@@ -450,7 +449,7 @@ const isToday = (dateStr) => {
         {/* 부모 행 */}
         <TableRow sx={{ height: 42, fontWeight: "bold", fontSize: "15px",
            "& td": {
-      borderBottom: "2.5px solid #dad7d7ff !important"
+      borderBottom: "1px solid #dcdcdc"
     }
         }}>
           
@@ -703,9 +702,10 @@ const isToday = (dateStr) => {
               {/* subRow 실제 데이터 */}
 <TableRow
   sx={{
-    bgcolor: "#fafafa",
+    bgcolor: "#fff",
     height: 42,                // 부모와 동일한 세로 높이
     "& td": {
+      fontWeight:"bold",
       padding: "6px 8px",     // 부모와 비슷한 padding 적용
       fontSize: "15px"        // 글자 크기도 동일하게
     }
@@ -765,8 +765,11 @@ const isToday = (dateStr) => {
 
   {/* 남은 일수 */}
   <TableCell align="center">
+  <Box sx={getRemainingStyle(calcRemainingDays(sub.request_date))}>
     {calcRemainingDays(sub.request_date)}
-  </TableCell>
+  </Box>
+</TableCell>
+
 
   {/* 담당자 (필터 조건에 입력) */}
   {!showIncomingOnly && <TableCell />}

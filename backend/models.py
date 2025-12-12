@@ -486,7 +486,6 @@ class POSubRow(db.Model):
 
     request_date = db.Column(db.Date)
     ototek_date = db.Column(db.Date)
-    remaining_days = db.Column(db.Integer)
     company = db.Column(db.String(100))
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -498,6 +497,6 @@ class POSubRow(db.Model):
             "po_id": self.po_id,
             "request_date": self.request_date.strftime("%Y-%m-%d") if self.request_date else None,
             "ototek_date": self.ototek_date.strftime("%Y-%m-%d") if self.ototek_date else None,
-            "remaining_days": self.remaining_days,
+
             "company": self.company,
         }

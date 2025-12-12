@@ -8,6 +8,8 @@ from models import OilScheduleRow
 from models import OilItemList
 from models import EvInventory, EvSchedule, EvSetting
 from models import POManagement, POSetting
+from models import POSubRow 
+
 from models import DashboardMemo
 
 
@@ -1190,7 +1192,6 @@ def save_po_bulk():
                 po_id=row.id,
                 request_date=to_date(s.get("request_date")),
                 ototek_date=to_date(s.get("ototek_date")),
-                remaining_days=s.get("remaining_days"),
                 company=s.get("company"),
             )
             db.session.add(sub)
