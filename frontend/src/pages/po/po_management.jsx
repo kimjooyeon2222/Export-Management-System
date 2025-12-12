@@ -181,22 +181,24 @@ const formatDisplayDate = (dateStr) => {
   /* ----------------------------------
         날짜/남은일수 계산
   ---------------------------------- */
-  const todayUS = () => {
-    const now = new Date().toLocaleString("en-US", {
-      timeZone: "America/Chicago"
-    });
-    const d = new Date(now);
-    d.setHours(0, 0, 0, 0);
-    return d;
-  };
+  const todayLocal = () => {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0); // 오늘 00:00 (접속자 기준)
+  return d;
+};
+const DAY = 1000 * 60 * 60 * 24;
 
-  const calcRemainingDays = (targetDate) => {
-    if (!targetDate) return "";
-    const t = todayUS();
-    const d = new Date(targetDate);
-    const diff = Math.ceil((d - t) / (1000 * 60 * 60 * 24));
-    return diff;
-  };
+const calcRemainingDays = (targetDate) => {
+  if (!targetDate) return "";
+
+  const [y, m, d] = targetDate.split("-").map(Number);
+  const target = new Date(y, m - 1, d);
+  target.setHours(0, 0, 0, 0);
+
+  const today = todayLocal();
+
+  return Math.round((target - today) / DAY);
+};
 
   const getRemainingStyle = (days) => {
   if (days >= 1 && days <= 45) {
@@ -219,19 +221,15 @@ const formatDisplayDate = (dateStr) => {
 const isToday = (dateStr) => {
   if (!dateStr || typeof dateStr !== "string") return false;
 
-  // 날짜 형식이 YYYY-MM-DD인지 체크
   const trimmed = dateStr.slice(0, 10);
 
-  // new Date() 유효성 검사
-  const parsed = new Date(trimmed);
-  if (isNaN(parsed)) return false;
+  const todayLocal = new Date()
+    .toISOString()
+    .slice(0, 10);
 
-  const todayKR = new Date().toLocaleDateString("en-CA", {
-    timeZone: "Asia/Seoul",
-  }); // 한국 날짜 YYYY-MM-DD
-
-  return trimmed === todayKR;
+  return trimmed === todayLocal;
 };
+
 
 
 
