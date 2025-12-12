@@ -450,12 +450,12 @@ const isToday = (dateStr) => {
         {/* 부모 행 */}
         <TableRow sx={{ height: 42, fontWeight: "bold", fontSize: "15px",
            "& td": {
-      borderBottom: "2px solid #c2c2c2 !important"
+      borderBottom: "2.5px solid #dad7d7ff !important"
     }
         }}>
           
           {/* PO 번호 */}
-          <TableCell align="center">
+          <TableCell align="center" sx={{fontWeight: "bold", fontSize: "15px"}}>
             {editMode ? (
               <TextField
                 size="small"
@@ -469,7 +469,7 @@ const isToday = (dateStr) => {
 
           {/* 북미 발주일자 */}
           {!showIncomingOnly && (
-            <TableCell align="center">
+            <TableCell align="center" sx={{fontWeight: "bold", fontSize: "15px"}}>
               {editMode ? (
                 <TextField
                   size="small"
@@ -485,7 +485,7 @@ const isToday = (dateStr) => {
           )}
 
           {/* 북미도착요청일자 */}
-<TableCell align="center">
+<TableCell align="center" sx={{fontWeight: "bold", fontSize: "15px"}}>
   <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 1 }}>
     
     {/* 날짜 입력/표시 */}
@@ -526,7 +526,7 @@ const isToday = (dateStr) => {
 </TableCell>
 
           {/* 오토텍 */}
-          <TableCell align="center">
+          <TableCell align="center" sx={{fontWeight: "bold", fontSize: "15px"}}>
             {editMode ? (
               <TextField
                 size="small"
@@ -539,13 +539,13 @@ const isToday = (dateStr) => {
           </TableCell>
 
           {/* 남은일수 */}
-          <TableCell align="center">
+          <TableCell align="center" sx={{fontWeight: "bold", fontSize: "15px"}}>
             <Box sx={getRemainingStyle(days)}>{days}</Box>
           </TableCell>
 
           {/* 담당자 */}
           {!showIncomingOnly && (
-            <TableCell align="center">
+            <TableCell align="center" sx={{fontWeight: "bold", fontSize: "15px"}}>
               {editMode ? (
                 <TextField
                   size="small"
@@ -559,7 +559,7 @@ const isToday = (dateStr) => {
           )}
 
           {/* 업체 */}
-          <TableCell align="center">
+          <TableCell align="center" sx={{fontWeight: "bold", fontSize: "15px"}}>
             {editMode ? (
               <TextField
                 size="small"
@@ -573,7 +573,7 @@ const isToday = (dateStr) => {
 
           {/* 결재목차 */}
           {!showIncomingOnly && (
-            <TableCell align="center">
+            <TableCell align="center" sx={{fontWeight: "bold", fontSize: "15px"}}>
               {editMode ? (
                 <TextField
                   size="small"
@@ -588,7 +588,7 @@ const isToday = (dateStr) => {
 
           {/* 운송방법 */}
           {!showIncomingOnly && (
-            <TableCell align="center">
+            <TableCell align="center" sx={{fontWeight: "bold", fontSize: "15px"}}>
               {editMode ? (
                 <Select
                   size="small"
@@ -612,17 +612,94 @@ const isToday = (dateStr) => {
               
               {/* 얇은 줄 */}
                {/* ⭐ 첫 번째 subrow는 얇은 줄을 그리지 않는다 */}
-    {index !== 0 && (
-              <TableRow>
-                <TableCell
-                  colSpan={9}
-                  sx={{
-                    padding: 0,
-                    borderBottom: "1px solid rgba(224,224,224,1)"
-                  }}
-                />
-              </TableRow>
+   {index !== 0 && (
+  <TableRow sx={{ height: 0 }}>
+    
+    {/* 1) PO# 칸 → border 없음 */}
+    <TableCell sx={{ padding: 0, borderBottom: "none", fontWeight: "bold", fontSize: "15px"}} />
+
+    {/* 2) 북미 발주일자 (필터 OFF일 때만) */}
+    {!showIncomingOnly && (
+      <TableCell
+        sx={{
+          padding: 0,
+          borderBottom: "1px solid rgba(224,224,224,1)",
+           fontWeight: "bold", fontSize: "15px"
+        }}
+      />
     )}
+
+    {/* 3) 요청일자 */}
+    <TableCell
+      sx={{
+        padding: 0,
+        borderBottom: "1px solid rgba(224,224,224,1)",
+         fontWeight: "bold", fontSize: "15px"
+      }}
+    />
+
+    {/* 4) 오토텍 */}
+    <TableCell
+      sx={{
+        padding: 0,
+        borderBottom: "1px solid rgba(224,224,224,1)",
+         fontWeight: "bold", fontSize: "15px"
+      }}
+    />
+
+    {/* 5) 남은 일수 */}
+    <TableCell
+      sx={{
+        padding: 0,
+        borderBottom: "1px solid rgba(224,224,224,1)",
+         fontWeight: "bold", fontSize: "15px"
+      }}
+    />
+
+    {/* 6) 담당자 */}
+    {!showIncomingOnly && (
+      <TableCell
+        sx={{
+          padding: 0,
+          borderBottom: "1px solid rgba(224,224,224,1)",
+           fontWeight: "bold", fontSize: "15px"
+        }}
+      />
+    )}
+
+    {/* 7) 업체 */}
+    <TableCell
+      sx={{
+        padding: 0,
+        borderBottom: "1px solid rgba(224,224,224,1)",
+         fontWeight: "bold", fontSize: "15px"
+      }}
+    />
+
+    {/* 8) 결재 */}
+    {!showIncomingOnly && (
+      <TableCell
+        sx={{
+          padding: 0,
+          borderBottom: "1px solid rgba(224,224,224,1)",
+           fontWeight: "bold", fontSize: "15px"
+        }}
+      />
+    )}
+
+    {/* 9) 운송방법 */}
+    {!showIncomingOnly && (
+      <TableCell
+        sx={{
+          padding: 0,
+          borderBottom: "1px solid rgba(224,224,224,1)",
+           fontWeight: "bold", fontSize: "15px"
+        }}
+      />
+    )}
+  </TableRow>
+)}
+
               {/* subRow 실제 데이터 */}
 <TableRow
   sx={{
