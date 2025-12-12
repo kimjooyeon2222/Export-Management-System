@@ -448,13 +448,12 @@ const isToday = (dateStr) => {
 
         {/* 부모 행 */}
         <TableRow sx={{ height: 42, fontWeight: "bold", fontSize: "15px",
-           "& td": {
-      borderBottom: "1px solid #dcdcdc"
-    }
+           
         }}>
           
           {/* PO 번호 */}
-          <TableCell align="center" sx={{fontWeight: "bold", fontSize: "15px"}}>
+          <TableCell align="center" sx={{fontWeight: "bold", fontSize: "15px"
+}}>
             {editMode ? (
               <TextField
                 size="small"
@@ -622,7 +621,7 @@ const isToday = (dateStr) => {
       <TableCell
         sx={{
           padding: 0,
-          borderBottom: "1px solid rgba(224,224,224,1)",
+           borderBottom: "none",
            fontWeight: "bold", fontSize: "15px"
         }}
       />
@@ -632,7 +631,7 @@ const isToday = (dateStr) => {
     <TableCell
       sx={{
         padding: 0,
-        borderBottom: "1px solid rgba(224,224,224,1)",
+        borderBottom: "none",
          fontWeight: "bold", fontSize: "15px"
       }}
     />
@@ -641,7 +640,7 @@ const isToday = (dateStr) => {
     <TableCell
       sx={{
         padding: 0,
-        borderBottom: "1px solid rgba(224,224,224,1)",
+        borderBottom: "none",
          fontWeight: "bold", fontSize: "15px"
       }}
     />
@@ -650,7 +649,7 @@ const isToday = (dateStr) => {
     <TableCell
       sx={{
         padding: 0,
-        borderBottom: "1px solid rgba(224,224,224,1)",
+        borderBottom: "none",
          fontWeight: "bold", fontSize: "15px"
       }}
     />
@@ -660,7 +659,7 @@ const isToday = (dateStr) => {
       <TableCell
         sx={{
           padding: 0,
-          borderBottom: "1px solid rgba(224,224,224,1)",
+          borderBottom: "none",
            fontWeight: "bold", fontSize: "15px"
         }}
       />
@@ -670,7 +669,7 @@ const isToday = (dateStr) => {
     <TableCell
       sx={{
         padding: 0,
-        borderBottom: "1px solid rgba(224,224,224,1)",
+        borderBottom: "none",
          fontWeight: "bold", fontSize: "15px"
       }}
     />
@@ -680,7 +679,7 @@ const isToday = (dateStr) => {
       <TableCell
         sx={{
           padding: 0,
-          borderBottom: "1px solid rgba(224,224,224,1)",
+          borderBottom: "none",
            fontWeight: "bold", fontSize: "15px"
         }}
       />
@@ -691,7 +690,7 @@ const isToday = (dateStr) => {
       <TableCell
         sx={{
           padding: 0,
-          borderBottom: "1px solid rgba(224,224,224,1)",
+          borderBottom: "none",
            fontWeight: "bold", fontSize: "15px"
         }}
       />
@@ -704,6 +703,7 @@ const isToday = (dateStr) => {
   sx={{
     bgcolor: "#fff",
     height: 42,                // 부모와 동일한 세로 높이
+    
     "& td": {
       fontWeight:"bold",
       padding: "6px 8px",     // 부모와 비슷한 padding 적용
