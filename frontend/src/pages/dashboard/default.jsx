@@ -220,7 +220,7 @@ const saveMemo = async () => {
   sx={{
     mt: 2.5,
     p: 4,
-    width: '700px',
+    width: '650px',
     height: "350px",
     mx:"auto",
     backgroundColor: '#FFF8C6',
@@ -279,7 +279,7 @@ const saveMemo = async () => {
       style={{
         display: "inline-block",     // 내용 박스를 가운데에 고정
         textAlign: "left",
-        fontSize: "1.4rem",
+        fontSize: "1.3rem",
         lineHeight: "1.75rem",
         fontWeight: 600,             // 굵게
         whiteSpace: "pre-line",
@@ -293,25 +293,26 @@ const saveMemo = async () => {
   {editMode && (
     <>
       {/* 🔥 빨간펜 토글 버튼 */}
-      <Button
-        variant={redPen ? "contained" : "outlined"}
-        sx={{
-          mb: 1,
-          borderColor: "#d32f2f",
-          color: redPen ? "#fff" : "#d32f2f",
-          backgroundColor: redPen ? "#d32f2f" : "transparent",
-        }}
-        onClick={() => {
-          setRedPen(!redPen);
-          if (!redPen) {
-            editor.chain().setColor("#d32f2f").run();
-          } else {
-            editor.chain().setColor("black").run();
-          }
-        }}
-      >
-        빨간펜
-      </Button>
+<Box sx={{ display: "flex", width: "100%" }}>
+  <Button
+    variant={redPen ? "contained" : "outlined"}
+    sx={{
+      ml: "auto",      // 🔥 flex에서만 작동
+      mb: 1,
+      borderColor: "#d32f2f",
+      color: redPen ? "#fff" : "#d32f2f",
+      backgroundColor: redPen ? "#d32f2f" : "transparent",
+    }}
+    onClick={() => {
+      setRedPen(!redPen);
+      if (!redPen) editor.chain().setColor("#d32f2f").run();
+      else editor.chain().setColor("black").run();
+    }}
+  >
+    빨간펜
+  </Button>
+</Box>
+
 
       {/* 에디터 */}
       <Box
