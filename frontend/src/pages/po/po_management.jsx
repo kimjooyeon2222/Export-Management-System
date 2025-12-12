@@ -448,7 +448,8 @@ const isToday = (dateStr) => {
 
         {/* 부모 행 */}
         <TableRow sx={{ height: 42, fontWeight: "bold", fontSize: "15px",
-           
+            borderTop: "3px solid #e0e0e0",   // ⭐⭐ 여기 추가!!
+
         }}>
           
           {/* PO 번호 */}
