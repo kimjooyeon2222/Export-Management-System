@@ -150,6 +150,18 @@ const calcInTransitEV = (part_no) => {
 
 const saveSchedule = async () => {
   try {
+        // =========================
+    // 1️⃣ EV 설정 저장 (작성자 / 날짜)
+    // =========================
+    await fetch(`${API_BASE}/api/ev-setting`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        writer: writer,     // state
+        us_date: usDate,    // YYYY-MM-DD
+      }),
+    });
+
     const payload = scheduleRows.map(row => {
       const cleanRow = {
         inv_no: row.inv_no,
@@ -165,7 +177,7 @@ const saveSchedule = async () => {
       return cleanRow;
     });
 
-    const res = await fetch(`${API_BASE}/api/ev-schedule/save`, {
+    const res = await fetch(`${API_BASE}/api/ev-schedule/bulk`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
