@@ -70,6 +70,7 @@ export default function DashboardDefault() {
 
 const API_BASE = import.meta.env.VITE_API_URL;
 
+const [userDate, setUserDate] = useState("");
 const [editMode, setEditMode] = useState(false);
 const [note, setNote] = useState("");
 const [redPen, setRedPen] = useState(false);
@@ -100,6 +101,15 @@ const editor = useEditor({
 });
 
 
+useEffect(() => {
+  fetch(`${API_BASE}/memo`)
+    .then(res => res.json())
+    .then(data => {
+      if (data.text) setNote(data.text);
+      if (data.user_date) setUserDate(data.user_date);   // ⭐ 날짜도 저장
+    })
+    .catch(err => console.error("메모 로딩 실패:", err));
+}, []);
 
 useEffect(() => {
   if (editor && !editMode) {
@@ -113,15 +123,7 @@ useEffect(() => {
   }
 }, [editMode, editor]);
 
-// ⭐ 페이지 로드시 메모 불러오기
-useEffect(() => {
-  fetch(`${API_BASE}/memo`)
-    .then(res => res.json())
-    .then(data => {
-      if (data.text) setNote(data.text);
-    })
-    .catch(err => console.error("메모 로딩 실패:", err));
-}, []);
+
 
 // ⭐ 저장 함수
 const saveMemo = async () => {
@@ -129,28 +131,26 @@ const saveMemo = async () => {
     await fetch(`${API_BASE}/memo`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: note })
+      body: JSON.stringify({ 
+        text: note,
+        user_date: userDate       // ⭐ 날짜 추가
+      })
     });
-
-    
   } catch (error) {
     console.error("메모 저장 실패:", error);
   }
 };
 
-  const today =  new Date();
-  const navigate = useNavigate();
 
-  // EMS 버튼 데이터
-  const emsButtons = [
-    { label: 'INVOICE TRK', color: '#4A4A4A' },
-    { label: '단조품', color: '#D32F2F' },
-    { label: '오일', color: '#FBC02D', textColor: '#000' },
-    { label: 'AXLE서브품', color: '#FDD835', textColor: '#000' },
-    { label: 'EV서브품', color: '#43A047' },
-    { label: '브라켓', color: '#1976D2' },
-    { label: '수출품 사진', color: '#8E24AA' }
-  ];
+  const today = new Intl.DateTimeFormat("ko-KR", {
+  timeZone: "Asia/Seoul",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit"
+}).format(new Date());
+
+  
+
 
   return (
 
@@ -237,19 +237,42 @@ const saveMemo = async () => {
   }}
 >
   {/* 날짜 */}
-  <Typography
-    variant="subtitle2"
-    sx={{
-      position: 'absolute',
-      right: '20px',
-      top: '15px',
-      fontWeight: 'bold',
-      fontSize: '0.9rem',
-      color: '#5C5C5C'
-    }}
-  >
-    {today.toLocaleDateString()} (한국현지시각)
-  </Typography>
+ {/* 날짜 영역 */}
+{
+  !editMode ? (
+    // 보기 모드 → 저장된 날짜 표시
+    <Typography
+      variant="subtitle2"
+      sx={{
+        position: 'absolute',
+        right: '20px',
+        top: '15px',
+        fontWeight: 'bold',
+        fontSize: '0.9rem',
+        color: '#5C5C5C'
+      }}
+    >
+      {userDate || "날짜 없음"}
+    </Typography>
+  ) : (
+    // 수정 모드 → 사용자가 날짜 입력 가능
+    <Box sx={{ position: 'absolute', right: '20px', top: '15px' }}>
+      <input
+        type="text"
+        placeholder="YYYY-MM-DD"
+        value={userDate}
+        onChange={(e) => setUserDate(e.target.value)}
+        style={{
+          padding: "4px 8px",
+          border: "1px solid #aaa",
+          borderRadius: "4px",
+          fontSize: "0.9rem"
+        }}
+      />
+    </Box>
+  )
+}
+
 
   {/* 제목 */}
   <Typography
@@ -286,6 +309,7 @@ const saveMemo = async () => {
         lineHeight: "1.75rem",
         fontWeight: 600,             // 굵게
         whiteSpace: "pre-line",
+        
       }}
     />
   </Box>

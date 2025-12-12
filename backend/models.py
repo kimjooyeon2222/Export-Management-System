@@ -458,6 +458,8 @@ class DashboardMemo(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     text = db.Column(db.Text, nullable=False)
+    user_date = db.Column(db.String(20), nullable=True)  # ⭐ 추가
+
     updated_at = db.Column(
         db.DateTime,
         default=datetime.utcnow,
@@ -468,5 +470,7 @@ class DashboardMemo(db.Model):
         return {
             "id": self.id,
             "text": self.text,
+            "user_date": self.user_date,
             "updated_at": self.updated_at
         }
+

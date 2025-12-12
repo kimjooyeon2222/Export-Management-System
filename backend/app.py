@@ -1191,27 +1191,31 @@ def get_dashboard_memo():
     memo = DashboardMemo.query.first()
 
     if memo:
-        return jsonify(memo.to_dict())
+        return jsonify(memo.to_dict())   # user_date 자동 포함
     else:
-        return jsonify({"id": None, "text": ""})
+        return jsonify({"id": None, "text": "", "user_date": ""})
+
 
 
 @app.route("/memo", methods=["POST"])
 def update_dashboard_memo():
     data = request.json
+
     new_text = data.get("text", "")
+    new_user_date = data.get("user_date", "")
 
     memo = DashboardMemo.query.first()
 
-    if memo:
-        memo.text = new_text
-    else:
-        memo = DashboardMemo(text=new_text)
+    if not memo:
+        memo = DashboardMemo(text=new_text, user_date=new_user_date)
         db.session.add(memo)
+    else:
+        memo.text = new_text
+        memo.user_date = new_user_date
 
     db.session.commit()
 
-    return jsonify({"status": "success", "text": memo.text})
+    return jsonify({"status": "success"})
 
 
 
