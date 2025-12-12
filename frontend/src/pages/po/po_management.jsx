@@ -18,6 +18,9 @@ import { v4 as uuidv4 } from "uuid";
 const API_BASE = import.meta.env.VITE_API_URL;
 
 export default function POManagementPage() {
+
+
+
   useEffect(() => {
   loadPOData();
   loadUsDate();   // ⭐ 북미 날짜 로드
@@ -41,6 +44,19 @@ const loadUsDate = async () => {
   } catch (err) {
     console.error("us_date 불러오기 실패:", err);
   }
+};
+
+const removeSubRow = (parentId, subId) => {
+  setPoRows(prev =>
+    prev.map(r =>
+      r.id === parentId
+        ? {
+            ...r,
+            subrows: r.subrows.filter(sub => sub.id !== subId)
+          }
+        : r
+    )
+  );
 };
 
 
@@ -105,10 +121,52 @@ const formatDisplayDate = (dateStr) => {
   manager: "",
   company: "",   // ⭐ 추가된 업체 컬럼
   subject: "",
-  method: "해운"
+  method: "해운",
+  subrows: []   // ⭐ 여기 추가
+
 }
 
   ]);
+  const updateSubCell = (parentId, subId, field, value) => {
+  setPoRows(prev =>
+    prev.map(row =>
+      row.id === parentId
+        ? {
+            ...row,
+            subrows: row.subrows.map(sub =>
+              sub.id === subId
+                ? { ...sub, [field]: value }
+                : sub
+            )
+          }
+        : row
+    )
+  );
+};
+
+  const addSubRow = (parentId) => {
+  setPoRows(prev =>
+    prev.map(r =>
+      r.id === parentId
+        ? {
+            ...r,
+            subrows: [
+              ...r.subrows,
+              {
+                id: uuidv4(),
+                request_date: "",
+                ototek_date: "",
+                remaining_days: "",
+                company: ""
+              }
+            ]
+          }
+        : r
+    )
+  );
+};
+
+
 
   /* ----------------------------------
         제목 자동 생성
@@ -225,7 +283,8 @@ const isToday = (dateStr) => {
   manager: "",
   company: "",
   subject: "",
-  method: "해운"
+  method: "해운",
+  subrows: []   
       }
     ]);
   };
@@ -330,7 +389,11 @@ const isToday = (dateStr) => {
 
 
       {/* 메인 테이블 */}
-      <Paper sx={{ p: 2 }}>
+      <Paper 
+  sx={{ p: 2, border: 'none', boxShadow: 'none' }} 
+  elevation={0}
+>
+
         <Table size="small">
           <TableHead
   sx={{
@@ -347,7 +410,16 @@ const isToday = (dateStr) => {
               {!showIncomingOnly && (
   <TableCell align="center" sx={{fontWeight:"bold", fontSize:"15px"}}>북미 발주일자</TableCell>
 )}
-              <TableCell align="center" sx={{fontWeight:"bold", fontSize:"15px"}}>북미도착 요청일자(A)</TableCell>
+              <TableCell 
+  align="center" 
+  sx={{fontWeight:"bold", fontSize:"15px", position: "relative"}}
+>
+  북미도착 요청일자(A)
+
+
+
+</TableCell>
+
               <TableCell align="center" sx={{fontWeight:"bold", fontSize:"15px"}}>오토텍 발주일자</TableCell>
               <TableCell align="center" sx={{fontWeight:"bold", fontSize:"15px"}}>(A)-(금일) 남은 일수</TableCell>
               {/* 담당자 숨김 */}
@@ -369,160 +441,291 @@ const isToday = (dateStr) => {
           </TableHead>
 
           <TableBody>
-            {filteredRows.map((row) => {
-              const days = calcRemainingDays(row.request_date);
+  {filteredRows.map((row) => {
+    const days = calcRemainingDays(row.request_date);
 
-              return (
-                <TableRow key={row.id} sx={{ height: 42, fontWeight:"bold", fontSize:"15px"}}>
+    return (
+      <React.Fragment key={row.id}>
 
-                  
-                 
+        {/* 부모 행 */}
+        <TableRow sx={{ height: 42, fontWeight: "bold", fontSize: "15px",
+           "& td": {
+      borderBottom: "2px solid #c2c2c2 !important"
+    }
+        }}>
+          
+          {/* PO 번호 */}
+          <TableCell align="center">
+            {editMode ? (
+              <TextField
+                size="small"
+                value={row.po_no}
+                onChange={(e) => updateCell(row.id, "po_no", e.target.value)}
+              />
+            ) : (
+              row.po_no
+            )}
+          </TableCell>
 
-                  {/* PO 번호 */}
-                  <TableCell align="center" sx={{ py: 1.2 ,fontWeight:"bold", fontSize:"15px"}}>
+          {/* 북미 발주일자 */}
+          {!showIncomingOnly && (
+            <TableCell align="center">
+              {editMode ? (
+                <TextField
+                  size="small"
+                  value={row.order_date}
+                  onChange={(e) => updateCell(row.id, "order_date", e.target.value)}
+                />
+              ) : (
+                <Box sx={getOrderDateStyle(row.order_date)}>
+                  {formatDisplayDate(row.order_date)}
+                </Box>
+              )}
+            </TableCell>
+          )}
 
-                    {editMode ? (
-                      <TextField
-                        size="small"
-                        value={row.po_no}
-                        onChange={(e) =>
-                          updateCell(row.id, "po_no", e.target.value)
-                        }
-                      />
-                    ) : (
-                      row.po_no
-                    )}
-                  </TableCell>
+          {/* 북미도착요청일자 */}
+<TableCell align="center">
+  <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 1 }}>
+    
+    {/* 날짜 입력/표시 */}
+    {editMode ? (
+      <TextField
+        size="small"
+        value={row.request_date}
+        onChange={(e) => updateCell(row.id, "request_date", e.target.value)}
+      />
+    ) : (
+      formatDisplayDate(row.request_date)
+    )}
 
-                  {/* 북미발주일자 (오늘이면 강조) */}
-                  {!showIncomingOnly && (
- <TableCell
-  align="center"
-  sx={{
-    py: 1.2,
-    fontWeight: "bold",
-    fontSize: "15px",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center"
-  }}
->
-  {editMode ? (
-    <TextField
-      size="small"
-      value={row.order_date}
-      onChange={(e) => updateCell(row.id, "order_date", e.target.value)}
-    />
-  ) : (
-    <Box sx={getOrderDateStyle(row.order_date)}>
-      {formatDisplayDate(row.order_date)}
-    </Box>
-  )}
+    {/* + / - 버튼 */}
+    {editMode && (
+      <>
+        <Button
+          size="small"
+          variant="outlined"
+          onClick={() => addSubRow(row.id)}
+          sx={{ minWidth: 26, padding: "0 6px" }}
+        >
+          +
+        </Button>
+
+        <Button
+          size="small"
+          variant="outlined"
+          color="error"
+          onClick={() => removeSubRow(row.id, sub.id)}
+          sx={{ minWidth: 26, padding: "0 6px" }}
+        >
+          -
+        </Button>
+      </>
+    )}
+  </Box>
 </TableCell>
 
-)}
+          {/* 오토텍 */}
+          <TableCell align="center">
+            {editMode ? (
+              <TextField
+                size="small"
+                value={row.ototek_date}
+                onChange={(e) => updateCell(row.id, "ototek_date", e.target.value)}
+              />
+            ) : (
+              formatDisplayDate(row.ototek_date)
+            )}
+          </TableCell>
 
-               <TableCell align="center" sx={{fontWeight:"bold", fontSize:"15px"}}>
+          {/* 남은일수 */}
+          <TableCell align="center">
+            <Box sx={getRemainingStyle(days)}>{days}</Box>
+          </TableCell>
+
+          {/* 담당자 */}
+          {!showIncomingOnly && (
+            <TableCell align="center">
+              {editMode ? (
+                <TextField
+                  size="small"
+                  value={row.manager}
+                  onChange={(e) => updateCell(row.id, "manager", e.target.value)}
+                />
+              ) : (
+                row.manager
+              )}
+            </TableCell>
+          )}
+
+          {/* 업체 */}
+          <TableCell align="center">
+            {editMode ? (
+              <TextField
+                size="small"
+                value={row.company}
+                onChange={(e) => updateCell(row.id, "company", e.target.value)}
+              />
+            ) : (
+              row.company
+            )}
+          </TableCell>
+
+          {/* 결재목차 */}
+          {!showIncomingOnly && (
+            <TableCell align="center">
+              {editMode ? (
+                <TextField
+                  size="small"
+                  value={row.subject}
+                  onChange={(e) => updateCell(row.id, "subject", e.target.value)}
+                />
+              ) : (
+                row.subject
+              )}
+            </TableCell>
+          )}
+
+          {/* 운송방법 */}
+          {!showIncomingOnly && (
+            <TableCell align="center">
+              {editMode ? (
+                <Select
+                  size="small"
+                  value={row.method}
+                  onChange={(e) => updateCell(row.id, "method", e.target.value)}
+                >
+                  <MenuItem value="해운">해운</MenuItem>
+                  <MenuItem value="항공">항공</MenuItem>
+                  <MenuItem value="팀트럭">팀트럭</MenuItem>
+                </Select>
+              ) : (
+                <Box sx={getShipStyle(row.method)}>{row.method}</Box>
+              )}
+            </TableCell>
+          )}
+        </TableRow>
+
+        {/* ⭐ subrow 렌더링 (부모 바로 아래) */}
+        {row.subrows.map((sub, index) => (
+            <React.Fragment key={sub.id}>
+              
+              {/* 얇은 줄 */}
+               {/* ⭐ 첫 번째 subrow는 얇은 줄을 그리지 않는다 */}
+    {index !== 0 && (
+              <TableRow>
+                <TableCell
+                  colSpan={9}
+                  sx={{
+                    padding: 0,
+                    borderBottom: "1px solid rgba(224,224,224,1)"
+                  }}
+                />
+              </TableRow>
+    )}
+              {/* subRow 실제 데이터 */}
+<TableRow
+  sx={{
+    bgcolor: "#fafafa",
+    height: 42,                // 부모와 동일한 세로 높이
+    "& td": {
+      padding: "6px 8px",     // 부모와 비슷한 padding 적용
+      fontSize: "15px"        // 글자 크기도 동일하게
+    }
+  }}
+>
+
+  {/* PO 빈칸 */}
+  <TableCell />
+
+  {/* 북미발주 빈칸 */}
+  {!showIncomingOnly && <TableCell />}
+
+  {/* (A) 요청일자 + 삭제 버튼을 같은 셀 안에 넣기 */}
+  <TableCell align="center">
+    <Box sx={{ display:"flex", justifyContent:"center", alignItems:"center", gap:1 }}>
+      {editMode ? (
+        <TextField
+          size="small"
+          value={sub.request_date}
+          onChange={(e) =>
+            updateSubCell(row.id, sub.id, "request_date", e.target.value)
+          }
+        />
+      ) : (
+        formatDisplayDate(sub.request_date)
+      )}
+
+      {editMode && (
+        <Button
+          size="small"
+          color="error"
+          onClick={() => removeSubRow(row.id,sub.id)}
+
+
+          sx={{ minWidth: "26px", padding: "0 6px" }}
+        >
+          -
+        </Button>
+      )}
+    </Box>
+  </TableCell>
+
+  {/* 오토텍 */}
+  <TableCell align="center">
+    {editMode ? (
+      <TextField
+        size="small"
+        value={sub.ototek_date}
+        onChange={(e) =>
+          updateSubCell(row.id, sub.id, "ototek_date", e.target.value)
+        }
+      />
+    ) : (
+      formatDisplayDate(sub.ototek_date)
+    )}
+  </TableCell>
+
+  {/* 남은 일수 */}
+  <TableCell align="center">
+    {calcRemainingDays(sub.request_date)}
+  </TableCell>
+
+  {/* 담당자 (필터 조건에 입력) */}
+  {!showIncomingOnly && <TableCell />}
+
+  {/* 업체 */}
+<TableCell align="center">
   {editMode ? (
     <TextField
       size="small"
-      value={row.request_date}
+      value={sub.company}
       onChange={(e) =>
-        updateCell(row.id, "request_date", e.target.value)
+        updateSubCell(row.id, sub.id, "company", e.target.value)
       }
     />
   ) : (
-    formatDisplayDate(row.request_date)
+    sub.company
   )}
 </TableCell>
 
 
-                  {/* 오토텍발주일자 */}
-                 <TableCell align="center" sx={{fontWeight:"bold", fontSize:"15px"}}>
-  {editMode ? (
-    <TextField
-      size="small"
-      value={row.ototek_date}
-      onChange={(e) => updateCell(row.id, "ototek_date", e.target.value)}
-    />
-  ) : (
-    formatDisplayDate(row.ototek_date)
+  {/* 결재 / 운송 */}
+  {!showIncomingOnly && (
+    <>
+      <TableCell />
+      <TableCell />
+    </>
   )}
-</TableCell>
+</TableRow>
 
-                  {/* 남은일수 */}
-                  <TableCell align="center" sx={{fontWeight:"bold", fontSize:"15px"}}>
-                    <Box sx={getRemainingStyle(days)}>{days}</Box>
-                  </TableCell>
+            </React.Fragment>
+          ))}
+      </React.Fragment>
+    );
+  })}
+</TableBody>
 
-                  {/* 담당자 */}
-                  {!showIncomingOnly && (
-  <TableCell align="center" sx={{fontWeight:"bold", fontSize:"15px"}}>
-    {editMode ? (
-      <TextField
-        size="small"
-        value={row.manager}
-        onChange={(e) => updateCell(row.id, "manager", e.target.value)}
-      />
-    ) : (
-      row.manager
-    )}
-  </TableCell>
-)}
-                  <TableCell align="center" sx={{fontWeight:"bold", fontSize:"15px"}}>
-  {editMode ? (
-    <TextField
-      size="small"
-      value={row.company}
-      onChange={(e) => updateCell(row.id, "company", e.target.value)}
-    />
-  ) : (
-    row.company
-  )}
-</TableCell>
-
-
-                  {/* 결재 목차 */}
-                  {!showIncomingOnly && (
-  <TableCell align="center" sx={{fontWeight:"bold", fontSize:"15px"}}>
-    {editMode ? (
-      <TextField
-        size="small"
-        value={row.subject}
-        onChange={(e) => updateCell(row.id, "subject", e.target.value)}
-      />
-    ) : (
-      row.subject
-    )}
-  </TableCell>
-)}
-
-
-                  {/* 운송방법 */}
-                 {!showIncomingOnly && (
-  <TableCell align="center" sx={{fontWeight:"bold", fontSize:"15px"}}>
-    {editMode ? (
-      <Select sx={{fontWeight:"bold", fontSize:"15px"}}
-        size="small"
-        value={row.method}
-        onChange={(e) =>
-          updateCell(row.id, "method", e.target.value)
-        }
-      >
-        <MenuItem value="해운" sx={{fontWeight:"bold", fontSize:"15px"}}>해운</MenuItem>
-        <MenuItem value="항공" sx={{fontWeight:"bold", fontSize:"15px"}}>항공</MenuItem>
-        <MenuItem value="팀트럭" sx={{fontWeight:"bold", fontSize:"15px"}}>팀트럭</MenuItem>
-      </Select>
-    ) : (
-      <Box sx={getShipStyle(row.method)}>{row.method}</Box>
-    )}
-  </TableCell>
-)}
-
-                </TableRow>
-              );
-            })}
-          </TableBody>
         </Table>
       </Paper>
     </Box>

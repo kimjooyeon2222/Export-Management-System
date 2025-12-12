@@ -1167,8 +1167,8 @@ def get_po():
 def save_po_bulk():
     rows = request.json
 
-    # 기존 데이터 삭제
     POManagement.query.delete()
+    POSubRow.query.delete()
 
     for r in rows:
         row = POManagement(
@@ -1182,9 +1182,23 @@ def save_po_bulk():
             method=r.get("method"),
         )
         db.session.add(row)
+        db.session.flush()   # ⭐ PK(id)를 즉시 생성해 줌
+
+        # ★ subrows 저장
+        for s in r.get("subrows", []):
+            sub = POSubRow(
+                po_id=row.id,
+                request_date=to_date(s.get("request_date")),
+                ototek_date=to_date(s.get("ototek_date")),
+                remaining_days=s.get("remaining_days"),
+                company=s.get("company"),
+            )
+            db.session.add(sub)
 
     db.session.commit()
     return jsonify({"message": "saved"})
+
+
 
 @app.route("/memo", methods=["GET"])
 def get_dashboard_memo():

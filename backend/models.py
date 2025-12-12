@@ -412,30 +412,27 @@ class POSetting(db.Model):
 class POManagement(db.Model):
     __tablename__ = "po_management"
 
-    # 기본 키
     id = db.Column(db.Integer, primary_key=True)
-
-    # PO 번호
     po_no = db.Column(db.String(50))
-
-    # 날짜들
-    order_date = db.Column(db.Date)      # 북미 발주일자
-    request_date = db.Column(db.Date)    # 북미 도착 요청일자
-    ototek_date = db.Column(db.Date)     # 오토텍 발주일자
-
-    # 담당자 · 업체 · 내용
+    order_date = db.Column(db.Date)
+    request_date = db.Column(db.Date)
+    ototek_date = db.Column(db.Date)
     manager = db.Column(db.String(50))
     company = db.Column(db.String(100))
     subject = db.Column(db.String(255))
-
-    # 운송방법
     method = db.Column(db.String(50))
 
-    # 생성/수정 시간 — MySQL TIMESTAMP와 동일하게 동작
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    # JSON 변환 — 날짜는 YYYY-MM-DD로 변환해 React가 문제 없이 읽도록 처리
+    subrows = db.relationship(
+        "POSubRow",
+        backref="parent",
+        cascade="all, delete-orphan",
+        passive_deletes=True
+    )
+
+    # ⭐⭐⭐ 반드시 클래스 안으로 들여쓰기!!
     def to_dict(self):
         return {
             "id": self.id,
@@ -447,10 +444,11 @@ class POManagement(db.Model):
             "company": self.company,
             "subject": self.subject,
             "method": self.method,
-            # created / updated는 프론트에서 표시 안 해도 되면 삭제 가능
-            "created_at": self.created_at,
-            "updated_at": self.updated_at,
+
+            # ⭐ 반드시 포함해야 React가 subRow UI를 그림
+            "subrows": [s.to_dict() for s in self.subrows]
         }
+
 
 
 class DashboardMemo(db.Model):
@@ -458,7 +456,7 @@ class DashboardMemo(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     text = db.Column(db.Text, nullable=False)
-    user_date = db.Column(db.String(20), nullable=True)  # ⭐ 추가
+    user_date = db.Column(db.String(20), nullable=True)  
 
     updated_at = db.Column(
         db.DateTime,
@@ -474,3 +472,32 @@ class DashboardMemo(db.Model):
             "updated_at": self.updated_at
         }
 
+class POSubRow(db.Model):
+    __tablename__ = "po_subrow"
+
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # 부모 Row FK
+    po_id = db.Column(
+        db.Integer,
+        db.ForeignKey("po_management.id", ondelete="CASCADE"),
+        nullable=False
+    )
+
+    request_date = db.Column(db.Date)
+    ototek_date = db.Column(db.Date)
+    remaining_days = db.Column(db.Integer)
+    company = db.Column(db.String(100))
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "po_id": self.po_id,
+            "request_date": self.request_date.strftime("%Y-%m-%d") if self.request_date else None,
+            "ototek_date": self.ototek_date.strftime("%Y-%m-%d") if self.ototek_date else None,
+            "remaining_days": self.remaining_days,
+            "company": self.company,
+        }
