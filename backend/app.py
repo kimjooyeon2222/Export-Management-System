@@ -12,7 +12,6 @@ from models import POSubRow
 
 from models import DashboardMemo
 
-
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from config import Config

@@ -30,6 +30,24 @@ import EyeInvisibleOutlined from '@ant-design/icons/EyeInvisibleOutlined';
 // ============================|| JWT - LOGIN ||============================ //
 
 export default function AuthLogin({ isDemo = false }) {
+  const handleLogin = async (values) => {
+  const res = await fetch("http://서버IP:5001/api/auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(values)
+  });
+
+  const data = await res.json();
+
+  if (res.ok) {
+    localStorage.setItem("token", data.access_token);
+    localStorage.setItem("role", data.role);
+    window.location.href = "/";
+  } else {
+    alert("로그인 실패");
+  }
+};
+
   const [checked, setChecked] = React.useState(false);
 
   const [showPassword, setShowPassword] = React.useState(false);
@@ -44,36 +62,36 @@ export default function AuthLogin({ isDemo = false }) {
   return (
     <>
       <Formik
-        initialValues={{
-          email: 'info@codedthemes.com',
-          password: '123456',
-          submit: null
-        }}
-        validationSchema={Yup.object().shape({
-          email: Yup.string().email('Must be a valid email').max(255).required('Email is required'),
-          password: Yup.string()
-            .required('Password is required')
-            .test('no-leading-trailing-whitespace', 'Password cannot start or end with spaces', (value) => value === value.trim())
-            .max(10, 'Password must be less than 10 characters')
-        })}
-      >
-        {({ errors, handleBlur, handleChange, touched, values }) => (
-          <form noValidate>
+  initialValues={{
+    login_id: '',
+    password: ''
+  }}
+  validationSchema={Yup.object({
+    login_id: Yup.string().required('ID is required'),
+    password: Yup.string().required('Password is required')
+  })}
+  onSubmit={handleLogin}
+>
+
+        {({ errors, handleBlur, handleChange, handleSubmit, touched, values }) => (
+
+         <form noValidate onSubmit={handleSubmit}>
+
             <Grid container spacing={3}>
               <Grid size={12}>
                 <Stack sx={{ gap: 1 }}>
-                  <InputLabel htmlFor="email-login">Email Address</InputLabel>
-                  <OutlinedInput
-                    id="email-login"
-                    type="email"
-                    value={values.email}
-                    name="email"
-                    onBlur={handleBlur}
-                    onChange={handleChange}
-                    placeholder="Enter email address"
-                    fullWidth
-                    error={Boolean(touched.email && errors.email)}
-                  />
+                  <InputLabel htmlFor="login-id">Login ID</InputLabel>
+<OutlinedInput
+  id="login-id"
+  type="text"
+  value={values.login_id}
+  name="login_id"
+  onBlur={handleBlur}
+  onChange={handleChange}
+  placeholder="Enter ID"
+  fullWidth
+/>
+
                 </Stack>
                 {touched.email && errors.email && (
                   <FormHelperText error id="standard-weight-helper-text-email-login">
@@ -136,9 +154,15 @@ export default function AuthLogin({ isDemo = false }) {
               </Grid>
               <Grid size={12}>
                 <AnimateButton>
-                  <Button fullWidth size="large" variant="contained" color="primary">
-                    Login
-                  </Button>
+                  <Button
+  fullWidth
+  size="large"
+  variant="contained"
+  type="submit"
+>
+  Login
+</Button>
+
                 </AnimateButton>
               </Grid>
             </Grid>

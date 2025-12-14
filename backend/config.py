@@ -1,5 +1,18 @@
+import os
+from dotenv import load_dotenv
+
+load_dotenv()  # 🔥 .env 로드
+
 class Config:
-    #SQLALCHEMY_DATABASE_URI = "mysql+pymysql://root:PVibNAMAWUExlznvCIWYfHzZIacQWVwL@nozomi.proxy.rlwy.net:24511/invoice_db"
-    SQLALCHEMY_DATABASE_URI = "mysql+pymysql://root:0000@127.0.0.1:3306/invoice_db"
+    SQLALCHEMY_DATABASE_URI = (
+        f"mysql+pymysql://"
+        f"{os.getenv('DB_USER')}:"
+        f"{os.getenv('DB_PASSWORD')}@"
+        f"{os.getenv('DB_HOST')}:"
+        f"{os.getenv('DB_PORT')}/"
+        f"{os.getenv('DB_NAME')}"
+    )
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+    JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")

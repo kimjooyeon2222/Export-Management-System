@@ -30,11 +30,16 @@ import AxleSubPage from 'pages/AxleSub/AxleSubPage';
 import EvSubPage from 'pages/EvSub/EvSubPage';
 
 
+
 // ==============================|| MAIN ROUTING ||============================== //
 
 const MainRoutes = {
   path: '/',
-  element: <DashboardLayout />,
+    element: (
+   
+      <DashboardLayout />
+    
+  ),
   children: [
     {
       path: '/',
