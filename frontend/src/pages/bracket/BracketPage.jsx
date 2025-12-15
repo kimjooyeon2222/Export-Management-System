@@ -179,10 +179,24 @@ const handleSave = async () => {
     // ★ 판단결과 박스 스타일 (AxleSub 동일)
 const getStatusBoxStyle = (status) => {
   const map = {
-    "초과":     { bg: "#EAD1DC", color: "#741B47" },  // 연한 보라톤
-    "양호":     { bg: "#D9EAD3", color: "#38761D" },  // 연한 녹색
-    "위험":     { bg: "#F4CCCC", color: "#990000" },  // 연한 빨강
-    "적정재고미달": { bg: "#FCE5CD", color: "#B45F06" }, // 연한 주황톤
+    // 🔁 서로 교체
+    "초과": {
+      bg: "#FCE5CD",   // 기존 적정재고미달 색
+      color: "#B45F06",
+    },
+    "적정재고미달": {
+      bg: "#EAD1DC",   // 기존 초과 색
+      color: "#741B47",
+    },
+
+    "양호": {
+      bg: "#D9EAD3",
+      color: "#38761D",
+    },
+    "위험": {
+      bg: "#F4CCCC",
+      color: "#990000",
+    },
   };
 
   const s = map[status] || { bg: "#eee", color: "#333" };
@@ -197,6 +211,7 @@ const getStatusBoxStyle = (status) => {
     color: s.color,
   };
 };
+
 
     const bracketCompanyColors = {
   "디케이메탈": "#FFD966",

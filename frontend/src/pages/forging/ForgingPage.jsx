@@ -24,8 +24,8 @@ export default function ForgingPage() {
   switch (status) {
     case "초과":
       return {
-        bgcolor: "#ead1dc",     // 연보라 배경
-        color: "#99004d",       // 진보라 글씨
+         bgcolor: "#fff2cc",     // 🔄 연노랑
+        color: "#7f6000",       // 🔄 갈색
         fontWeight: "bold",
         borderRadius: "6px",
         px: 1.2,
@@ -51,8 +51,8 @@ export default function ForgingPage() {
       };
     case "적정재고미달":
       return {
-        bgcolor: "#fff2cc",      // 연노랑 배경
-        color: "#7f6000",        // 갈색 글씨
+       bgcolor: "#ead1dc",     // 🔄 연보라
+        color: "#99004d",       // 🔄 진보라
         fontWeight: "bold",
         borderRadius: "6px",
         px: 1.2,
@@ -707,12 +707,10 @@ const getStatusStyle = (status) => {
     const status = judgeStatus(normal, targetStock);
 
     return (
-      <TableRow
-  key={idx}
-  sx={{
-    backgroundColor: status === "초과" ? "#faeaea" : "inherit", // ⭐ 기본이 붉음
-  }}
->
+      <TableRow  key={idx}
+        sx={{
+    backgroundColor: status === "적정재고미달" ? "#faeaea" : "inherit",
+  }}>
 
         
         {/* 품목명 */}

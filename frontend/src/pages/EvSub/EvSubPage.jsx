@@ -21,17 +21,54 @@ export default function EvSubPage() {
     const getStockStatusStyle = (status) => {
   switch (status) {
     case "초과":
-      return { bgcolor: "#ead1dc", color: "#99004d", fontWeight: "bold", px: 1.2, borderRadius: "6px" };
+      // 🔄 원래 적정재고미달 색상
+      return {
+        bgcolor: "#fff2cc",   // 연노랑
+        color: "#7f6000",     // 갈색
+        fontWeight: "bold",
+        px: 1.2,
+        borderRadius: "6px"
+      };
+
     case "양호":
-      return { bgcolor: "#d9ead3", color: "#274e13", fontWeight: "bold", px: 1.2, borderRadius: "6px" };
+      return {
+        bgcolor: "#d9ead3",
+        color: "#274e13",
+        fontWeight: "bold",
+        px: 1.2,
+        borderRadius: "6px"
+      };
+
     case "위험":
-      return { bgcolor: "#f4cccc", color: "#990000", fontWeight: "bold", px: 1.2, borderRadius: "6px" };
+      return {
+        bgcolor: "#f4cccc",
+        color: "#990000",
+        fontWeight: "bold",
+        px: 1.2,
+        borderRadius: "6px"
+      };
+
     case "적정재고미달":
-      return { bgcolor: "#fff2cc", color: "#7f6000", fontWeight: "bold", px: 1.2, borderRadius: "6px" };
+      // 🔄 원래 초과 색상
+      return {
+        bgcolor: "#ead1dc",   // 연보라
+        color: "#99004d",     // 진보라
+        fontWeight: "bold",
+        px: 1.2,
+        borderRadius: "6px"
+      };
+
     default:
-      return { bgcolor: "#eeeeee", color: "#000", fontWeight: "bold", px: 1.2, borderRadius: "6px" };
+      return {
+        bgcolor: "#eeeeee",
+        color: "#000",
+        fontWeight: "bold",
+        px: 1.2,
+        borderRadius: "6px"
+      };
   }
 };
+
 
     // ==========================================
 // 🔥 품번 → 스케줄 표 컬럼(PART_NAMES 이름) 찾기
@@ -709,7 +746,7 @@ const total = row.actual_stock + transit;
       <TableRow
   key={idx}
   sx={{
-    backgroundColor: status === "초과" ? "#fdf1f3" : "inherit"
+    backgroundColor: status === "적정재고미달" ? "#fdf1f3" : "inherit"
   }}
 >
 

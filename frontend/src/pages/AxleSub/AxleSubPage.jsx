@@ -20,46 +20,53 @@ import { apiFetch } from "api/apiFetch";
 
 export default function AxleSubPage() {
 
-  const getAxleJudgeStyle = (status) => {
+ const getAxleJudgeStyle = (status) => {
   switch (status) {
     case "초과":
       return {
-        bgcolor: "#ead1dc",
-        color: "#99004d",
+        bgcolor: "#fff2cc",     // 🔄 연노랑
+        color: "#7f6000",       // 🔄 갈색
         fontWeight: "bold",
         borderRadius: "6px",
         px: 1.2,
-        display: "inline-block",
+        display: "inline-block"
       };
     case "양호":
       return {
-        bgcolor: "#d9ead3",
-        color: "#274e13",
+        bgcolor: "#d9ead3",     // 연연두 배경
+        color: "#274e13",       // 짙은 초록 글씨
         fontWeight: "bold",
         borderRadius: "6px",
         px: 1.2,
-        display: "inline-block",
+        display: "inline-block"
       };
     case "위험":
       return {
-        bgcolor: "#f4cccc",
-        color: "#990000",
+        bgcolor: "#f4cccc",     // 연분홍 배경
+        color: "#990000",       // 진빨강 글씨
         fontWeight: "bold",
         borderRadius: "6px",
         px: 1.2,
-        display: "inline-block",
+        display: "inline-block"
       };
     case "적정재고미달":
       return {
-        bgcolor: "#fff2cc",
-        color: "#7f6000",
+        bgcolor: "#ead1dc",     // 🔄 연보라
+        color: "#99004d",       // 🔄 진보라
         fontWeight: "bold",
         borderRadius: "6px",
         px: 1.2,
-        display: "inline-block",
+        display: "inline-block"
       };
     default:
-      return {};
+      return {
+        bgcolor: "#eeeeee",
+        color: "#000",
+        fontWeight: "bold",
+        borderRadius: "6px",
+        px: 1.2,
+        display: "inline-block"
+      };
   }
 };
 
@@ -289,15 +296,7 @@ const getStatus = (actual, target) => {
   return "적정재고미달";
 };
 
-const statusColor = (status) => {
-  switch (status) {
-    case "초과": return "purple";
-    case "양호": return "green";
-    case "위험": return "red";
-    case "적정재고미달": return "orange";
-    default: return "black";
-  }
-};
+
 
 
     const [scheduleRows, setScheduleRows] = useState([]);
@@ -666,7 +665,7 @@ const saveAxleData = async () => {
 <TableRow
   key={row.id}
   sx={{
-    backgroundColor: judge === "초과" ? "#faeeee" : "inherit" 
+    backgroundColor: judge === "적정재고미달" ? "#faeeee" : "inherit" 
   }}
 >
 
