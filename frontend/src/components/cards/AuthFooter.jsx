@@ -14,9 +14,9 @@ export default function AuthFooter() {
         sx={{ gap: 2, justifyContent: { xs: 'center', sm: 'space-between', textAlign: { xs: 'center', sm: 'inherit' } } }}
       >
         <Typography variant="subtitle2" color="secondary">
-          © Made with love by Team{' '}
+          © All rights reserved {' '}
           <Link href="http://www.shinhwa-eng.com/" target="_blank" underline="hover">
-            CodedThemes
+            SHINHWA
           </Link>
         </Typography>
 
@@ -25,7 +25,7 @@ export default function AuthFooter() {
             variant="subtitle2"
             color="secondary"
             component={Link}
-            href="https://mui.com/store/terms/"
+            href="http://www.shinhwa-eng.com/"
             target="_blank"
             underline="hover"
           >
@@ -35,7 +35,7 @@ export default function AuthFooter() {
             variant="subtitle2"
             color="secondary"
             component={Link}
-            href="https://mui.com/legal/privacy/"
+            href="http://www.shinhwa-eng.com/"
             target="_blank"
             underline="hover"
           >
