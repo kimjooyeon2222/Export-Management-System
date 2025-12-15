@@ -638,7 +638,7 @@ async function handleAutoLoad(tempId, invNo) {
       <TableRow
   key={row.id}
   sx={{
-    backgroundColor: status === "초과" ? "#fbeaea" : "inherit"
+    backgroundColor: status === "적정재고미달" ? "#fbeaea" : "inherit"
   }}
 >
 
