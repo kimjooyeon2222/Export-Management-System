@@ -137,29 +137,28 @@ export default function OilInvoiceTimeline({
       </TableCell>
 
       {/* ETA */}
-      <TableCell
-        align="center"
-        sx={{
-          backgroundColor: isIncoming ? "#ffe6eb" : "inherit",
-        }}
-      >
-        {editMode ? (
-          <TextField
-            size="small"
-            value={invoiceInfo.eta || ""}
-            onChange={(e) => onUpdateHeader("eta", e.target.value)}
-          />
-        ) : (
-          <span
-            style={{
-              color: isIncoming ? "red" : "inherit",
-              fontWeight: isIncoming ? "bold" : "normal",
-            }}
-          >
-            {invoiceInfo.eta || "-"}
-          </span>
-        )}
-      </TableCell>
+<TableCell align="center">
+  {editMode ? (
+    <TextField
+      size="small"
+      value={invoiceInfo.eta || ""}
+      onChange={(e) => onUpdateHeader("eta", e.target.value)}
+    />
+  ) : (
+    <span
+      style={{
+        display: "inline-block",                 
+        backgroundColor: isIncoming ? "#ffe6eb" : "transparent",
+        borderRadius: "999px",
+        padding: isIncoming ? "2px 8px" : 0,    
+        color: isIncoming ? "red" : "inherit",
+        fontWeight: isIncoming ? "bold" : "normal",
+      }}
+    >
+      {invoiceInfo.eta || "-"}
+    </span>
+  )}
+</TableCell>
 
       {/* Calendar seq cells */}
       {calendarDays.map((day) => (
