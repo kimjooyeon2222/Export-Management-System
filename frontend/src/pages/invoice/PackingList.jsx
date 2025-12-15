@@ -97,7 +97,6 @@ console.log("🔥 URL inv:", JSON.stringify(inv));
   // 3) DB INSERT
   const res = await apiFetch(`${API}/api/packing`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(newRow)
   });
 
@@ -145,7 +144,6 @@ console.log("🔥 URL inv:", JSON.stringify(inv));
 
     await apiFetch(`${API}/api/packing/${id}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     });
   };
@@ -208,7 +206,6 @@ console.log("🔥 URL inv:", JSON.stringify(inv));
         for (let item of converted) {
           const res = await apiFetch(`${API}/api/packing`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(item),
           });
 
@@ -369,7 +366,7 @@ console.log("🔥 URL inv:", JSON.stringify(inv));
         <Table size="small" stickyHeader>
           <TableHead sx={{ bgcolor: "#fff3cd" }}>
             <TableRow>
-              {["ID", "PO번호", "거래처", "품번", "품명", "규격", "수량(EA)","UNIT"].map((col) => (
+              {["PO번호", "거래처", "품번", "품명", "규격", "수량(EA)","UNIT"].map((col) => (
                 <TableCell key={col} align="center" sx={{ fontWeight: "bold" }}>
                   {col}
                 </TableCell>
@@ -400,7 +397,7 @@ console.log("🔥 URL inv:", JSON.stringify(inv));
   }}
 >
 
-                {["id", "po", "vendor", "partNo", "partName", "spec", "qty","unit"].map(
+                {[ "po", "vendor", "partNo", "partName", "spec", "qty","unit"].map(
                   (field, idx) => (
                     <TableCell
   key={idx}
