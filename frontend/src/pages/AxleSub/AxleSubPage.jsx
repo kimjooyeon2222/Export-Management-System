@@ -19,7 +19,50 @@ import { apiFetch } from "api/apiFetch";
 
 
 export default function AxleSubPage() {
-    
+
+  const getAxleJudgeStyle = (status) => {
+  switch (status) {
+    case "초과":
+      return {
+        bgcolor: "#ead1dc",
+        color: "#99004d",
+        fontWeight: "bold",
+        borderRadius: "6px",
+        px: 1.2,
+        display: "inline-block",
+      };
+    case "양호":
+      return {
+        bgcolor: "#d9ead3",
+        color: "#274e13",
+        fontWeight: "bold",
+        borderRadius: "6px",
+        px: 1.2,
+        display: "inline-block",
+      };
+    case "위험":
+      return {
+        bgcolor: "#f4cccc",
+        color: "#990000",
+        fontWeight: "bold",
+        borderRadius: "6px",
+        px: 1.2,
+        display: "inline-block",
+      };
+    case "적정재고미달":
+      return {
+        bgcolor: "#fff2cc",
+        color: "#7f6000",
+        fontWeight: "bold",
+        borderRadius: "6px",
+        px: 1.2,
+        display: "inline-block",
+      };
+    default:
+      return {};
+  }
+};
+
     // 배경색 HEX → 글자색 자동 결정 (흰색/검정)
 const getContrastTextColor = (bgColor) => {
   if (!bgColor) return "#000";
@@ -617,8 +660,16 @@ const saveAxleData = async () => {
       ? targetStockSetting * 2
       : targetStockSetting;
 
+       const judge = getStatus(existing, target); 
   return (
-    <TableRow key={row.id}>
+
+<TableRow
+  key={row.id}
+  sx={{
+    backgroundColor: judge === "초과" ? "#faeeee" : "inherit" 
+  }}
+>
+
       <TableCell align="center">
   <Box
     sx={{
@@ -672,14 +723,12 @@ const saveAxleData = async () => {
       <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold"  }}>{formatNumber(total)}</TableCell>
 
       {/* 판단결과 */}
-      <TableCell align="center"
-        sx={{
-          color: statusColor(getStatus(existing, target)),
-          fontWeight: "bold", fontSize: "15px"
-        }}
-      >
-        {getStatus(existing, target)}
-      </TableCell>
+      <TableCell align="center">
+  <Box sx={getAxleJudgeStyle(judge)}>
+    {judge}
+  </Box>
+</TableCell>
+
     </TableRow>
   );
 })}

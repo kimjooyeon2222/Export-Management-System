@@ -707,7 +707,13 @@ const getStatusStyle = (status) => {
     const status = judgeStatus(normal, targetStock);
 
     return (
-      <TableRow key={idx}>
+      <TableRow
+  key={idx}
+  sx={{
+    backgroundColor: status === "초과" ? "#faeaea" : "inherit", // ⭐ 기본이 붉음
+  }}
+>
+
         
         {/* 품목명 */}
         <TableCell align="center" sx={{ fontWeight: "bold", fontSize: 15 }}>
