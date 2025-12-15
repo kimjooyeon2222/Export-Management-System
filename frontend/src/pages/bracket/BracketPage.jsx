@@ -19,6 +19,7 @@ import { apiFetch } from "api/apiFetch";
 export default function BracketPage() {
       const [scheduleRows, setScheduleRows] = useState([]);
     
+const [showStockPanel, setShowStockPanel] = useState(false);
 
     // ================================================
 // 🔥 BRACKET 품번 기준으로 packing_list 합산하는 함수
@@ -526,20 +527,43 @@ async function handleAutoLoad(tempId, invNo) {
       </Box>
 
       {/* 제목 */}
-      <Typography variant="h5" sx={{ fontSize: 18, fontWeight: "bold", mb: 2 }}>
-  BRACKET 재고 및 운송 스케줄 관리
-  {usDate ? ` (${getPeriod(usDate)})` : ""}
-</Typography>
+      {/* 제목 + 과부족 접기 버튼 */}
+<Box
+  sx={{
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    mb: 2,
+  }}
+>
+  <Typography variant="h5" sx={{ fontSize: 18, fontWeight: "bold" }}>
+    BRACKET 재고 및 운송 스케줄 관리
+    {usDate ? ` (${getPeriod(usDate)})` : ""}
+  </Typography>
+
+  <Button
+    size="small"
+    variant="outlined"
+    onClick={() => setShowStockPanel(!showStockPanel)}
+    sx={{ fontSize: 14, fontWeight: "bold" }}
+  >
+    {showStockPanel ? "− 과부족 상태 접기" : "+ 과부족 상태표 보기"}
+  </Button>
+</Box>
+
 
       {/* =========================================
           과부족 상태표
+          
       ========================================= */}
+      {showStockPanel && (
+
       <Paper sx={{ p: 2, mb: 4, border: "2px solid #777" }}>
         <Box sx={{ display: "flex", mb: 2, gap: 3 }}>
           <Typography sx={{ fontWeight: "bold", fontSize: 18 }}>
             ※ 과부족 상태 ※
           </Typography>
-
+          
           {editMode ? (
             <TextField
               label="적정재고 기준"
@@ -596,7 +620,13 @@ async function handleAutoLoad(tempId, invNo) {
     const status = getStatus(total, target);
 
     return (
-      <TableRow key={row.id}>
+      <TableRow
+  key={row.id}
+  sx={{
+    backgroundColor: status === "초과" ? "#fbeaea" : "inherit"
+  }}
+>
+
         <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
           <Box
             sx={{
@@ -639,6 +669,7 @@ async function handleAutoLoad(tempId, invNo) {
 
         </Table>
       </Paper>
+)}
 
       {/* =========================================
           운항 스케줄

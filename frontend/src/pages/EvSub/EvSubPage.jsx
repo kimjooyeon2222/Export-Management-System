@@ -706,7 +706,13 @@ const total = row.actual_stock + transit;
     const status = getStatus(row.actual_stock, proper);
 
     return (
-      <TableRow key={idx}>
+      <TableRow
+  key={idx}
+  sx={{
+    backgroundColor: status === "초과" ? "#fdf1f3" : "inherit"
+  }}
+>
+
         <TableCell align="center">
   <Box
     sx={{
