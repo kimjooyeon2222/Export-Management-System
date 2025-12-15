@@ -31,17 +31,24 @@ import EyeInvisibleOutlined from '@ant-design/icons/EyeInvisibleOutlined';
 
 export default function AuthLogin({ isDemo = false }) {
   const handleLogin = async (values) => {
-  const res = await fetch("http://서버IP:5001/api/auth/login", {
+  const res = await fetch(
+  `${import.meta.env.VITE_API_URL}/api/auth/login`,
+  {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+          headers: {
+        "Content-Type": "application/json"  
+      },
     body: JSON.stringify(values)
-  });
+  }
+);
+
 
   const data = await res.json();
 
   if (res.ok) {
-    localStorage.setItem("token", data.access_token);
-    localStorage.setItem("role", data.role);
+    localStorage.setItem("access_token", data.access_token);
+localStorage.setItem("role", data.role);
+
     window.location.href = "/";
   } else {
     alert("로그인 실패");
@@ -93,11 +100,12 @@ export default function AuthLogin({ isDemo = false }) {
 />
 
                 </Stack>
-                {touched.email && errors.email && (
-                  <FormHelperText error id="standard-weight-helper-text-email-login">
-                    {errors.email}
-                  </FormHelperText>
-                )}
+                {touched.login_id && errors.login_id && (
+  <FormHelperText error>
+    {errors.login_id}
+  </FormHelperText>
+)}
+
               </Grid>
               <Grid size={12}>
                 <Stack sx={{ gap: 1 }}>

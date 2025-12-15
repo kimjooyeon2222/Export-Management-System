@@ -1,8 +1,11 @@
 print("🔥 app.py 실행됨!")
+from dotenv import load_dotenv
+load_dotenv()
+
 import os
-os.environ.pop("DATABASE_URL", None)
-os.environ.pop("MYSQL_URL", None)
-os.environ.pop("JAWSDB_URL", None)
+from auth_utils import admin_required
+from flask_jwt_extended import jwt_required
+
 
 from models import OilScheduleRow
 from models import OilItemList
@@ -16,11 +19,13 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 from config import Config
 from models import db, Invoice, PackingList, StockSetting, StockItem, ScheduleRow
-from config import Config
+
 from models import AxleInventory, AxleSchedule
 from models import AxleSetting
 from datetime import datetime
 
+from flask_jwt_extended import JWTManager
+from auth import auth_bp
 
 def to_date(value):
     if not value:
@@ -37,9 +42,20 @@ print("🔥 Flask 실제 연결 DB:", Config.SQLALCHEMY_DATABASE_URI)
 app = Flask(__name__)
 app.config.from_object(Config)
 
-CORS(app)
+
+jwt = JWTManager(app)   # ⭐ 이 줄 필수
+
+
+CORS(
+    app,
+    supports_credentials=True,
+    allow_headers=["Content-Type", "Authorization"]
+)
+
 db.init_app(app)
 
+# 🔑 auth blueprint 등록
+app.register_blueprint(auth_bp, url_prefix="/api/auth")
 from datetime import datetime
 
 def calc_status(etd, eta):
@@ -64,6 +80,8 @@ def calc_status(etd, eta):
 
 
 @app.route("/")
+@jwt_required()
+
 def home():
     return "Flask + MySQL Connected!"
 
@@ -72,6 +90,7 @@ def home():
 # 🔥 1) 모든 invoice 조회 (GET)
 # ============================================
 @app.route("/api/invoices", methods=["GET"])
+@jwt_required()
 def get_invoices():
     invoices = Invoice.query.all()
     return jsonify([
@@ -98,7 +117,10 @@ def get_invoices():
 # ============================================
 # 🔥 2) invoice 생성 (POST)
 # ============================================
+
 @app.route("/api/invoices", methods=["POST"])
+@jwt_required()
+@admin_required
 def create_invoice():
     data = request.json
     inv = Invoice(**data)
@@ -115,6 +137,8 @@ def create_invoice():
 # 🔥 3) invoice 수정 (PUT)
 # ============================================
 @app.route("/api/invoices/<int:id>", methods=["PUT"])
+@jwt_required()
+@admin_required
 def update_invoice(id):
     invoice = Invoice.query.get_or_404(id)
     data = request.json
@@ -130,6 +154,8 @@ def update_invoice(id):
 # 🔥 4) invoice 삭제 (DELETE by ID)
 # ============================================
 @app.route("/api/invoices/<int:id>", methods=["DELETE"])
+@jwt_required()
+@admin_required
 def delete_invoice(id):
     invoice = Invoice.query.get_or_404(id)
     db.session.delete(invoice)
@@ -141,6 +167,8 @@ def delete_invoice(id):
 # 🔥 4-1) invoice 삭제 (DELETE by INV_NO)
 # ============================================
 @app.route("/api/invoices/inv/<inv_no>", methods=["DELETE"])
+@jwt_required()
+@admin_required
 def delete_invoice_by_inv(inv_no):
     invoice = Invoice.query.filter_by(inv_no=inv_no).first()
 
@@ -157,6 +185,7 @@ def delete_invoice_by_inv(inv_no):
 # 🔥 5) 모든 packing_list 조회 (JOIN 포함)
 # ============================================
 @app.route("/api/packing", methods=["GET"])
+@jwt_required()
 def get_all_packing():
     rows = db.session.query(PackingList, Invoice.inv_no).join(
         Invoice, PackingList.invoice_id == Invoice.id
@@ -184,6 +213,8 @@ def get_all_packing():
 # 🔥 6) 특정 invoice_no 기준 packing list 조회
 # ============================================
 @app.route("/api/invoice/<string:inv_no>/packing", methods=["GET"])
+@jwt_required()
+
 def get_packing_by_inv(inv_no):
     
     print("🔥 Flask 받은 inv_no:", repr(inv_no))
@@ -213,6 +244,8 @@ def get_packing_by_inv(inv_no):
 
 # packing 추가 (POST)
 @app.route("/api/packing", methods=["POST"])
+@jwt_required()
+@admin_required
 def create_packing():
     data = request.json
     row = PackingList(**data)
@@ -222,6 +255,8 @@ def create_packing():
 
 #packing 수정 (PUT)
 @app.route("/api/packing/<int:id>", methods=["PUT"])
+@jwt_required()
+@admin_required
 def update_packing(id):
     row = PackingList.query.get_or_404(id)
     data = request.json
@@ -235,6 +270,8 @@ def update_packing(id):
 
 #packing 삭제 (DELETE)
 @app.route("/api/packing/<int:id>", methods=["DELETE"])
+@jwt_required()
+@admin_required
 def delete_packing(id):
     row = PackingList.query.get_or_404(id)
     db.session.delete(row)
@@ -242,6 +279,9 @@ def delete_packing(id):
     return jsonify({"message": "deleted"})
 
 @app.route("/debug/invoices")
+@jwt_required()
+@admin_required
+
 def debug_invoices():
     rows = Invoice.query.all()
     return jsonify([
@@ -267,6 +307,8 @@ def debug_invoices():
 
 
 @app.before_request
+def debug_auth():
+    print("🔥 Authorization:", request.headers.get("Authorization"))
 def test_db():
     try:
         db.session.execute(text("SELECT 1"))
@@ -275,11 +317,16 @@ def test_db():
 
 
 @app.route("/debug/raw")
+@jwt_required()
+@admin_required
 def raw_test():
     rows = db.session.execute(db.text("SELECT * FROM invoice")).fetchall()
     return jsonify([dict(r._mapping) for r in rows])
 
 @app.route("/debug/invoice/<inv_no>")
+@jwt_required()
+@admin_required
+
 def debug_invoice(inv_no):
     invoice = Invoice.query.filter_by(inv_no=inv_no).first()
     return {
@@ -290,6 +337,8 @@ def debug_invoice(inv_no):
 # 🔥 단일 invoice 조회 (React에서 사용하는 API)
 # ============================================
 @app.route("/api/invoice/<string:inv_no>", methods=["GET"])
+@jwt_required()
+
 def get_invoice_by_inv_no(inv_no):
     invoice = Invoice.query.filter_by(inv_no=inv_no).first()
 
@@ -334,6 +383,8 @@ def get_invoice_by_inv_no(inv_no):
     })
 
 @app.route("/api/packing/max-id", methods=["GET"])
+@jwt_required()
+
 def get_packing_max_id():
     max_id = db.session.query(db.func.max(PackingList.id)).scalar()
     if max_id is None:
@@ -341,6 +392,8 @@ def get_packing_max_id():
     return jsonify({"max_id": max_id})
 
 @app.route("/api/invoices/sort", methods=["PUT"])
+@jwt_required()
+@admin_required
 def update_sort_order():
     data = request.json  # [{id:1, sort_order:1}, ...]
 
@@ -358,6 +411,8 @@ def update_sort_order():
 # ============================================
 
 @app.route("/api/stock-setting", methods=["GET"])
+@jwt_required()
+
 def get_stock_setting():
     row = StockSetting.query.order_by(StockSetting.id.desc()).first()
     if not row:
@@ -375,6 +430,8 @@ def get_stock_setting():
 
 
 @app.route("/api/stock-setting/<int:id>", methods=["PUT"])
+@jwt_required()
+@admin_required
 def update_stock_setting(id):
     row = StockSetting.query.get_or_404(id)
     data = request.json
@@ -385,6 +442,8 @@ def update_stock_setting(id):
 
 
 @app.route("/api/stock-setting/<int:id>", methods=["DELETE"])
+@jwt_required()
+@admin_required
 def delete_stock_setting(id):
     row = StockSetting.query.get_or_404(id)
     db.session.delete(row)
@@ -397,6 +456,8 @@ def delete_stock_setting(id):
 # ============================================
 
 @app.route("/api/stock-items", methods=["GET"])
+@jwt_required()
+
 def get_stock_items():
     rows = StockItem.query.all()
     return jsonify([
@@ -413,6 +474,8 @@ def get_stock_items():
 
 
 @app.route("/api/stock-items", methods=["POST"])
+@jwt_required()
+@admin_required
 def create_stock_item():
     data = request.json
     row = StockItem(**data)
@@ -422,6 +485,8 @@ def create_stock_item():
 
 
 @app.route("/api/stock-items/<int:id>", methods=["PUT"])
+@jwt_required()
+@admin_required
 def update_stock_item(id):
     row = StockItem.query.get_or_404(id)
     data = request.json
@@ -432,6 +497,8 @@ def update_stock_item(id):
 
 
 @app.route("/api/stock-items/<int:id>", methods=["DELETE"])
+@jwt_required()
+@admin_required
 def delete_stock_item(id):
     row = StockItem.query.get_or_404(id)
     db.session.delete(row)
@@ -444,6 +511,8 @@ def delete_stock_item(id):
 # ============================================
 
 @app.route("/api/schedule-rows", methods=["GET"])
+@jwt_required()
+
 def get_schedule_rows():
     rows = ScheduleRow.query.all()
     return jsonify([
@@ -468,6 +537,8 @@ def get_schedule_rows():
 
 
 @app.route("/api/schedule-rows", methods=["POST"])
+@jwt_required()
+@admin_required
 def create_schedule_row():
     data = request.json
     row = ScheduleRow(**data)
@@ -477,6 +548,8 @@ def create_schedule_row():
 
 
 @app.route("/api/schedule-rows/<int:id>", methods=["PUT"])
+@jwt_required()
+@admin_required
 def update_schedule_row(id):
     row = ScheduleRow.query.get_or_404(id)
     data = request.json
@@ -487,6 +560,8 @@ def update_schedule_row(id):
 
 
 @app.route("/api/schedule-rows/<int:id>", methods=["DELETE"])
+@jwt_required()
+@admin_required
 def delete_schedule_row(id):
     row = ScheduleRow.query.get_or_404(id)
     db.session.delete(row)
@@ -496,6 +571,8 @@ def delete_schedule_row(id):
 
 
 @app.route("/api/stock-setting", methods=["POST"])
+@jwt_required()
+@admin_required
 def save_stock_setting():
     data = request.json
 
@@ -517,6 +594,8 @@ def save_stock_setting():
 
 
 @app.route("/api/stock-item/bulk", methods=["POST"])
+@jwt_required()
+@admin_required
 def save_stock_items():
     items = request.json  # 리스트
 
@@ -535,6 +614,8 @@ def save_stock_items():
     db.session.commit()
     return jsonify({"message": "saved"})
 @app.route("/api/schedule-row/bulk", methods=["POST"])
+@jwt_required()
+@admin_required
 def save_schedule_rows():
     rows = request.json  # 리스트
 
@@ -566,6 +647,8 @@ def save_schedule_rows():
 # oil_schedule_row 전체 불러오기 API
 # GET /api/oil-schedule
 @app.route("/api/oil-schedule", methods=["GET"])
+@jwt_required()
+
 def get_oil_schedule():
     rows = (
         OilScheduleRow.query
@@ -595,6 +678,8 @@ def get_oil_schedule():
 
 # POST /api/oil-schedule/bulk
 @app.route("/api/oil-schedule/bulk", methods=["POST"])
+@jwt_required()
+@admin_required
 def save_oil_schedule_bulk():
     data = request.get_json()
 
@@ -620,6 +705,8 @@ def save_oil_schedule_bulk():
 
 # GET /api/oil-invoice/<inv_no>
 @app.route("/api/oil-invoice/<inv_no>", methods=["GET"])
+@jwt_required()
+
 def get_oil_invoice(inv_no):
     inv = Invoice.query.filter_by(inv_no=inv_no).first()
     if not inv:
@@ -645,11 +732,15 @@ def get_oil_invoice(inv_no):
 
 # GET /api/oil-items
 @app.route("/api/oil-items", methods=["GET"])
+@jwt_required()
+
 def get_oil_items():
     rows = OilItemList.query.order_by(OilItemList.no.asc()).all()
     return jsonify([r.to_dict() for r in rows])
 
 @app.route("/api/oil-items/bulk", methods=["POST"])
+@jwt_required()
+@admin_required
 def save_oil_items():
     data = request.json  # 리스트 형태
 
@@ -668,11 +759,15 @@ def save_oil_items():
     return jsonify({"message": "saved"})
 
 @app.route("/api/axle", methods=["GET"])
+@jwt_required()
+
 def get_axle_inventory():
     rows = AxleInventory.query.all()
     return jsonify([r.to_dict() for r in rows])
 
 @app.route("/api/axle/<int:id>", methods=["PUT"])
+@jwt_required()
+@admin_required
 def update_axle_item(id):
     row = AxleInventory.query.get_or_404(id)
     data = request.json
@@ -684,6 +779,8 @@ def update_axle_item(id):
     return jsonify({"message": "updated"})
 
 @app.route("/api/axle", methods=["POST"])
+@jwt_required()
+@admin_required
 def create_axle_item():
     data = request.json
     row = AxleInventory(**data)
@@ -692,11 +789,15 @@ def create_axle_item():
     return jsonify({"id": row.id}), 201
 
 @app.route("/api/axle-schedule", methods=["GET"])
+@jwt_required()
+
 def get_axle_schedule():
     rows = AxleSchedule.query.all()
     return jsonify([r.to_dict() for r in rows])
 
 @app.route("/api/axle-schedule", methods=["POST"])
+@jwt_required()
+@admin_required
 def create_axle_schedule():
     data = request.json
     row = AxleSchedule(inv_no=data["inv_no"])
@@ -706,6 +807,8 @@ def create_axle_schedule():
 
 
 @app.route("/api/axle-schedule/<int:id>", methods=["DELETE"])
+@jwt_required()
+@admin_required
 def delete_axle_schedule(id):
     row = AxleSchedule.query.get_or_404(id)
     db.session.delete(row)
@@ -713,6 +816,8 @@ def delete_axle_schedule(id):
     return jsonify({"message": "deleted"})
 
 @app.route("/api/axle-setting", methods=["GET"])
+@jwt_required()
+
 def get_axle_setting():
     setting = AxleSetting.query.first()
     if not setting:
@@ -730,6 +835,8 @@ def get_axle_setting():
 
 
 @app.route("/api/axle-setting", methods=["PUT"])
+@jwt_required()
+@admin_required
 def update_axle_setting():
     data = request.json
 
@@ -751,6 +858,8 @@ def update_axle_setting():
     return jsonify({"message": "updated"})
 
 @app.route("/api/packing-list/by-inv/<inv_no>")
+@jwt_required()
+
 def get_packing_list_by_inv(inv_no):
     try:
         # 1) invoice.id 찾기
@@ -777,6 +886,8 @@ def get_packing_list_by_inv(inv_no):
         return jsonify({"error": str(e)}), 500
 
 @app.route("/api/axle-schedule/<int:id>", methods=["PUT"])
+@jwt_required()
+@admin_required
 def update_axle_schedule(id):
     row = AxleSchedule.query.get_or_404(id)
     data = request.json
@@ -793,6 +904,8 @@ def update_axle_schedule(id):
 # 🔥 AXLE SCHEDULE BULK SAVE API
 # ============================================
 @app.route("/api/axle-schedule/bulk", methods=["POST"])
+@jwt_required()
+@admin_required
 def save_axle_schedule_bulk():
     rows = request.json  # React에서 보낸 배열
 
@@ -813,11 +926,15 @@ def save_axle_schedule_bulk():
 
 
 @app.route("/api/ev-inventory", methods=["GET"])
+@jwt_required()
+
 def get_ev_inventory():
     rows = EvInventory.query.all()
     return jsonify([r.to_dict() for r in rows])
 
 @app.route("/api/ev-inventory/<int:id>", methods=["PUT"])
+@jwt_required()
+@admin_required
 def update_ev_inventory(id):
     row = EvInventory.query.get_or_404(id)
     data = request.json
@@ -829,6 +946,8 @@ def update_ev_inventory(id):
     return jsonify({"message": "updated"})
 
 @app.route("/api/ev-inventory", methods=["POST"])
+@jwt_required()
+@admin_required
 def create_ev_inventory():
     data = request.json
     row = EvInventory(**data)
@@ -837,6 +956,8 @@ def create_ev_inventory():
     return jsonify({"id": row.id}), 201
 
 @app.route("/api/ev-setting", methods=["GET"])
+@jwt_required()
+
 def get_ev_setting():
     setting = EvSetting.query.first()
 
@@ -853,6 +974,8 @@ def get_ev_setting():
 
 
 @app.route("/api/ev-setting", methods=["PUT"])
+@jwt_required()
+@admin_required
 def update_ev_setting():
     data = request.json
 
@@ -872,11 +995,15 @@ def update_ev_setting():
     return jsonify({"message": "updated"})
 
 @app.route("/api/ev-schedule", methods=["GET"])
+@jwt_required()
+
 def get_ev_schedule():
     rows = EvSchedule.query.all()
     return jsonify([r.to_dict() for r in rows])
 
 @app.route("/api/ev-schedule", methods=["POST"])
+@jwt_required()
+@admin_required
 def create_ev_schedule():
     data = request.json
     row = EvSchedule(inv_no=data["inv_no"])
@@ -885,6 +1012,8 @@ def create_ev_schedule():
     return jsonify({"id": row.id}), 201
 
 @app.route("/api/ev-schedule/<int:id>", methods=["DELETE"])
+@jwt_required()
+@admin_required
 def delete_ev_schedule(id):
     row = EvSchedule.query.get_or_404(id)
     db.session.delete(row)
@@ -893,6 +1022,8 @@ def delete_ev_schedule(id):
 
 
 @app.route("/api/ev-schedule/bulk", methods=["POST"])
+@jwt_required()
+@admin_required
 def save_ev_schedule_bulk():
     rows = request.json
 
@@ -908,6 +1039,8 @@ def save_ev_schedule_bulk():
     return jsonify({"message": "saved"})
 
 @app.route("/packing/find", methods=["POST"])
+@jwt_required()
+@admin_required
 def find_item():
     data = request.json
     part_no = data.get("part_no")
@@ -923,6 +1056,8 @@ def find_item():
 
 
 @app.route("/api/ev/packing-full/<inv_no>", methods=["GET"])
+@jwt_required()
+
 def get_ev_packing_full(inv_no):
     try:
         # 1) invoice 조회
@@ -987,12 +1122,16 @@ from models import BrInventory, BrSchedule, BrSetting
 
 
 @app.route("/api/br-inventory", methods=["GET"])
+@jwt_required()
+
 def get_br_inventory():
     rows = BrInventory.query.all()
     return jsonify([r.to_dict() for r in rows])
 
 
 @app.route("/api/br-inventory/<int:id>", methods=["PUT"])
+@jwt_required()
+@admin_required
 def update_br_inventory(id):
     row = BrInventory.query.get_or_404(id)
     data = request.json
@@ -1005,6 +1144,8 @@ def update_br_inventory(id):
 
 
 @app.route("/api/br-inventory", methods=["POST"])
+@jwt_required()
+@admin_required
 def create_br_inventory():
     data = request.json
     row = BrInventory(**data)
@@ -1017,6 +1158,8 @@ def create_br_inventory():
 # ============================================
 
 @app.route("/api/br-setting", methods=["GET"])
+@jwt_required()
+
 def get_br_setting():
     setting = BrSetting.query.first()
 
@@ -1035,6 +1178,8 @@ def get_br_setting():
 
 
 @app.route("/api/br-setting", methods=["PUT"])
+@jwt_required()
+@admin_required
 def update_br_setting():
     data = request.json
 
@@ -1059,12 +1204,16 @@ def update_br_setting():
 # ============================================
 
 @app.route("/api/br-schedule", methods=["GET"])
+@jwt_required()
+
 def get_br_schedule():
     rows = BrSchedule.query.all()
     return jsonify([r.to_dict() for r in rows])
 
 
 @app.route("/api/br-schedule/bulk", methods=["POST"])
+@jwt_required()
+@admin_required
 def save_br_schedule_bulk():
     rows = request.json  # React에서 보낸 배열
 
@@ -1080,6 +1229,8 @@ def save_br_schedule_bulk():
     return jsonify({"message": "saved"})
 
 @app.route("/api/br/auto-load/<inv_no>", methods=["GET"])
+@jwt_required()
+
 def br_auto_load(inv_no):
     try:
         # 1) invoice 조회
@@ -1132,6 +1283,8 @@ def br_auto_load(inv_no):
 
 
 @app.route("/api/po/setting", methods=["GET"])
+@jwt_required()
+
 def get_po_setting():
     setting = POSetting.query.first()
     if not setting:
@@ -1141,6 +1294,8 @@ def get_po_setting():
 
 
 @app.route("/api/po/setting", methods=["PUT"])
+@jwt_required()
+@admin_required
 def update_po_setting():
     data = request.json
 
@@ -1159,12 +1314,16 @@ def update_po_setting():
 
 
 @app.route("/api/po", methods=["GET"])
+@jwt_required()
+
 def get_po():
     rows = POManagement.query.order_by(POManagement.id.asc()).all()
     return jsonify([r.to_dict() for r in rows])
 
 
 @app.route("/api/po/bulk", methods=["POST"])
+@jwt_required()
+@admin_required
 def save_po_bulk():
     rows = request.json
 
@@ -1201,6 +1360,8 @@ def save_po_bulk():
 
 
 @app.route("/memo", methods=["GET"])
+@jwt_required()
+
 def get_dashboard_memo():
     memo = DashboardMemo.query.first()
 
@@ -1212,6 +1373,8 @@ def get_dashboard_memo():
 
 
 @app.route("/memo", methods=["POST"])
+@jwt_required()
+@admin_required
 def update_dashboard_memo():
     data = request.json
 

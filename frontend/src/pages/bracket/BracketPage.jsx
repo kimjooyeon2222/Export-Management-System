@@ -14,6 +14,7 @@ import {
 } from "@mui/material";
 import { v4 as uuidv4 } from "uuid";
 import { useNavigate } from "react-router-dom";
+import { apiFetch } from "api/apiFetch";
 
 export default function BracketPage() {
       const [scheduleRows, setScheduleRows] = useState([]);
@@ -27,7 +28,7 @@ async function calcBracketQty(invNo) {
 
   try {
     // packing_list 불러오기 (특정 INV)
-    const res = await fetch(`${API_BASE}/api/packing-list/by-inv/${invNo}`);
+    const res = await apiFetch(`${API_BASE}/api/packing-list/by-inv/${invNo}`);
     const items = await res.json();
 
     let LH = 0;
@@ -58,7 +59,7 @@ useEffect(() => {
   async function loadAll() {
     try {
       // 1) BRACKET 세팅 불러오기
-      const settingRes = await fetch(`${API_BASE}/api/br-setting`);
+      const settingRes = await apiFetch(`${API_BASE}/api/br-setting`);
       const setting = await settingRes.json();
       if (setting) {
         setWriter(setting.writer || "");
@@ -68,7 +69,7 @@ useEffect(() => {
 
       
       // 2) BRACKET 인벤토리 불러오기
-const invRes = await fetch(`${API_BASE}/api/br-inventory`);
+const invRes = await apiFetch(`${API_BASE}/api/br-inventory`);
 const inv = await invRes.json();
 if (Array.isArray(inv)) {
   setBracketRows(
@@ -82,7 +83,7 @@ if (Array.isArray(inv)) {
 
       // 3) 스케줄 불러오기
       // 3) BRACKET 스케줄 불러오기 + qty 자동 적용
-const schRes = await fetch(`${API_BASE}/api/br-schedule`);
+const schRes = await apiFetch(`${API_BASE}/api/br-schedule`);
 const schedule = await schRes.json();
 
 let updated = [];
@@ -136,9 +137,8 @@ const handleSave = async () => {
     const API_BASE = import.meta.env.VITE_API_URL;
 
     // 1) BRACKET 세팅 저장 (작성자 / 날짜 / 적정재고)
-    await fetch(`${API_BASE}/api/br-setting`, {
+    await apiFetch(`${API_BASE}/api/br-setting`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         writer,
         us_date: usDate,
@@ -148,9 +148,8 @@ const handleSave = async () => {
 
     // 2) 각 품목(actual_stock) 저장
     for (const row of bracketRows) {
-      await fetch(`${API_BASE}/api/br-inventory/${row.id}`, {
+      await apiFetch(`${API_BASE}/api/br-inventory/${row.id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           actual_stock: row.actual_stock,
         }),
@@ -162,9 +161,8 @@ const handleSave = async () => {
       inv_no: row.inv_no,
     }));
 
-    await fetch(`${API_BASE}/api/br-schedule/bulk`, {
+    await apiFetch(`${API_BASE}/api/br-schedule/bulk`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(schedulePayload),
     });
 
@@ -351,7 +349,7 @@ async function handleAutoLoad(tempId, invNo) {
   const API_BASE = import.meta.env.VITE_API_URL;
 
   try {
-    const res = await fetch(`${API_BASE}/api/br/auto-load/${invNo}`);
+    const res = await apiFetch(`${API_BASE}/api/br/auto-load/${invNo}`);
     const data = await res.json();
 
     if (data.error) return;

@@ -28,6 +28,7 @@ const POManagementPage = Loadable(lazy(() => import('pages/po/po_management')));
 
 import AxleSubPage from 'pages/AxleSub/AxleSubPage';
 import EvSubPage from 'pages/EvSub/EvSubPage';
+import RequireAuth from 'sections/auth/RequireAuth';
 
 
 
@@ -36,9 +37,11 @@ import EvSubPage from 'pages/EvSub/EvSubPage';
 const MainRoutes = {
   path: '/',
     element: (
-   
+       <RequireAuth>
+
       <DashboardLayout />
-    
+        </RequireAuth>
+
   ),
   children: [
     {

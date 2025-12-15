@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from "uuid";
 import { useRef } from "react";
+import { apiFetch } from "api/apiFetch";
 
 import {
   Box,
@@ -57,6 +58,14 @@ const itemToExporters = {
 
 
 export default function InvoicePage() {
+  const [userRole, setUserRole] = useState(null);
+
+useEffect(() => {
+  const role = localStorage.getItem("role");
+  setUserRole(role);
+}, []);
+
+
   function parseUSDate(str) {
   if (!str) return null;
   const [y, m, d] = str.split("-").map(Number);
@@ -115,7 +124,7 @@ const handleDragEnd = async (event) => {
   setRows(newRows);
 
   // DB 저장
-  await fetch(`${API_BASE}/api/invoices/sort`, {
+  await apiFetch(`${API_BASE}/api/invoices/sort`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(updatedSort),
@@ -173,7 +182,6 @@ const [etaEnd, setEtaEnd] = useState("");
   const [poNumber, setPoNumber] = useState('');
   const [searchResult, setSearchResult] = useState(null);
   const [showUpcoming, setShowUpcoming] = useState(true);
-  const [userRole] = useState('admin');
 // === 상단에 추가 ===
   const [isEditMode, setIsEditMode] = useState(false);
   // 🔥 삭제 모드
@@ -192,7 +200,7 @@ const [etaEnd, setEtaEnd] = useState("");
     return d.toISOString().split('T')[0];
   };
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5001";
+const API_BASE = import.meta.env.VITE_API_URL;
 
 function parseKRDate(dateStr) {
   if (!dateStr) return null;
@@ -205,7 +213,7 @@ function parseKRDate(dateStr) {
   // 기본 데이터
   const [rows, setRows] = useState([]);
   useEffect(() => {
-  fetch(`${API_BASE}/api/invoices`)
+  apiFetch(`${API_BASE}/api/invoices`)
     .then(res => res.json())
     .then(data => {
       const sorted = [...data].sort((a, b) => a.sort_order - b.sort_order);
@@ -255,7 +263,7 @@ const handleAdd = async () => {
     remark: "신규"
   };
 
-  const res = await fetch(`${API_BASE}/api/invoices`, {
+  const res = await apiFetch(`${API_BASE}/api/invoices`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(newRow),
@@ -274,7 +282,7 @@ const handleAdd = async () => {
     );
 
     // 2) 서버(DB)에 업데이트 요청
-    await fetch(`${API_BASE}/api/invoices/${id}`, {
+    await apiFetch(`${API_BASE}/api/invoices/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ [field]: value })
@@ -282,34 +290,11 @@ const handleAdd = async () => {
   };
 
 
-  const handleDelete = async (inv_no) => {
-    if (!window.confirm("정말 삭제하시겠습니까?")) return;
 
-    // 1) DB 삭제 요청 (INV 번호 기준)
-    await fetch(`${API_BASE}/api/invoices/inv/${inv_no}`, {
-      method: "DELETE"
-    });
-
-    // 2) 프론트 화면에서도 삭제
-    setRows(prev => prev.filter(r => r.inv_no !== inv_no));
-  };
-
-
-
-  const shipment = {
-    exporter: '오토텍',
-    inv: 'ATT-SUP-20250924-V1',
-    cont: 'HMMU6530409',
-    bl: 'WIU525100870',
-    etd: '2025-10-04',
-    eta: '2025-11-03',
-    factory: '2025-11-04',
-    arrival: '미착'
-  };
 
   const handleSearch = async () => {
-  const allPacking = await fetch(`${API_BASE}/api/packing`).then(r => r.json());
-  const allInvoice = await fetch(`${API_BASE}/api/invoices`).then(r => r.json());
+  const allPacking = await apiFetch(`${API_BASE}/api/packing`).then(r => r.json());
+  const allInvoice = await apiFetch(`${API_BASE}/api/invoices`).then(r => r.json());
 
   if (!poNumber.trim()) {
     alert("검색어를 입력하세요.");
@@ -923,8 +908,7 @@ const arrived = delayedDate2 <= todayUS;
 </Box>
 </Box>
 
-      {/* 관리자용 버튼 */}
-      {userRole === 'admin' && (
+
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, px: 3, pb: 1 }}>
                   {/* 우측 필터 버튼 */}
         <Button
@@ -957,6 +941,7 @@ const arrived = delayedDate2 <= todayUS;
     (5일전)
   </Typography>
 </Button>
+   
 <Button
   variant="contained"
   color={sortMode ? "secondary" : "info"}
@@ -1043,7 +1028,7 @@ const arrived = delayedDate2 <= todayUS;
     if (!window.confirm(`${selectedInvs.length}개 항목을 삭제할까요?`)) return;
 
     for (const inv of selectedInvs) {
-      await fetch(`${API_BASE}/api/invoices/inv/${inv}`, {
+      await apiFetch(`${API_BASE}/api/invoices/inv/${inv}`, {
         method: "DELETE",
       });
     }
@@ -1058,8 +1043,7 @@ const arrived = delayedDate2 <= todayUS;
 
 
         </Box>
-      )}
-
+   
       {/* 하단 표 */}
       <Box ref={bottomScrollRef} sx={{ flexGrow: 1, overflowY: 'auto', px: 2, pb: 2 }}>
         <Paper elevation={2}>

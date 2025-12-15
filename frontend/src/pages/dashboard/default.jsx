@@ -14,6 +14,7 @@ import Box from '@mui/material/Box';
 
 import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
+import { apiFetch } from "api/apiFetch";
 
 
 // project imports
@@ -102,7 +103,8 @@ const editor = useEditor({
 
 
 useEffect(() => {
-  fetch(`${API_BASE}/memo`)
+
+  apiFetch(`${API_BASE}/memo`)
     .then(res => res.json())
     .then(data => {
       if (data.text) setNote(data.text);
@@ -128,7 +130,7 @@ useEffect(() => {
 // ⭐ 저장 함수
 const saveMemo = async () => {
   try {
-    await fetch(`${API_BASE}/memo`, {
+    await apiFetch(`${API_BASE}/memo`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ 

@@ -12,6 +12,7 @@ import {
   TableBody,
   Paper,
 } from "@mui/material";
+import { apiFetch } from "api/apiFetch";
 
 export default function PackingList() {
 
@@ -24,7 +25,7 @@ const [selectedRows, setSelectedRows] = useState([]);
 
 // 🔥 invoice 테이블 - invoice_id 가져오기
 useEffect(() => {
-  fetch(`${API}/api/invoice/${inv}`)
+  apiFetch(`${API}/api/invoice/${inv}`)
     .then(res => res.json())
     .then(data => {
       setInvoiceId(data.id); // invoice.id가 진짜 invoice_id
@@ -37,7 +38,6 @@ console.log("🔥 URL inv:", JSON.stringify(inv));
 
   const navigate = useNavigate();
   const [isEditMode, setIsEditMode] = useState(false);
-  const [userRole] = useState("admin");
 
   // SheetJS CDN 로드
   useEffect(() => {
@@ -53,7 +53,7 @@ console.log("🔥 URL inv:", JSON.stringify(inv));
   const [rows, setRows] = useState([]);
 
   useEffect(() => {
-    fetch(`${API}/api/invoice/${inv}/packing`)
+    apiFetch(`${API}/api/invoice/${inv}/packing`)
       .then(res => res.json())
       .then(data => {
         
@@ -77,7 +77,7 @@ console.log("🔥 URL inv:", JSON.stringify(inv));
   // 행 추가
   const handleAdd = async () => {
   // 1) DB에서 packing_list의 max(id) 가져오기
-  const maxRes = await fetch(`${API}/api/packing/max-id`);
+  const maxRes = await apiFetch(`${API}/api/packing/max-id`);
   const maxData = await maxRes.json();
   const nextId = (maxData.max_id || 0) + 1;
 
@@ -95,7 +95,7 @@ console.log("🔥 URL inv:", JSON.stringify(inv));
   };
 
   // 3) DB INSERT
-  const res = await fetch(`${API}/api/packing`, {
+  const res = await apiFetch(`${API}/api/packing`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(newRow)
@@ -143,7 +143,7 @@ console.log("🔥 URL inv:", JSON.stringify(inv));
       [dbFieldMap[field]]: value
     };
 
-    await fetch(`${API}/api/packing/${id}`, {
+    await apiFetch(`${API}/api/packing/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
@@ -155,7 +155,7 @@ console.log("🔥 URL inv:", JSON.stringify(inv));
   const handleDelete = async (id) => {
     if (!window.confirm("정말 삭제하시겠습니까?")) return;
 
-    await fetch(`${API}/api/packing/${id}`, {
+    await apiFetch(`${API}/api/packing/${id}`, {
       method: "DELETE"
     });
 
@@ -206,7 +206,7 @@ console.log("🔥 URL inv:", JSON.stringify(inv));
         const insertedRows = [];
 
         for (let item of converted) {
-          const res = await fetch(`${API}/api/packing`, {
+          const res = await apiFetch(`${API}/api/packing`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(item),
@@ -263,8 +263,6 @@ console.log("🔥 URL inv:", JSON.stringify(inv));
           ← INVOICE로 돌아가기
         </Button>
 
-        {/* 관리자 전용 버튼 */}
-        {userRole === "admin" && (
   <Box sx={{ display: "flex", gap: 1 }}>
 
     {/* 🔵 엑셀 업로드 버튼 (수정모드 아니면 disabled) */}
@@ -342,7 +340,7 @@ console.log("🔥 URL inv:", JSON.stringify(inv));
         }
 
         for (const id of selectedRows) {
-          await fetch(`${API}/api/packing/${id}`, { method: "DELETE" });
+          await apiFetch(`${API}/api/packing/${id}`, { method: "DELETE" });
         }
 
         setRows(prev => prev.filter(r => !selectedRows.includes(r.id)));
@@ -354,7 +352,7 @@ console.log("🔥 URL inv:", JSON.stringify(inv));
     </Button>
 
   </Box>
-)}
+
 
       </Box>
 
@@ -408,7 +406,8 @@ console.log("🔥 URL inv:", JSON.stringify(inv));
   key={idx}
   align="center"
   sx={{
-    cursor: isEditMode && userRole === "admin" ? "pointer" : "default",
+    cursor: isEditMode ? "pointer" : "default",
+
   }}
   onClick={() => {
 
@@ -416,7 +415,7 @@ console.log("🔥 URL inv:", JSON.stringify(inv));
     if (deleteMode) return;
 
     // 🔥 수정 모드 아닐 때 → 아무것도 안 함
-    if (!isEditMode || userRole !== "admin") return;
+    if (!isEditMode) return;
 
     // 🔥 UNIT 은 클릭 시 prompt 금지 → select 로만 수정
     if (field === "unit") return;
@@ -429,7 +428,8 @@ console.log("🔥 URL inv:", JSON.stringify(inv));
 >
 
   {/* 🔥 UNIT만 드롭다운 + 직접입력 적용 */}
-  {isEditMode && userRole === "admin" && field === "unit" ? (
+  {isEditMode && field === "unit" ? (
+
     row.unit === "__custom__" ? (
       // 🔸 직접 입력 모드 (input)
       <input

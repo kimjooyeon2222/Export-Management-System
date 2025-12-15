@@ -14,68 +14,12 @@ import {
 import { useNavigate } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 
+import { apiFetch } from "api/apiFetch";
 
 
 
 export default function AxleSubPage() {
-    const codeToKey = {
-  "52216-T00151": "plug",        // PLUG
-  "SMF660066T": "gasket",        // GASKET
-  "S1430308140": "dowel_pin",    // DOWEL PIN
-  "52119-T00350": "plate"        // PLATE
-};
-
-
-    const getStockStatusStyle = (status) => {
-  switch (status) {
-    case "초과":
-      return {
-        bgcolor: "#ead1dc",
-        color: "#99004d",
-        fontWeight: "bold",
-        borderRadius: "6px",
-        px: 1.2,
-        display: "inline-block"
-      };
-    case "양호":
-      return {
-        bgcolor: "#d9ead3",
-        color: "#274e13",
-        fontWeight: "bold",
-        borderRadius: "6px",
-        px: 1.2,
-        display: "inline-block"
-      };
-    case "위험":
-      return {
-        bgcolor: "#f4cccc",
-        color: "#990000",
-        fontWeight: "bold",
-        borderRadius: "6px",
-        px: 1.2,
-        display: "inline-block"
-      };
-    case "적정재고미달":
-      return {
-        bgcolor: "#fff2cc",
-        color: "#7f6000",
-        fontWeight: "bold",
-        borderRadius: "6px",
-        px: 1.2,
-        display: "inline-block"
-      };
-    default:
-      return {
-        bgcolor: "#eeeeee",
-        color: "#000",
-        fontWeight: "bold",
-        borderRadius: "6px",
-        px: 1.2,
-        display: "inline-block"
-      };
-  }
-};
-
+    
     // 배경색 HEX → 글자색 자동 결정 (흰색/검정)
 const getContrastTextColor = (bgColor) => {
   if (!bgColor) return "#000";
@@ -183,25 +127,36 @@ function todayUS() {
 };
 
       const API_BASE = import.meta.env.VITE_API_URL;
-   
+    const keyMap = {
+  "PLUG": "plug",
+  "GASKET": "gasket",
+  "PLATE": "plate",
+  "PIN-DOWEL": "dowel_pin"   // ← 이게 핵심
+};
+const keyMapForAxle = {
+  "PLUG": "plug",
+  "GASKET": "gasket",
+  "DOWEL PIN": "dowel_pin",
+  "PLATE": "plate"
+};
 
 const fetchPackingQty = async (inv_no) => {
   if (!inv_no) return { plug: 0, gasket: 0, dowel_pin: 0, plate: 0 };
 
   try {
-    const res = await fetch(`${API_BASE}/api/packing-list/by-inv/${inv_no}`);
+    const res = await apiFetch(`${API_BASE}/api/packing-list/by-inv/${inv_no}`);
     const data = await res.json();
 
-    const getQtyByCode = (code) => {
-      const row = data.find(x => x.part_no?.toUpperCase() === code);
+    const getQty = (name) => {
+      const row = data.find(x => x.part_name?.toUpperCase() === name);
       return row ? Number(row.qty) : 0;
     };
 
     return {
-      plug: getQtyByCode("52216-T00151"),
-      gasket: getQtyByCode("SMF660066T"),
-      dowel_pin: getQtyByCode("S1430308140"),
-      plate: getQtyByCode("52119-T00350"),
+      plug: getQty("PLUG"),
+      gasket: getQty("GASKET"),
+      dowel_pin: getQty("PIN-DOWEL"),
+      plate: getQty("PLATE"),
     };
 
   } catch (err) {
@@ -209,7 +164,6 @@ const fetchPackingQty = async (inv_no) => {
     return { plug: 0, gasket: 0, dowel_pin: 0, plate: 0 };
   }
 };
-
 
 
     const getScheduleStatus = (etd, eta) => {
@@ -225,30 +179,34 @@ const fetchPackingQty = async (inv_no) => {
   return "운항중";
 };
 
-const calcInTransit = (row) => {
-  const key = codeToKey[row.item_code];
+// 🔥 운항중 수량 계산 (오늘 날짜 기준)
+const calcInTransit = (itemName) => {
+  if (!Array.isArray(scheduleRows)) return 0;
+
+  const key = keyMapForAxle[itemName?.toUpperCase()];
   if (!key) return 0;
 
   return scheduleRows
-    .filter(r => getScheduleStatus(r.etd, r.eta) === "운항중")
-    .reduce((sum, r) => sum + (Number(r[key]) || 0), 0);
+    .filter(row => getScheduleStatus(row.etd, row.eta) === "운항중")
+    .reduce((sum, row) => sum + (Number(row[key]) || 0), 0);
 };
-
 
 
 const updateScheduleCell = (tempId, field, value) => {
   setScheduleRows(prev =>
-    prev.map(row =>
-      row.tempId === tempId ? { ...row, [field]: value } : row
-    )
+    Array.isArray(prev)
+      ? prev.map(row =>
+          row.tempId === tempId ? { ...row, [field]: value } : row
+        )
+      : []
   );
 };
 
 
+
     const saveSetting = async () => {
-  await fetch(`${API_BASE}/api/axle-setting`, {
+  await apiFetch(`${API_BASE}/api/axle-setting`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       target_stock: targetStockSetting,
       writer,
@@ -258,7 +216,7 @@ const updateScheduleCell = (tempId, field, value) => {
 };
 
     const fetchSetting = async () => {
-  const res = await fetch(`${API_BASE}/api/axle-setting`);
+  const res = await apiFetch(`${API_BASE}/api/axle-setting`);
   const data = await res.json();
 
   setTargetStockSetting(data.target_stock);
@@ -270,12 +228,15 @@ const [targetStockSetting, setTargetStockSetting] = useState(0);
     // 🔥 targetStockSetting 변경 시 모든 행의 target_stock를 자동 갱신
 useEffect(() => {
   setAxleRows(prev =>
-    prev.map(row => ({
-      ...row,
-      target_stock: targetStockSetting
-    }))
+    Array.isArray(prev)
+      ? prev.map(row => ({
+          ...row,
+          target_stock: targetStockSetting
+        }))
+      : []
   );
 }, [targetStockSetting]);
+
 
     // ★ 엑셀 수식 =IF(F6>=F4*1.13,"초과", ...)
 const getStatus = (actual, target) => {
@@ -310,7 +271,7 @@ updateScheduleCell(row.tempId, "dowel_pin", qty.dowel_pin);
 updateScheduleCell(row.tempId, "plate", qty.plate);
 
 
-                const ship = await fetch(`${API_BASE}/api/invoice/${row.inv_no}`).then(r => r.json());
+                const ship = await apiFetch(`${API_BASE}/api/invoice/${row.inv_no}`).then(r => r.json());
                 if (!ship.error) {
                    updateScheduleCell(row.tempId, "etd", ship.etd);
 updateScheduleCell(row.tempId, "eta", ship.eta);
@@ -330,7 +291,7 @@ const refreshScheduleValues = async (rows) => {
     updateScheduleCell(row.tempId, "dowel_pin", qty.dowel_pin);
     updateScheduleCell(row.tempId, "plate", qty.plate);
 
-    const ship = await fetch(`${API_BASE}/api/invoice/${row.inv_no}`).then(r => r.json());
+    const ship = await apiFetch(`${API_BASE}/api/invoice/${row.inv_no}`).then(r => r.json());
     if (!ship.error) {
       updateScheduleCell(row.tempId, "etd", ship.etd || "");
       updateScheduleCell(row.tempId, "eta", ship.eta || "");
@@ -340,8 +301,14 @@ const refreshScheduleValues = async (rows) => {
 
 const fetchScheduleData = async () => {
   try {
-    const res = await fetch(`${API_BASE}/api/axle-schedule`);
+    const res = await apiFetch(`${API_BASE}/api/axle-schedule`);
     const data = await res.json();
+
+    if (!Array.isArray(data)) {
+      console.error("❌ axle-schedule 응답 배열 아님:", data);
+      setScheduleRows([]);
+      return [];
+    }
 
     const withIds = data.map(r => ({
       ...r,
@@ -350,12 +317,14 @@ const fetchScheduleData = async () => {
     }));
 
     setScheduleRows(withIds);
-    return withIds;    // ⭐ 추가
+    return withIds;
   } catch (err) {
     console.error("AXLE 스케줄 로드 오류:", err);
+    setScheduleRows([]);
     return [];
   }
 };
+
 
 
 
@@ -396,13 +365,22 @@ const fetchScheduleData = async () => {
 
 const fetchAxleData = async () => {
   try {
-    const res = await fetch(`${API_BASE}/api/axle`);
+    const res = await apiFetch(`${API_BASE}/api/axle`);
     const data = await res.json();
+
+    if (!Array.isArray(data)) {
+      console.error("❌ axle 응답이 배열 아님:", data);
+      setAxleRows([]);
+      return;
+    }
+
     setAxleRows(data);
   } catch (err) {
     console.error("AXLE 데이터 로드 오류:", err);
+    setAxleRows([]);
   }
 };
+
 
 
   useEffect(() => {
@@ -423,9 +401,8 @@ const saveAxleData = async () => {
       const cleanRow = { ...row };
       delete cleanRow.updated_at;
 
-      await fetch(`${API_BASE}/api/axle/${row.id}`, {
+      await apiFetch(`${API_BASE}/api/axle/${row.id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(cleanRow)
       });
     }
@@ -434,9 +411,8 @@ const saveAxleData = async () => {
     await saveSetting();
 
     // 3) 스케줄 Bulk 저장
-    await fetch(`${API_BASE}/api/axle-schedule/bulk`, {
+    await apiFetch(`${API_BASE}/api/axle-schedule/bulk`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(scheduleRows)
     });
 
@@ -633,14 +609,13 @@ const saveAxleData = async () => {
 
       <TableBody>
         {axleRows.map((row) => {
-  const inTransit = calcInTransit(row);   // 운항중
+  const inTransit = calcInTransit(row.item_name);   // 운항중
   const existing = row.actual_stock;                // 기존재고
   const total = inTransit + existing;               // 총합
   const target =
-  row.item_code === "S1430308140"
-    ? targetStockSetting * 2   // DOWEL PIN만 2배
-    : targetStockSetting;
-
+    row.item_name?.toUpperCase() === "DOWEL PIN"
+      ? targetStockSetting * 2
+      : targetStockSetting;
 
   return (
     <TableRow key={row.id}>
@@ -697,12 +672,14 @@ const saveAxleData = async () => {
       <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold"  }}>{formatNumber(total)}</TableCell>
 
       {/* 판단결과 */}
-      <TableCell align="center">
-  <Box sx={getStockStatusStyle(getStatus(existing, target))}>
-    {getStatus(existing, target)}
-  </Box>
-</TableCell>
-
+      <TableCell align="center"
+        sx={{
+          color: statusColor(getStatus(existing, target)),
+          fontWeight: "bold", fontSize: "15px"
+        }}
+      >
+        {getStatus(existing, target)}
+      </TableCell>
     </TableRow>
   );
 })}
@@ -912,7 +889,7 @@ updateScheduleCell(row.tempId, "plate", qty.plate);
 
   // 2) INVOICE에서 ETD/ETA 불러오기 (🔥 status는 안씀!)
   try {
-    const res = await fetch(`${API_BASE}/api/invoice/${inv}`);
+    const res = await apiFetch(`${API_BASE}/api/invoice/${inv}`);
     const ship = await res.json();
 
     if (!ship.error) {

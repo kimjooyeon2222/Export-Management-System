@@ -16,6 +16,7 @@ import {
 } from "@mui/material";
 import { v4 as uuidv4 } from "uuid";
 const API_BASE = import.meta.env.VITE_API_URL;
+import { apiFetch } from "api/apiFetch";
 
 export default function POManagementPage() {
 
@@ -28,7 +29,7 @@ export default function POManagementPage() {
 
   const loadPOData = async () => {
   try {
-    const res = await fetch(`${API_BASE}/api/po`);
+    const res = await apiFetch(`${API_BASE}/api/po`);
     const data = await res.json();
     setPoRows(data);
   } catch (err) {
@@ -38,7 +39,7 @@ export default function POManagementPage() {
 
 const loadUsDate = async () => {
   try {
-    const res = await fetch(`${API_BASE}/api/po/setting`);
+    const res = await apiFetch(`${API_BASE}/api/po/setting`);
     const data = await res.json();
     setUsDate(data.us_date || "");
   } catch (err) {
@@ -63,14 +64,14 @@ const removeSubRow = (parentId, subId) => {
   const handleSave = async () => {
   try {
     // 1) PO rows 저장
-    await fetch(`${API_BASE}/api/po/bulk`, {
+    await apiFetch(`${API_BASE}/api/po/bulk`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(poRows),
     });
 
     // 2) 북미 날짜 저장
-    await fetch(`${API_BASE}/api/po/setting`, {
+    await apiFetch(`${API_BASE}/api/po/setting`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ us_date: usDate }),

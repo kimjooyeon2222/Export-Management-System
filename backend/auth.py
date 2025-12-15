@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token
 from flask_bcrypt import Bcrypt
 import pymysql
+from flask_jwt_extended import create_access_token
 
 auth_bp = Blueprint("auth", __name__)
 bcrypt = Bcrypt()
@@ -32,10 +33,14 @@ def login():
     if not user or not bcrypt.check_password_hash(user["password_hash"], password):
         return jsonify({"message": "Invalid ID or password"}), 401
 
-    token = create_access_token(identity={
-        "id": user["id"],
+    token = create_access_token(
+    identity=str(user["id"]),        # 🔥 문자열로
+    additional_claims={
         "role": user["role"]
-    })
+    }
+)
+
+
 
     return jsonify({
         "access_token": token,

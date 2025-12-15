@@ -15,6 +15,7 @@ import {
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import HorizontalScroll from "./HorizontalScroll";
+import { apiFetch } from "api/apiFetch";
 
 export default function EvSubPage() {
     const getStockStatusStyle = (status) => {
@@ -102,7 +103,7 @@ const calcInTransitEV = (part_no) => {
 
   try {
     // 1) Invoice 정보
-    const resInv = await fetch(`${API_BASE}/api/invoice/${inv}`);
+    const resInv = await apiFetch(`${API_BASE}/api/invoice/${inv}`);
     const invData = await resInv.json();
     if (invData.error) return;
 
@@ -111,7 +112,7 @@ const calcInTransitEV = (part_no) => {
     const status = getScheduleStatus(etd, eta);
 
     // 2) 통합 API
-    const resFull = await fetch(`${API_BASE}/api/ev/packing-full/${inv}`);
+    const resFull = await apiFetch(`${API_BASE}/api/ev/packing-full/${inv}`);
     const fullData = await resFull.json();
     if (fullData.error) return;
 
@@ -153,9 +154,8 @@ const saveSchedule = async () => {
         // =========================
     // 1️⃣ EV 설정 저장 (작성자 / 날짜)
     // =========================
-    await fetch(`${API_BASE}/api/ev-setting`, {
+    await apiFetch(`${API_BASE}/api/ev-setting`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         writer: writer,     // state
         us_date: usDate,    // YYYY-MM-DD
@@ -177,9 +177,8 @@ const saveSchedule = async () => {
       return cleanRow;
     });
 
-    const res = await fetch(`${API_BASE}/api/ev-schedule/bulk`, {
+    const res = await apiFetch(`${API_BASE}/api/ev-schedule/bulk`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
 
@@ -209,7 +208,7 @@ const saveSchedule = async () => {
     // =========================
     // 1) Invoice 정보 불러오기 (기존 로직 그대로 유지)
     // =========================
-    const resInv = await fetch(`${API_BASE}/api/invoice/${inv}`);
+    const resInv = await apiFetch(`${API_BASE}/api/invoice/${inv}`);
     const invData = await resInv.json();
 
     if (invData.error) return;
@@ -221,7 +220,7 @@ const saveSchedule = async () => {
     // =========================
     // 2) 새로운 통합 API 호출
     // =========================
-    const resFull = await fetch(`${API_BASE}/api/ev/packing-full/${inv}`);
+    const resFull = await apiFetch(`${API_BASE}/api/ev/packing-full/${inv}`);
     const fullData = await resFull.json();
 
     if (fullData.error) return;
@@ -349,27 +348,9 @@ function todayUS() {
   return d;
 }
 
-  function getChicagoOffset(date) {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/Chicago",
-    timeZoneName: "short",
-  }).formatToParts(date);
 
-  const name = parts.find(p => p.type === "timeZoneName").value;
-  return name === "CDT" ? -5 : -6;
-}
 
-const toAlabamaMidnight = (dateStr) => {
-  if (!dateStr) return null;
 
-  const [year, month, day] = dateStr.split("-").map(Number);
-  const utc = Date.UTC(year, month - 1, day, 0, 0, 0);
-
-  const offsetHours = getChicagoOffset(new Date(utc));
-  const chicagoTimestamp = utc - offsetHours * 3600 * 1000;
-
-  return new Date(chicagoTimestamp);
-};
     const [scheduleRows, setScheduleRows] = useState([]);
 
     const [inventoryRows, setInventoryRows] = useState([]);
@@ -391,18 +372,18 @@ useEffect(() => {
 const loadEvData = async () => {
   try {
     // 1) EV Setting
-    const resSetting = await fetch(`${API_BASE}/api/ev-setting`);
+    const resSetting = await apiFetch(`${API_BASE}/api/ev-setting`);
     const setting = await resSetting.json();
     setWriter(setting.writer || "");
     setUsDate(setting.us_date || "");
 
     // 2) EV Inventory (ev_inventory)
-    const resInv = await fetch(`${API_BASE}/api/ev-inventory`);
+    const resInv = await apiFetch(`${API_BASE}/api/ev-inventory`);
     const inventory = await resInv.json();
     setInventoryRows(inventory);
 
     // 3) EV Schedule (ev_schedule)
-    const resSchedule = await fetch(`${API_BASE}/api/ev-schedule`);
+    const resSchedule = await apiFetch(`${API_BASE}/api/ev-schedule`);
     const schedules = await resSchedule.json();
 
     setScheduleRows(

@@ -17,6 +17,7 @@ import {
   Button,
 } from "@mui/material";
 
+import { apiFetch } from "api/apiFetch";
 
 
 export default function OilShipmentSchedule() {
@@ -52,9 +53,8 @@ const updateOilCell = (no, field, value) => {
   );
 };
 const saveOilList = async () => {
-  await fetch(`${API_BASE}/api/oil-items/bulk`, {
+  await apiFetch(`${API_BASE}/api/oil-items/bulk`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(oilList),
   });
   alert("오일 관리 리스트 저장 완료!");
@@ -94,7 +94,7 @@ const updateHeader = async (invKey, field, value) => {
 
   // 🔥 INV 입력 시 자동 invoice 정보 채워 넣기
   if (field === "inv") {
-    const res = await fetch(`${API_BASE}/api/oil-invoice/${value}`);
+    const res = await apiFetch(`${API_BASE}/api/oil-invoice/${value}`);
     const data = await res.json();
 
     if (!data.error) {
@@ -135,8 +135,14 @@ const updateSeq = (invKey, seq, value) => {
 
 //DB 로딩 함수
 const loadOilSchedule = async () => {
-  const res = await fetch(`${API_BASE}/api/oil-schedule`);
+  const res = await apiFetch(`${API_BASE}/api/oil-schedule`);
   const data = await res.json();
+    if (!Array.isArray(data)) {
+    console.error("❌ oil-schedule 응답이 배열 아님:", data);
+    setScheduleRows([]);   // 💡 무조건 배열로 보정
+    return;
+  }
+
   setScheduleRows(data);
 };
   const [editMode, setEditMode] = useState(false);    // ← 반드시 여기에!
@@ -218,7 +224,7 @@ const updateRow = async (index, field, value) => {
 
   // 👉 INV# 입력 시 자동 invoice 불러오기
   if (field === "inv_no") {
-    const res = await fetch(`${API_BASE}/api/oil-invoice/${value}`);
+    const res = await apiFetch(`${API_BASE}/api/oil-invoice/${value}`);
     const data = await res.json();
 
     if (!data.error) {
@@ -261,9 +267,8 @@ const saveAll = async () => {
   });
 
   // 🔥 cleanedRows만 DB에 저장
-  const res = await fetch(`${API_BASE}/api/oil-schedule/bulk`, {
+  const res = await apiFetch(`${API_BASE}/api/oil-schedule/bulk`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(cleanedRows),
   });
 
@@ -288,7 +293,7 @@ const saveAll = async () => {
 const loadInvoiceInfo = async () => {
   if (!inv) return;
 
-  const res = await fetch(`${API_BASE}/api/oil-invoice/${inv}`);
+  const res = await apiFetch(`${API_BASE}/api/oil-invoice/${inv}`);
   const data = await res.json();
 
   if (!data.error) {
@@ -343,7 +348,7 @@ scheduleRows.forEach((r) => {
 
 
 useEffect(() => {
-  fetch(`${API_BASE}/api/oil-items`)
+  apiFetch(`${API_BASE}/api/oil-items`)
     .then(res => res.json())
     .then(data => setOilList(data));
 }, []);

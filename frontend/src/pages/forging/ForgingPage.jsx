@@ -15,6 +15,7 @@ import { v4 as uuidv4 } from "uuid";
 
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { apiFetch } from "api/apiFetch";
 
 
 
@@ -156,7 +157,7 @@ const navigate = useNavigate();
 useEffect(() => {
   async function loadStockSetting() {
     try {
-      const res = await fetch(`${API_BASE}/api/stock-setting`);
+      const res = await apiFetch(`${API_BASE}/api/stock-setting`);
       const data = await res.json();
 
       if (data) {
@@ -183,7 +184,7 @@ useEffect(() => {
 
   useEffect(() => {
   async function loadItems() {
-    const res = await fetch(`${API_BASE}/api/stock-items`);
+    const res = await apiFetch(`${API_BASE}/api/stock-items`);
     const dbItems = await res.json();
 
     if (Array.isArray(dbItems)) {
@@ -223,7 +224,7 @@ function parseKRDate(dateStr) {
 
 useEffect(() => {
   async function loadRows() {
-    const res = await fetch(`${API_BASE}/api/schedule-rows`);
+    const res = await apiFetch(`${API_BASE}/api/schedule-rows`);
     const dbRows = await res.json();
 
     const fixedRows = dbRows.map(r => {
@@ -491,9 +492,8 @@ const getStatusStyle = (status) => {
 
       try {
         // 1) stock_setting 저장
-        await fetch(`${API_BASE}/api/stock-setting`, {
+        await apiFetch(`${API_BASE}/api/stock-setting`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             target_stock: targetStock,
             writer,
@@ -502,18 +502,16 @@ const getStatusStyle = (status) => {
         });
 
         // 2) stock_items 저장
-        await fetch(`${API_BASE}/api/stock-item/bulk`, {
+        await apiFetch(`${API_BASE}/api/stock-item/bulk`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(items)
         });
         
         const cleanRows = rows.map(normalizeRow);
 
         // 3) schedule_rows 저장 ← 여기 핵심!!
-        await fetch(`${API_BASE}/api/schedule-row/bulk`, {
+        await apiFetch(`${API_BASE}/api/schedule-row/bulk`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
          body: JSON.stringify(cleanRows)
         });
 
@@ -965,7 +963,7 @@ const getStatusStyle = (status) => {
 
   // 3️⃣ 정상 입력일 때만 API 호출
   try {
-    const res = await fetch(`${API_BASE}/api/invoice/${inv}`);
+    const res = await apiFetch(`${API_BASE}/api/invoice/${inv}`);
     const data = await res.json();
 
     const today = todayUS();
