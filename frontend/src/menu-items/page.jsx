@@ -23,7 +23,7 @@ const pages = {
       icon: icons.LoginOutlined,
       target: true,
     },
-    {
+   /* {
       id: 'register1',
       title: "회원가입",
       type: 'item',
@@ -31,6 +31,7 @@ const pages = {
       icon: icons.ProfileOutlined,
       target: true,
     }
+      */
   ]
 };
 
