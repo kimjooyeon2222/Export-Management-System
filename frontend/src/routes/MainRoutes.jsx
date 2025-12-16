@@ -4,8 +4,12 @@ import { lazy } from 'react';
 import Loadable from 'components/Loadable';
 import DashboardLayout from 'layout/Dashboard';
 
+
 // render- Dashboard
 const DashboardDefault = Loadable(lazy(() => import('pages/dashboard/default')));
+// render - Item / Stock Audit
+const ItemPage = Loadable(lazy(() => import('pages/item/ItemPage')));
+const StockAuditPage = Loadable(lazy(() => import('pages/stock-audit/StockAuditPage')));
 
 // render - color
 const Color = Loadable(lazy(() => import('pages/component-overview/color')));
@@ -58,6 +62,14 @@ const MainRoutes = {
       ]
     },
     {
+      path: 'item',
+      element: <ItemPage />
+    },
+    {
+      path: 'stock-audit',
+      element: <StockAuditPage />
+    },
+    {
       path: 'typography',
       element: <Typography />
     },
@@ -103,7 +115,9 @@ const MainRoutes = {
     {
        path: 'po-management',
       element: <POManagementPage />
-    }
+    },
+
+
 
 
 
