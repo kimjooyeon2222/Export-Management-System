@@ -20,6 +20,60 @@ import { apiFetch } from "api/apiFetch";
 
 
 export default function ItemPage() {
+const handleSave = async () => {
+  const API = import.meta.env.VITE_API_URL;
+
+  // ⭐ 핵심: 신규 + 수정된 것만
+ const targets = rows.filter(row =>
+  (row._deleted && row.id) ||   // 기존 데이터 삭제
+  (!row.id && !row._deleted) || // 신규 등록
+  row._dirty                    // 수정
+);
+
+  if (targets.length === 0) {
+    alert("저장할 변경사항이 없습니다.");
+    return;
+  }
+
+  if (!window.confirm(`${targets.length}건을 저장할까요?`)) return;
+
+for (const row of targets) {
+  if (row._deleted && row.id) {
+    await apiFetch(`${API}/api/items/${row.id}`, {
+      method: "DELETE"
+    });
+    continue;
+  }
+
+  const payload = {
+    item_no: row.item_no,
+    item_name: row.item_name,
+    spec: row.spec,
+    material: row.material,
+    item_type: row.item_type,
+    unit: row.unit
+  };
+
+  if (!row.id) {
+    await apiFetch(`${API}/api/items`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+  } else if (row._dirty) {
+    await apiFetch(`${API}/api/items/${row.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+  }
+}
+
+
+  alert("✅ 저장 완료");
+  handleSearch();
+};
+
 
     useEffect(() => {
   handleSearch();
@@ -27,6 +81,8 @@ export default function ItemPage() {
   /* ===================== 상태 ===================== */
   const [rows, setRows] = useState([]);
   const [editMode, setEditMode] = useState(false);
+  const [editSelectMode, setEditSelectMode] = useState(false);
+  const [editingRowId, setEditingRowId] = useState(null);
   const [deleteMode, setDeleteMode] = useState(false);
   const [selectedRows, setSelectedRows] = useState([]);
 
@@ -38,7 +94,7 @@ export default function ItemPage() {
     itemType: "",
     unit: "",
     orderBy: "itemNo",
-    limit: 200
+    limit: 100
   });
 
   /* ===================== 검색 ===================== */
@@ -83,38 +139,55 @@ const handleSearch = async () => {
         updated_at: ""
       }
     ]);
+    alert("✅ 품목 행 추가 완료");
   };
 
   const toggleDeleteMode = () => {
-    if (!editMode) return;
+  if (!editMode) return;
 
-    if (!deleteMode) {
-      setDeleteMode(true);
-      setSelectedRows([]);
-      alert("🗑 삭제 모드 활성화\n삭제할 품목을 선택하세요.");
-    } else {
-      if (selectedRows.length === 0) {
-        alert("삭제할 품목이 선택되지 않았습니다.");
-        return;
-      }
+  // 🔁 삭제 모드 OFF (다시 누르면 취소)
+  if (deleteMode && selectedRows.length === 0) {
+    setDeleteMode(false);
+    setSelectedRows([]);
+    return;
+  }
 
-      if (!window.confirm(`${selectedRows.length}개 품목을 삭제할까요?`)) return;
+  // 🔁 삭제 모드 ON
+  if (!deleteMode) {
+    setDeleteMode(true);
+    setSelectedRows([]);
+    alert("🗑 삭제 모드 활성화\n삭제할 품목을 선택하세요.");
+    return;
+  }
 
-      setRows(prev => prev.filter(r => !selectedRows.includes(r.tempId)));
-      setSelectedRows([]);
-      setDeleteMode(false);
-    }
-  };
+  // 🔥 삭제 실행
+  if (!window.confirm(`${selectedRows.length}개 품목을 삭제할까요?`)) return;
+
+  setRows(prev =>
+  prev.map(r =>
+    selectedRows.includes(r.tempId)
+      ? { ...r, _deleted: true }
+      : r
+  )
+);
+
+  setSelectedRows([]);
+  setDeleteMode(false);
+};
+
 
   const handleCellChange = (id, field, value) => {
-    if (!editMode || deleteMode) return;
+  if (!editMode || !editSelectMode || deleteMode) return;
 
-    setRows(prev =>
-      prev.map(row =>
-        row.tempId === id ? { ...row, [field]: value } : row
-      )
-    );
-  };
+  setRows(prev =>
+    prev.map(row =>
+      row.tempId === id
+        ? { ...row, [field]: value, _dirty: true }
+        : row
+    )
+  );
+};
+
 
   /* ===================== UI ===================== */
   return (
@@ -128,6 +201,23 @@ const handleSearch = async () => {
         <Button variant="contained" onClick={addItemRow} disabled={!editMode}>
           + 품목등록
         </Button>
+<Button
+  variant="contained"
+  color={editSelectMode ? "info" : "secondary"}
+  disabled={!editMode}
+  onClick={() => {
+    setEditSelectMode(prev => !prev);
+    setDeleteMode(false);
+    setSelectedRows([]);
+    setEditingRowId(null);
+
+    if (!editSelectMode) {
+      alert("✏ 수정할 행을 클릭하세요.");
+    }
+  }}
+>
+  {editSelectMode ? "수정 취소" : "수정"}
+</Button>
 
         <Button
           variant="contained"
@@ -137,6 +227,14 @@ const handleSearch = async () => {
         >
           {deleteMode ? "삭제 실행" : "삭제"}
         </Button>
+<Button
+  variant="contained"
+  color="success"
+  disabled={!editMode}
+  onClick={handleSave}
+>
+  저장
+</Button>
 
         <Button
           variant="outlined"
@@ -144,6 +242,8 @@ const handleSearch = async () => {
             setEditMode(prev => !prev);
             setDeleteMode(false);
             setSelectedRows([]);
+            setEditingRowId(null); 
+
           }}
           sx={{ fontWeight: "bold" }}
         >
@@ -153,7 +253,7 @@ const handleSearch = async () => {
 
       {/* ================= 검색 영역 ================= */}
       <Paper sx={{ p: 2, mb: 2 }}>
-        <Grid container spacing={2}>
+         <Grid container spacing={2} justifyContent="center">
           <Grid item xs={3}>
             <TextField label="품목번호" name="itemNo" fullWidth value={search.itemNo} onChange={handleSearchChange} />
           </Grid>
@@ -193,6 +293,8 @@ const handleSearch = async () => {
               <MenuItem value="itemName">품목명순</MenuItem>
               <MenuItem value="material">재질순</MenuItem>
               <MenuItem value="spec">규격순</MenuItem>
+              <MenuItem value="createdAtDesc">등록일시 역순</MenuItem> 
+
             </Select>
           </Grid>
 
@@ -213,14 +315,14 @@ const handleSearch = async () => {
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>품목번호</TableCell>
-              <TableCell>품목명</TableCell>
-              <TableCell>규격</TableCell>
-              <TableCell>재질</TableCell>
-              <TableCell>제품유형</TableCell>
-              <TableCell>단위</TableCell>
-              <TableCell>등록일시</TableCell>
-              <TableCell>수정일시</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold", fontSize:"15px" }}>품목번호</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold", fontSize:"15px"  }}>품목명</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold", fontSize:"15px"  }}>규격</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold" , fontSize:"15px" }}>재질</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold", fontSize:"15px"  }}>제품유형</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold" , fontSize:"15px" }}>단위</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold" , fontSize:"15px" }}>등록일시</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold", fontSize:"15px"  }}>수정일시</TableCell>
             </TableRow>
           </TableHead>
 
@@ -233,82 +335,155 @@ const handleSearch = async () => {
               </TableRow>
             )}
 
-            {rows.map(row => (
-              <TableRow
-                key={row.tempId}
-                hover
-                sx={{
-                  cursor: deleteMode ? "pointer" : "default",
-                  bgcolor: selectedRows.includes(row.tempId)
-                    ? "#ffdddd"
-                    : "inherit"
-                }}
-                onClick={() => {
-                  if (!deleteMode) return;
+            {rows
+            .filter(row => !row._deleted)
+            .map(row => (
+              <TableRow 
+  key={row.tempId}
+  hover
+  sx={{
+    cursor: deleteMode || editSelectMode ? "pointer" : "default",
+    bgcolor:
+      deleteMode && selectedRows.includes(row.tempId)
+        ? "#ffdddd"
+        : editSelectMode && editingRowId === row.tempId
+        ? "#e3f2fd"   // ✨ 수정 선택 행 표시
+        : "inherit"
+  }}
+  onClick={() => {
+    // 🗑 삭제 모드
+    if (deleteMode) {
+      setSelectedRows(prev =>
+        prev.includes(row.tempId)
+          ? prev.filter(id => id !== row.tempId)
+          : [...prev, row.tempId]
+      );
+      return;
+    }
 
-                  setSelectedRows(prev =>
-                    prev.includes(row.tempId)
-                      ? prev.filter(id => id !== row.tempId)
-                      : [...prev, row.tempId]
-                  );
-                }}
-              >
-                <TableCell>
-                  {editMode ? (
-                    <TextField size="small" value={row.item_no} onChange={e => handleCellChange(row.tempId, "item_no", e.target.value)} />
-                  ) : row.item_no}
+    // ✏ 수정 선택 모드
+    if (editSelectMode) {
+      setEditingRowId(row.tempId);
+    }
+  }}
+>
+
+                <TableCell align="center" sx={{ fontWeight: "bold", fontSize:"15px"  }}>
+                  {editMode && editingRowId === row.tempId ? (
+  <TextField
+    size="small"
+    value={row.item_no}
+    onChange={e =>
+      handleCellChange(row.tempId, "item_no", e.target.value)
+    }
+  />
+) : (
+  row.item_no
+)}
+
                 </TableCell>
 
-                <TableCell>
-                  {editMode ? (
-                    <TextField size="small" value={row.item_name} onChange={e => handleCellChange(row.tempId, "item_name", e.target.value)} />
-                  ) : row.item_name}
+                <TableCell align="center" sx={{ fontWeight: "bold" , fontSize:"15px" }}>
+                  {editMode && editingRowId === row.tempId ? (
+  <TextField
+    size="small"
+    value={row.item_name}
+    onChange={e =>
+      handleCellChange(row.tempId, "item_name", e.target.value)
+    }
+  />
+) : (
+  row.item_name
+)}
+
                 </TableCell>
 
-                <TableCell>
-                  {editMode ? (
-                    <TextField size="small" value={row.spec} onChange={e => handleCellChange(row.tempId, "spec", e.target.value)} />
-                  ) : row.spec}
-                </TableCell>
+                <TableCell align="center" sx={{ fontWeight: "bold", fontSize:"15px"  }}>
+  {editMode && editingRowId === row.tempId ? (
+    <TextField
+      size="small"
+      value={row.spec}
+      onChange={e =>
+        handleCellChange(row.tempId, "spec", e.target.value)
+      }
+    />
+  ) : (
+    row.spec
+  )}
+</TableCell>
 
-                <TableCell>
-                  {editMode ? (
-                    <TextField size="small" value={row.material} onChange={e => handleCellChange(row.tempId, "material", e.target.value)} />
-                  ) : row.material}
-                </TableCell>
 
-                <TableCell>
-                  {editMode ? (
-                    <Select
-                      size="small"
-                      value={row.item_type}
-                      onChange={e => handleCellChange(row.tempId, "item_type", e.target.value)}
-                    >
-                      <MenuItem value="PRODUCT">제품</MenuItem>
-                      <MenuItem value="RAW">원자재</MenuItem>
-                      <MenuItem value="SUB">부자재</MenuItem>
-                      <MenuItem value="CONSUMABLE">소모자재</MenuItem>
-                      <MenuItem value="TOOL">공구</MenuItem>
-                    </Select>
-                  ) : row.item_type}
-                </TableCell>
+                <TableCell align="center" sx={{ fontWeight: "bold", fontSize:"15px"  }}>
+  {editMode && editingRowId === row.tempId ? (
+    <TextField
+      size="small"
+      value={row.material}
+      onChange={e =>
+        handleCellChange(row.tempId, "material", e.target.value)
+      }
+    />
+  ) : (
+    row.material
+  )}
+</TableCell>
 
-                <TableCell>
-                  {editMode ? (
-                    <Select
-                      size="small"
-                      value={row.unit}
-                      onChange={e => handleCellChange(row.tempId, "unit", e.target.value)}
-                    >
-                      <MenuItem value="EA">EA</MenuItem>
-                      <MenuItem value="KG">KG</MenuItem>
-                      <MenuItem value="SET">SET</MenuItem>
-                    </Select>
-                  ) : row.unit}
-                </TableCell>
 
-                <TableCell>{row.created_at}</TableCell>
-                <TableCell>{row.updated_at}</TableCell>
+                <TableCell align="center"   sx={{ fontWeight: "bold", fontSize:"15px"  }}>
+  {editMode && editingRowId === row.tempId ? (
+    <Select
+      size="small"
+      value={row.item_type ?? ""}
+      onChange={e =>
+        handleCellChange(row.tempId, "item_type", e.target.value)
+      }
+    >
+      <MenuItem value="PRODUCT">제품</MenuItem>
+      <MenuItem value="RAW">원자재</MenuItem>
+      <MenuItem value="SUB">부자재</MenuItem>
+      <MenuItem value="CONSUMABLE">소모자재</MenuItem>
+      <MenuItem value="TOOL">공구</MenuItem>
+    </Select>
+  ) : (
+    row.item_type
+  )}
+</TableCell>
+
+
+                <TableCell align="center"  sx={{ fontWeight: "bold", fontSize:"15px"  }}>
+  {editMode && editingRowId === row.tempId ? (
+  row.unit === "__custom__" ? (
+    <TextField
+      size="small"
+      autoFocus
+      onBlur={(e) =>
+        handleCellChange(row.tempId, "unit", e.target.value || "EA")
+      }
+    />
+  ) : (
+    <Select
+      size="small"
+      value={row.unit}
+      onChange={(e) => {
+        if (e.target.value === "직접입력") {
+          handleCellChange(row.tempId, "unit", "__custom__");
+        } else {
+          handleCellChange(row.tempId, "unit", e.target.value);
+        }
+      }}
+    >
+      {["EA","KG","SET","BOX","RL","벌","통","리터","직접입력"].map(u => (
+        <MenuItem key={u} value={u}>{u}</MenuItem>
+      ))}
+    </Select>
+  )
+) : (
+  row.unit
+)}
+</TableCell>
+
+
+                <TableCell align="center"   sx={{ fontWeight: "bold", fontSize:"15px"  }}>{row.created_at}</TableCell>
+                <TableCell align="center"  sx={{ fontWeight: "bold", fontSize:"15px"  }}>{row.updated_at}</TableCell>
               </TableRow>
             ))}
           </TableBody>

@@ -518,7 +518,7 @@ class ItemMaster(db.Model):
     material = db.Column(db.String(100))
 
     # PRODUCT / RAW / SUB / CONSUMABLE / TOOL
-    item_type = db.Column(db.String(20), nullable=True)
+    item_type = db.Column(db.String(20))
 
     unit = db.Column(db.String(20))
 

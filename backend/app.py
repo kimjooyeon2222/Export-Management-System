@@ -1425,21 +1425,69 @@ def get_items():
         q = q.filter(ItemMaster.unit == request.args["unit"])
 
     # 🔃 정렬
-    order_map = {
-        "itemNo": ItemMaster.item_no,
-        "itemName": ItemMaster.item_name,
-        "material": ItemMaster.material,
-        "spec": ItemMaster.spec
-    }
-
     order_by = request.args.get("orderBy", "itemNo")
-    q = q.order_by(asc(order_map.get(order_by, ItemMaster.item_no)))
+
+    if order_by == "createdAtDesc":
+        q = q.order_by(ItemMaster.created_at.desc())
+    else:
+        order_map = {
+            "itemNo": ItemMaster.item_no,
+            "itemName": ItemMaster.item_name,
+            "material": ItemMaster.material,
+            "spec": ItemMaster.spec
+        }
+        q = q.order_by(asc(order_map.get(order_by, ItemMaster.item_no)))
 
     # 🔢 limit
     limit = int(request.args.get("limit", 200))
     rows = q.limit(limit).all()
 
     return jsonify([r.to_dict() for r in rows])
+
+
+@app.route("/api/items", methods=["POST"])
+@jwt_required()
+@admin_required
+def create_item():
+    data = request.json
+
+    item = ItemMaster(
+        item_no=data["item_no"],
+        item_name=data["item_name"],
+        spec=data.get("spec"),
+        material=data.get("material"),
+        item_type=data.get("item_type"),
+        unit=data.get("unit"),
+    )
+
+    db.session.add(item)
+    db.session.commit()
+
+    return jsonify(item.to_dict()), 201
+
+@app.route("/api/items/<int:id>", methods=["PUT"])
+@jwt_required()
+@admin_required
+def update_item(id):
+    item = ItemMaster.query.get_or_404(id)
+    data = request.json
+
+    for k, v in data.items():
+        setattr(item, k, v)
+
+    db.session.commit()
+    return jsonify({"message": "updated"})
+
+
+@app.route("/api/items/<int:id>", methods=["DELETE"])
+@jwt_required()
+@admin_required
+def delete_item(id):
+    item = ItemMaster.query.get_or_404(id)
+    db.session.delete(item)
+    db.session.commit()
+    return jsonify({"message": "deleted"})
+
 
 
 # ============================================
