@@ -1,6 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 
+
 db = SQLAlchemy()
 
 # ===========================================
@@ -499,4 +500,44 @@ class POSubRow(db.Model):
             "ototek_date": self.ototek_date.strftime("%Y-%m-%d") if self.ototek_date else None,
 
             "company": self.company,
+        }
+
+
+# ===========================================
+# 📦 ITEM MASTER (품목관리)
+# ===========================================
+class ItemMaster(db.Model):
+    __tablename__ = "item_master"
+
+    id = db.Column(db.BigInteger, primary_key=True)
+
+    item_no = db.Column(db.String(50), unique=True, nullable=False)
+    item_name = db.Column(db.String(100), nullable=False)
+
+    spec = db.Column(db.String(200))
+    material = db.Column(db.String(100))
+
+    # PRODUCT / RAW / SUB / CONSUMABLE / TOOL
+    item_type = db.Column(db.String(20), nullable=True)
+
+    unit = db.Column(db.String(20))
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "item_no": self.item_no,
+            "item_name": self.item_name,
+            "spec": self.spec,
+            "material": self.material,
+            "item_type": self.item_type,
+            "unit": self.unit,
+            "created_at": self.created_at.strftime("%Y-%m-%d %H:%M:%S") if self.created_at else "",
+            "updated_at": self.updated_at.strftime("%Y-%m-%d %H:%M:%S") if self.updated_at else ""
         }

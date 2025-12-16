@@ -5,6 +5,8 @@ load_dotenv()
 import os
 from auth_utils import admin_required
 from flask_jwt_extended import jwt_required
+from models import ItemMaster
+from sqlalchemy import asc
 
 
 from models import OilScheduleRow
@@ -1395,6 +1397,49 @@ def update_dashboard_memo():
     return jsonify({"status": "success"})
 
 
+# ===========================================
+# 📦 ITEM MASTER 조회
+# ===========================================
+@app.route("/api/items", methods=["GET"])
+@jwt_required()
+def get_items():
+    q = ItemMaster.query
+
+    # 🔎 검색 조건
+    if request.args.get("itemNo"):
+        q = q.filter(ItemMaster.item_no.like(f"%{request.args['itemNo']}%"))
+
+    if request.args.get("itemName"):
+        q = q.filter(ItemMaster.item_name.like(f"%{request.args['itemName']}%"))
+
+    if request.args.get("spec"):
+        q = q.filter(ItemMaster.spec.like(f"%{request.args['spec']}%"))
+
+    if request.args.get("material"):
+        q = q.filter(ItemMaster.material.like(f"%{request.args['material']}%"))
+
+    if request.args.get("itemType"):
+        q = q.filter(ItemMaster.item_type == request.args["itemType"])
+
+    if request.args.get("unit"):
+        q = q.filter(ItemMaster.unit == request.args["unit"])
+
+    # 🔃 정렬
+    order_map = {
+        "itemNo": ItemMaster.item_no,
+        "itemName": ItemMaster.item_name,
+        "material": ItemMaster.material,
+        "spec": ItemMaster.spec
+    }
+
+    order_by = request.args.get("orderBy", "itemNo")
+    q = q.order_by(asc(order_map.get(order_by, ItemMaster.item_no)))
+
+    # 🔢 limit
+    limit = int(request.args.get("limit", 200))
+    rows = q.limit(limit).all()
+
+    return jsonify([r.to_dict() for r in rows])
 
 
 # ============================================
