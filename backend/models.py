@@ -517,8 +517,9 @@ class ItemMaster(db.Model):
     spec = db.Column(db.String(200))
     material = db.Column(db.String(100))
 
-    # PRODUCT / RAW / SUB / CONSUMABLE / TOOL
-    item_type = db.Column(db.String(20))
+    item_form = db.Column(db.String(5))     # 품목형태
+    item_kind = db.Column(db.String(10))    # 품목유형
+
 
     unit = db.Column(db.String(20))
 
@@ -530,14 +531,15 @@ class ItemMaster(db.Model):
     )
 
     def to_dict(self):
-        return {
-            "id": self.id,
-            "item_no": self.item_no,
-            "item_name": self.item_name,
-            "spec": self.spec,
-            "material": self.material,
-            "item_type": self.item_type,
-            "unit": self.unit,
-            "created_at": self.created_at.strftime("%Y-%m-%d %H:%M:%S") if self.created_at else "",
-            "updated_at": self.updated_at.strftime("%Y-%m-%d %H:%M:%S") if self.updated_at else ""
-        }
+            return {
+             "id": self.id,
+             "item_no": self.item_no,
+             "item_name": self.item_name,
+             "spec": self.spec,
+              "material": self.material,
+             "item_form": self.item_form,
+              "item_kind": self.item_kind,
+              "unit": self.unit,
+              "created_at": self.created_at.strftime("%Y-%m-%d %H:%M:%S") if self.created_at else "",
+             "updated_at": self.updated_at.strftime("%Y-%m-%d %H:%M:%S") if self.updated_at else ""
+         }

@@ -1418,8 +1418,12 @@ def get_items():
     if request.args.get("material"):
         q = q.filter(ItemMaster.material.like(f"%{request.args['material']}%"))
 
-    if request.args.get("itemType"):
-        q = q.filter(ItemMaster.item_type == request.args["itemType"])
+    if request.args.get("itemForm"):
+        q = q.filter(ItemMaster.item_form == request.args["itemForm"])
+
+    if request.args.get("itemKind"):
+         q = q.filter(ItemMaster.item_kind == request.args["itemKind"])
+
 
     if request.args.get("unit"):
         q = q.filter(ItemMaster.unit == request.args["unit"])
@@ -1427,7 +1431,7 @@ def get_items():
     # 🔃 정렬
     order_by = request.args.get("orderBy", "itemNo")
 
-    if order_by == "createdAtDesc":
+    if order_by == "created_at_desc":
         q = q.order_by(ItemMaster.created_at.desc())
     else:
         order_map = {
@@ -1452,13 +1456,15 @@ def create_item():
     data = request.json
 
     item = ItemMaster(
-        item_no=data["item_no"],
-        item_name=data["item_name"],
-        spec=data.get("spec"),
-        material=data.get("material"),
-        item_type=data.get("item_type"),
-        unit=data.get("unit"),
-    )
+    item_no=data["item_no"],
+    item_name=data["item_name"],
+    spec=data.get("spec"),
+    material=data.get("material"),
+    item_form=data.get("item_form"),
+    item_kind=data.get("item_kind"),
+    unit=data.get("unit"),
+)
+
 
     db.session.add(item)
     db.session.commit()

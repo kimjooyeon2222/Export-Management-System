@@ -17,9 +17,30 @@ import { useState } from "react";
 import { useEffect } from "react";
 
 import { apiFetch } from "api/apiFetch";
+import ItemKindPicker, { ITEM_KIND_LIST } from "components/ItemKindPicker";
 
+export const ITEM_FORM_MAP = {
+  "1": "제품",
+  "2": "반제품",
+  "3": "원자재",
+  "4": "부자재",
+  "5": "소모자재",
+  "6": "경비(임가공비)",   
+  "7": "무상사급품",
+  "8": "가상품",          
+  "9": "관리품",
+  "A": "식자재"
+};
 
 export default function ItemPage() {
+  
+ const [openKindPicker, setOpenKindPicker] = useState(false);
+
+const ITEM_KIND_MAP = Object.fromEntries(
+  ITEM_KIND_LIST.map(v => [v.code, v.name])
+);
+
+
 const handleSave = async () => {
   const API = import.meta.env.VITE_API_URL;
 
@@ -50,7 +71,8 @@ for (const row of targets) {
     item_name: row.item_name,
     spec: row.spec,
     material: row.material,
-    item_type: row.item_type,
+    item_form: row.item_form,   
+    item_kind: row.item_kind, 
     unit: row.unit
   };
 
@@ -91,11 +113,13 @@ for (const row of targets) {
     itemName: "",
     spec: "",
     material: "",
-    itemType: "",
+    itemForm: "",
+    itemKind: "",
     unit: "",
     orderBy: "itemNo",
     limit: 100
   });
+
 
   /* ===================== 검색 ===================== */
   const handleSearchChange = (e) => {
@@ -133,7 +157,8 @@ const handleSearch = async () => {
         item_name: "",
         spec: "",
         material: "",
-        item_type: "",
+  item_form: "",   // ✅
+  item_kind: "",   // ✅
         unit: "EA",
         created_at: "",
         updated_at: ""
@@ -191,6 +216,7 @@ const handleSearch = async () => {
 
   /* ===================== UI ===================== */
   return (
+    
     <Box>
       <Typography variant="h4" gutterBottom>
         품목관리
@@ -268,15 +294,44 @@ const handleSearch = async () => {
           </Grid>
 
           <Grid item xs={3}>
-            <Select fullWidth name="itemType" value={search.itemType} onChange={handleSearchChange} displayEmpty>
-              <MenuItem value="">제품유형(전체)</MenuItem>
-              <MenuItem value="PRODUCT">제품</MenuItem>
-              <MenuItem value="RAW">원자재</MenuItem>
-              <MenuItem value="SUB">부자재</MenuItem>
-              <MenuItem value="CONSUMABLE">소모자재</MenuItem>
-              <MenuItem value="TOOL">공구</MenuItem>
+            <Select fullWidth name="itemForm" value={search.itemForm} onChange={handleSearchChange} displayEmpty>
+                <MenuItem value="">품목형태(전체)</MenuItem>
+                <MenuItem value="1">제품</MenuItem>
+                <MenuItem value="2">반제품</MenuItem>
+                <MenuItem value="3">원자재</MenuItem>
+                <MenuItem value="4">부자재</MenuItem>
+                <MenuItem value="5">소모자재</MenuItem>
+                <MenuItem value="6">경비(임가공비)</MenuItem>
+                <MenuItem value="7">무상사급품</MenuItem>
+                <MenuItem value="8">가상품</MenuItem>
+                <MenuItem value="9">관리품</MenuItem>
+                <MenuItem value="A">식자재</MenuItem>
             </Select>
           </Grid>
+<Grid item xs={3}>
+  <Box>
+  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+
+  <TextField
+    label="품목유형"
+    fullWidth
+    value={ITEM_KIND_MAP[search.itemKind] || ""}
+    placeholder="전체"
+    InputProps={{ readOnly: true }}
+    onClick={() => setOpenKindPicker(true)}
+    sx={{
+      cursor: "pointer",
+      "& .MuiInputBase-input": {
+        cursor: "pointer"
+      }
+    }}
+  />
+
+ 
+  </Box>
+</Box>
+
+</Grid>
 
           <Grid item xs={3}>
             <Select fullWidth name="unit" value={search.unit} onChange={handleSearchChange} displayEmpty>
@@ -293,7 +348,7 @@ const handleSearch = async () => {
               <MenuItem value="itemName">품목명순</MenuItem>
               <MenuItem value="material">재질순</MenuItem>
               <MenuItem value="spec">규격순</MenuItem>
-              <MenuItem value="createdAtDesc">등록일시 역순</MenuItem> 
+              <MenuItem value="created_at_desc">등록일시 역순</MenuItem> 
 
             </Select>
           </Grid>
@@ -319,7 +374,8 @@ const handleSearch = async () => {
               <TableCell align="center" sx={{ fontWeight: "bold", fontSize:"15px"  }}>품목명</TableCell>
               <TableCell align="center" sx={{ fontWeight: "bold", fontSize:"15px"  }}>규격</TableCell>
               <TableCell align="center" sx={{ fontWeight: "bold" , fontSize:"15px" }}>재질</TableCell>
-              <TableCell align="center" sx={{ fontWeight: "bold", fontSize:"15px"  }}>제품유형</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold", fontSize:"15px"  }}>품목형태</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold", fontSize:"15px"  }}>품목유형</TableCell>
               <TableCell align="center" sx={{ fontWeight: "bold" , fontSize:"15px" }}>단위</TableCell>
               <TableCell align="center" sx={{ fontWeight: "bold" , fontSize:"15px" }}>등록일시</TableCell>
               <TableCell align="center" sx={{ fontWeight: "bold", fontSize:"15px"  }}>수정일시</TableCell>
@@ -329,7 +385,7 @@ const handleSearch = async () => {
           <TableBody>
             {rows.length === 0 && (
               <TableRow>
-                <TableCell colSpan={8} align="center">
+                <TableCell colSpan={9} align="center">
                   조회된 데이터가 없습니다.
                 </TableCell>
               </TableRow>
@@ -431,21 +487,40 @@ const handleSearch = async () => {
                 <TableCell align="center"   sx={{ fontWeight: "bold", fontSize:"15px"  }}>
   {editMode && editingRowId === row.tempId ? (
     <Select
-      size="small"
-      value={row.item_type ?? ""}
-      onChange={e =>
-        handleCellChange(row.tempId, "item_type", e.target.value)
-      }
-    >
-      <MenuItem value="PRODUCT">제품</MenuItem>
-      <MenuItem value="RAW">원자재</MenuItem>
-      <MenuItem value="SUB">부자재</MenuItem>
-      <MenuItem value="CONSUMABLE">소모자재</MenuItem>
-      <MenuItem value="TOOL">공구</MenuItem>
-    </Select>
+  size="small"
+  value={row.item_form ?? ""}
+  onChange={e =>
+    handleCellChange(row.tempId, "item_form", e.target.value)
+  }
+>
+  <MenuItem value="1">제품</MenuItem>
+  <MenuItem value="2">반제품</MenuItem>
+  <MenuItem value="3">원자재</MenuItem>
+  <MenuItem value="4">부자재</MenuItem>
+  <MenuItem value="5">소모자재</MenuItem>
+  <MenuItem value="6">경비(임가공비)</MenuItem>
+  <MenuItem value="7">무상사급품</MenuItem>
+  <MenuItem value="8">가상품</MenuItem>
+  <MenuItem value="9">관리품</MenuItem>
+  <MenuItem value="A">식자재</MenuItem>
+</Select>
+
   ) : (
-    row.item_type
+    ITEM_FORM_MAP[row.item_form] || row.item_form
   )}
+</TableCell>
+<TableCell align="center" sx={{ fontWeight: "bold", fontSize:"15px" }}>
+  {editMode && editingRowId === row.tempId ? (
+  <ItemKindPicker
+    value={row.item_kind}
+    onSelect={(selected) =>
+      handleCellChange(row.tempId, "item_kind", selected.code)
+    }
+  />
+) : (
+  ITEM_KIND_MAP[row.item_kind] || row.item_kind
+)}
+
 </TableCell>
 
 
@@ -489,6 +564,21 @@ const handleSearch = async () => {
           </TableBody>
         </Table>
       </Paper>
+        <ItemKindPicker
+  open={openKindPicker}
+  value={search.itemKind}
+  onClose={() => setOpenKindPicker(false)}
+  onSelect={(row) => {
+    setSearch(prev => ({
+      ...prev,
+      itemKind: row.code
+    }));
+    setOpenKindPicker(false);
+  }}
+/>
+
     </Box>
+    
   );
+
 }
