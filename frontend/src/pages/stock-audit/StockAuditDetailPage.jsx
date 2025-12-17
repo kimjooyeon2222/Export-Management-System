@@ -15,8 +15,25 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import { useState } from "react";
 import ItemSearchDialog from "components/dialog/ItemSearchDialog"; 
 import { useParams, useNavigate } from "react-router-dom";
+import UploadFileIcon from "@mui/icons-material/UploadFile";
 
 export default function StockAuditDetailPage() {
+const [editMode, setEditMode] = useState(false);
+const [dirty, setDirty] = useState(false);
+
+ const handleExcelUpload = e => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  console.log("엑셀 업로드 파일:", file.name);
+
+  // TODO (다음 단계)
+  // 1. SheetJS(xlsx)로 파싱
+  // 2. rows 형식으로 변환
+  // 3. setRows(...)
+};
+
+
   const { auditDate } = useParams();
 const navigate = useNavigate();
 
@@ -52,12 +69,13 @@ const navigate = useNavigate();
      값 변경
   =============================== */
   const handleChange = (id, field, value) => {
-    setRows(prev =>
-      prev.map(r =>
-        r.id === id ? { ...r, [field]: value } : r
-      )
-    );
-  };
+  setDirty(true);
+  setRows(prev =>
+    prev.map(r =>
+      r.id === id ? { ...r, [field]: value } : r
+    )
+  );
+};
 
   /* ===============================
      Item 선택 결과 반영
@@ -98,23 +116,101 @@ const navigate = useNavigate();
     mb: 2,
     display: "flex",
     alignItems: "center",
-    gap: 2,        
+    gap: 1
   }}
 >
-  <Button sx={{fontWeight:"bold", fontSize:"15px"}}
+  {/* 뒤로가기 */}
+  <Button
     variant="outlined"
-    onClick={() => navigate(-1)}
+    onClick={() => {
+      if (dirty && editMode) {
+        if (!window.confirm("저장되지 않은 내용이 있습니다. 이동하시겠습니까?")) {
+          return;
+        }
+      }
+      navigate(-1);
+    }}
   >
     ← 뒤로가기
   </Button>
 
-  <Button sx={{fontWeight:"bold", fontSize:"15px"}}
-    variant="contained"
-    onClick={handleAddItem}
-  >
-    + 품목 추가
-  </Button>
+  {/* 가운데 밀기 */}
+  <Box sx={{ flexGrow: 1 }} />
+
+  {/* ===== 조회 모드 ===== */}
+  {!editMode && (
+    <Button
+      variant="outlined"
+      sx={{ fontWeight: "bold" }}
+      onClick={() => setEditMode(true)}
+    >
+      수정
+    </Button>
+  )}
+
+  {/* ===== 수정 모드 ===== */}
+  {editMode && (
+    <>
+      <Button
+        variant="contained"
+        onClick={() => {
+          handleAddItem();
+          setDirty(true);
+        }}
+      >
+        + 품목 추가
+      </Button>
+
+      <Button
+        variant="contained"
+        component="label"
+        startIcon={<UploadFileIcon />}
+      >
+        엑셀 업로드
+        <input
+          type="file"
+          accept=".xlsx,.xls"
+          hidden
+          onChange={e => {
+            handleExcelUpload(e);
+            setDirty(true);
+          }}
+        />
+      </Button>
+
+      <Button
+        variant="contained"
+        color="success"
+        sx={{ fontWeight: "bold" }}
+        onClick={() => {
+          // TODO: 저장 API 연결
+          setEditMode(false);
+          setDirty(false);
+        }}
+      >
+        저장
+      </Button>
+
+      <Button
+        variant="outlined"
+        color="error"
+        onClick={() => {
+          if (
+            !dirty ||
+            window.confirm("저장하지 않고 수정모드를 종료하시겠습니까?")
+          ) {
+            setEditMode(false);
+            setDirty(false);
+          }
+        }}
+      >
+        종료
+      </Button>
+    </>
+  )}
 </Paper>
+
+
 
 
 
@@ -267,7 +363,6 @@ const navigate = useNavigate();
       </Paper>
 
       <Box sx={{ mt: 2, textAlign: "right" }}>
-        <Button sx={{fontWeight:"bold", fontSize:"15px"}} variant="contained">저장</Button>
       </Box>
 
       {/* ===============================

@@ -18,6 +18,7 @@ import dayjs from "dayjs";
 
 export default function StockAuditListPage() {
   const navigate = useNavigate();
+const [editMode, setEditMode] = useState(false);
 
   // 🔥 임시 데이터 (나중에 API로 교체)
   const [rows, setRows] = useState([
@@ -95,46 +96,104 @@ export default function StockAuditListPage() {
       </Typography>
 
       {/* 검색 조건 */}
-      <Paper sx={{ p: 2, mb: 2 }}>
-        <Select 
-          value={year}
-          onChange={e => {
-            setYear(e.target.value);
-            setMonth(""); // 연도 바뀌면 월 초기화
-          }}
-          sx={{ mr: 2, minWidth: 120 ,fontWeight:"bold", fontSize:"15px"}}
-        >
-          {yearOptions.map(y => (
-            <MenuItem key={y} value={y}> 
-              {y}년
-            </MenuItem>
-          ))}
-        </Select>
-
-        <Select
-  value={month}
-  displayEmpty
-  onChange={e => setMonth(e.target.value)}
-  sx={{ minWidth: 100,fontWeight:"bold", fontSize:"15px" }}
+      <Paper
+  sx={{
+    p: 2,
+    mb: 2,
+    display: "flex",
+    alignItems: "center",
+    gap: 1
+  }}
 >
-  <MenuItem value="">전체</MenuItem>
-  {monthOptions.map(m => (
-    <MenuItem key={m} value={m}>
-      {m}월
-    </MenuItem>
-  ))}
-</Select>
+  {/* 연도 */}
+  <Select
+    value={year}
+    onChange={e => {
+      setYear(e.target.value);
+      setMonth("");
+    }}
+    sx={{ minWidth: 120, fontWeight: "bold", fontSize: "15px" }}
+    disabled={editMode}
+  >
+    {yearOptions.map(y => (
+      <MenuItem key={y} value={y}>
+        {y}년
+      </MenuItem>
+    ))}
+  </Select>
+
+  {/* 월 */}
+  <Select
+    value={month}
+    displayEmpty
+    onChange={e => setMonth(e.target.value)}
+    sx={{ minWidth: 100, fontWeight: "bold", fontSize: "15px" }}
+    disabled={editMode}
+  >
+    <MenuItem value="">전체</MenuItem>
+    {monthOptions.map(m => (
+      <MenuItem key={m} value={m}>
+        {m}월
+      </MenuItem>
+    ))}
+  </Select>
+
+  {/* 가운데 밀기 */}
+  <Box sx={{ flexGrow: 1 }} />
+
+  {/* 조회 모드 */}
+  {!editMode && (
+    <Button
+      variant="outlined"
+      sx={{ fontWeight: "bold", fontSize: "15px" }}
+      onClick={() => setEditMode(true)}
+    >
+      수정
+    </Button>
+  )}
+
+  {/* 수정 모드 */}
+  {editMode && (
+    <>
+      <Button
+        variant="contained"
+        sx={{ fontWeight: "bold", fontSize: "15px" }}
+        onClick={handleCreateAudit}
+      >
+        + 신규 재고실사
+      </Button>
+
+      <Button
+        variant="contained"
+        color="success"
+        sx={{ fontWeight: "bold", fontSize: "15px" }}
+        onClick={() => {
+          // TODO: 저장 API
+          setEditMode(false);
+        }}
+      >
+        저장
+      </Button>
+
+      <Button
+        variant="outlined"
+        color="error"
+        sx={{ fontWeight: "bold", fontSize: "15px" }}
+        onClick={() => {
+          if (
+            window.confirm("저장하지 않고 수정모드를 종료하시겠습니까?")
+          ) {
+            setEditMode(false);
+          }
+        }}
+      >
+        종료
+      </Button>
+    </>
+  )}
+</Paper>
 
 
-
-        <Button
-          variant="contained"
-          sx={{ ml: 2,fontWeight:"bold", fontSize:"15px" }}
-          onClick={handleCreateAudit}
-        >
-          + 신규 재고실사
-        </Button>
-      </Paper>
 
       {/* 목록 */}
       <Paper>
