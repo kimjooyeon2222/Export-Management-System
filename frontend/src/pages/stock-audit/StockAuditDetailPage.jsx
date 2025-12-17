@@ -12,26 +12,71 @@ import {
   IconButton
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import ItemSearchDialog from "components/dialog/ItemSearchDialog"; 
 import { useParams, useNavigate } from "react-router-dom";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 
 export default function StockAuditDetailPage() {
+    useEffect(() => {
+  const script = document.createElement("script");
+  script.src =
+    "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+  script.async = true;
+  document.body.appendChild(script);
+  return () => document.body.removeChild(script);
+}, []);
+
 const [editMode, setEditMode] = useState(false);
 const [dirty, setDirty] = useState(false);
 
- const handleExcelUpload = e => {
-  const file = e.target.files[0];
+const handleExcelUpload = (event) => {
+  const file = event.target.files[0];
   if (!file) return;
 
-  console.log("엑셀 업로드 파일:", file.name);
+  const reader = new FileReader();
 
-  // TODO (다음 단계)
-  // 1. SheetJS(xlsx)로 파싱
-  // 2. rows 형식으로 변환
-  // 3. setRows(...)
+  reader.onload = (e) => {
+    try {
+      const XLSX = window.XLSX;
+      if (!XLSX) {
+        alert("⚠️ XLSX 라이브러리가 아직 로드되지 않았습니다.");
+        return;
+      }
+
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: "array" });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const json = XLSX.utils.sheet_to_json(sheet);
+
+      console.log("📊 재고실사 엑셀 데이터:", json);
+
+      const converted = json.map(row => ({
+        id: Date.now() + Math.random(), // 임시 row ID
+        itemNo: row["품번"] || "",
+        itemName: row["품명"] || "",
+        vendorName: row["업체명"] || "",
+        auditQty: Number(row["실사수량"] || 0),
+        defectQty: Number(row["불량"] || 0),
+        shortageQty: Number(row["발청소재"] || 0),
+        optimalQty: Number(row["적정재고"] || 0),
+        boxQty: Number(row["박스입수량"] || 0)
+      }));
+
+      setRows(prev => [...prev, ...converted]);
+      setDirty(true);
+
+      alert(`✅ 엑셀 ${converted.length}건 업로드 완료`);
+    } catch (err) {
+      console.error("❌ 재고실사 엑셀 파싱 오류:", err);
+      alert("엑셀 파일 처리 중 오류가 발생했습니다.");
+    }
+  };
+
+  reader.readAsArrayBuffer(file);
+  event.target.value = "";
 };
+
 
 
   const { auditDate } = useParams();

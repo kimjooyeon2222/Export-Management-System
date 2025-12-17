@@ -31,10 +31,21 @@ export const ITEM_FORM_MAP = {
   "9": "관리품",
   "A": "식자재"
 };
+// constants/unitOptions.js (또는 ItemPage 상단)
+export const UNIT_OPTIONS = [
+  "EA",
+  "KG",
+  "SET",
+  "BOX",
+  "RL",
+  "벌",
+  "통",
+  "리터"
+];
 
 export default function ItemPage() {
   
- const [openKindPicker, setOpenKindPicker] = useState(null);
+const [openKindPicker, setOpenKindPicker] = useState(null);
 
 const ITEM_KIND_MAP = Object.fromEntries(
   ITEM_KIND_LIST.map(v => [v.code, v.name])
@@ -341,12 +352,21 @@ const handleSearch = async () => {
 </Grid>
 
           <Grid item xs={3}>
-            <Select fullWidth name="unit" value={search.unit} onChange={handleSearchChange} displayEmpty>
-              <MenuItem value="">단위(전체)</MenuItem>
-              <MenuItem value="EA">EA</MenuItem>
-              <MenuItem value="KG">KG</MenuItem>
-              <MenuItem value="SET">SET</MenuItem>
-            </Select>
+            <Select
+  fullWidth
+  name="unit"
+  value={search.unit}
+  onChange={handleSearchChange}
+  displayEmpty
+>
+  <MenuItem value="">단위(전체)</MenuItem>
+  {UNIT_OPTIONS.map(u => (
+    <MenuItem key={u} value={u}>
+      {u}
+    </MenuItem>
+  ))}
+</Select>
+
           </Grid>
 
           <Grid item xs={3}>
