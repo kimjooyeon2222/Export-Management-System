@@ -69,6 +69,7 @@ for (const row of targets) {
   const payload = {
     item_no: row.item_no,
     item_name: row.item_name,
+    company_name: row.company_name,
     spec: row.spec,
     material: row.material,
     item_form: row.item_form,   
@@ -111,6 +112,7 @@ for (const row of targets) {
   const [search, setSearch] = useState({
     itemNo: "",
     itemName: "",
+    companyName:"",
     spec: "",
     material: "",
     itemForm: "",
@@ -155,10 +157,11 @@ const handleSearch = async () => {
         tempId: crypto.randomUUID(),
         item_no: "",
         item_name: "",
+        company_name: "",   
         spec: "",
         material: "",
-  item_form: "",   // ✅
-  item_kind: "",   // ✅
+        item_form: "",  
+        item_kind: "",   
         unit: "EA",
         created_at: "",
         updated_at: ""
@@ -278,13 +281,16 @@ const handleSearch = async () => {
       </Box>
 
       {/* ================= 검색 영역 ================= */}
-      <Paper sx={{ p: 2, mb: 2 }}>
+      <Paper   component="form" sx={{ p: 2, mb: 2 }} onSubmit={(e) => {e.preventDefault(); handleSearch(); }}>
          <Grid container spacing={2} justifyContent="center">
           <Grid item xs={3}>
             <TextField label="품목번호" name="itemNo" fullWidth value={search.itemNo} onChange={handleSearchChange} />
           </Grid>
           <Grid item xs={3}>
             <TextField label="품목명" name="itemName" fullWidth value={search.itemName} onChange={handleSearchChange} />
+          </Grid>
+          <Grid item xs={3}>
+            <TextField label="업체명" name="companyName" fullWidth value={search.companyName} onChange={handleSearchChange} />
           </Grid>
           <Grid item xs={3}>
             <TextField label="규격" name="spec" fullWidth value={search.spec} onChange={handleSearchChange} />
@@ -358,7 +364,7 @@ const handleSearch = async () => {
           </Grid>
 
           <Grid item xs={12} textAlign="right">
-            <Button variant="contained" onClick={handleSearch}>
+            <Button variant="contained" type="submit">
               조회
             </Button>
           </Grid>
@@ -372,6 +378,7 @@ const handleSearch = async () => {
             <TableRow>
               <TableCell align="center" sx={{ fontWeight: "bold", fontSize:"15px" }}>품목번호</TableCell>
               <TableCell align="center" sx={{ fontWeight: "bold", fontSize:"15px"  }}>품목명</TableCell>
+             <TableCell align="center"  sx={{ fontWeight: "bold", fontSize:"15px"  }}>업체명</TableCell>
               <TableCell align="center" sx={{ fontWeight: "bold", fontSize:"15px"  }}>규격</TableCell>
               <TableCell align="center" sx={{ fontWeight: "bold" , fontSize:"15px" }}>재질</TableCell>
               <TableCell align="center" sx={{ fontWeight: "bold", fontSize:"15px"  }}>품목형태</TableCell>
@@ -453,6 +460,20 @@ const handleSearch = async () => {
 )}
 
                 </TableCell>
+                <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
+  {editMode && editingRowId === row.tempId ? (
+    <TextField
+      size="small"
+      value={row.company_name || ""}
+      onChange={e =>
+        handleCellChange(row.tempId, "company_name", e.target.value)
+      }
+    />
+  ) : (
+    row.company_name
+  )}
+</TableCell>
+
 
                 <TableCell align="center" sx={{ fontWeight: "bold", fontSize:"15px"  }}>
   {editMode && editingRowId === row.tempId ? (

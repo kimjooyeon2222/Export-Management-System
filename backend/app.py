@@ -1412,6 +1412,9 @@ def get_items():
     if request.args.get("itemName"):
         q = q.filter(ItemMaster.item_name.like(f"%{request.args['itemName']}%"))
 
+    if request.args.get("companyName"):
+        q = q.filter(ItemMaster.company_name.like(f"%{request.args['companyName']}%"))
+
     if request.args.get("spec"):
         q = q.filter(ItemMaster.spec.like(f"%{request.args['spec']}%"))
 
@@ -1458,6 +1461,7 @@ def create_item():
     item = ItemMaster(
     item_no=data["item_no"],
     item_name=data["item_name"],
+    company_name=data.get("company_name"),   
     spec=data.get("spec"),
     material=data.get("material"),
     item_form=data.get("item_form"),

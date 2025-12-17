@@ -513,6 +513,7 @@ class ItemMaster(db.Model):
 
     item_no = db.Column(db.String(50), unique=True, nullable=False)
     item_name = db.Column(db.String(100), nullable=False)
+    company_name = db.Column(db.String(100))  
 
     spec = db.Column(db.String(200))
     material = db.Column(db.String(100))
@@ -535,6 +536,7 @@ class ItemMaster(db.Model):
              "id": self.id,
              "item_no": self.item_no,
              "item_name": self.item_name,
+             "company_name": self.company_name,   
              "spec": self.spec,
               "material": self.material,
              "item_form": self.item_form,

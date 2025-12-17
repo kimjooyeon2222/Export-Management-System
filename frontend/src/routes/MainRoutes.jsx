@@ -10,6 +10,9 @@ const DashboardDefault = Loadable(lazy(() => import('pages/dashboard/default')))
 // render - Item / Stock Audit
 const ItemPage = Loadable(lazy(() => import('pages/item/ItemPage')));
 const StockAuditPage = Loadable(lazy(() => import('pages/stock-audit/StockAuditPage')));
+const StockAuditDetailPage = Loadable(
+  lazy(() => import('pages/stock-audit/StockAuditDetailPage'))
+);
 
 // render - color
 const Color = Loadable(lazy(() => import('pages/component-overview/color')));
@@ -67,7 +70,16 @@ const MainRoutes = {
     },
     {
       path: 'stock-audit',
-      element: <StockAuditPage />
+      children: [
+        {
+         path: '',
+         element: <StockAuditPage />
+        },
+        {
+          path: ':auditDate',
+          element: <StockAuditDetailPage />
+        }
+      ]
     },
     {
       path: 'typography',
