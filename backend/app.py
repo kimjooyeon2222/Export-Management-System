@@ -1,6 +1,7 @@
 print("🔥 app.py 실행됨!")
 from dotenv import load_dotenv
 load_dotenv()
+from sqlalchemy import or_
 
 import os
 from auth_utils import admin_required
@@ -1498,7 +1499,27 @@ def delete_item(id):
     db.session.commit()
     return jsonify({"message": "deleted"})
 
+@app.route("/api/items/search", methods=["GET"])
+@jwt_required()
+def search_items():
+    keyword = request.args.get("keyword", "").strip()
 
+    q = ItemMaster.query
+
+    # 🔥 keyword 있을 때만 OR 검색
+    if keyword:
+        q = q.filter(
+            or_(
+                ItemMaster.item_no.like(f"%{keyword}%"),
+                ItemMaster.item_name.like(f"%{keyword}%"),
+                ItemMaster.company_name.like(f"%{keyword}%")
+            )
+        )
+
+    # 🔥 keyword 없어도 전체 반환
+    rows = q.order_by(ItemMaster.item_no.asc()).limit(200).all()
+
+    return jsonify([r.to_dict() for r in rows])
 
 # ============================================
 # 서버 실행

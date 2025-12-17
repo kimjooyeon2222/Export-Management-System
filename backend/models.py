@@ -511,7 +511,7 @@ class ItemMaster(db.Model):
 
     id = db.Column(db.BigInteger, primary_key=True)
 
-    item_no = db.Column(db.String(50), unique=True, nullable=False)
+    item_no = db.Column(db.String(50), nullable=False)
     item_name = db.Column(db.String(100), nullable=False)
     company_name = db.Column(db.String(100))  
 

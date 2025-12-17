@@ -96,16 +96,16 @@ export default function StockAuditListPage() {
 
       {/* 검색 조건 */}
       <Paper sx={{ p: 2, mb: 2 }}>
-        <Select
+        <Select 
           value={year}
           onChange={e => {
             setYear(e.target.value);
             setMonth(""); // 연도 바뀌면 월 초기화
           }}
-          sx={{ mr: 2, minWidth: 120 }}
+          sx={{ mr: 2, minWidth: 120 ,fontWeight:"bold", fontSize:"15px"}}
         >
           {yearOptions.map(y => (
-            <MenuItem key={y} value={y}>
+            <MenuItem key={y} value={y}> 
               {y}년
             </MenuItem>
           ))}
@@ -115,7 +115,7 @@ export default function StockAuditListPage() {
   value={month}
   displayEmpty
   onChange={e => setMonth(e.target.value)}
-  sx={{ minWidth: 100 }}
+  sx={{ minWidth: 100,fontWeight:"bold", fontSize:"15px" }}
 >
   <MenuItem value="">전체</MenuItem>
   {monthOptions.map(m => (
@@ -129,7 +129,7 @@ export default function StockAuditListPage() {
 
         <Button
           variant="contained"
-          sx={{ ml: 2 }}
+          sx={{ ml: 2,fontWeight:"bold", fontSize:"15px" }}
           onClick={handleCreateAudit}
         >
           + 신규 재고실사
@@ -141,9 +141,9 @@ export default function StockAuditListPage() {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>실사일자</TableCell>
-              <TableCell align="center">품목 수</TableCell>
-              <TableCell align="center">관리</TableCell>
+              <TableCell align="center" sx={{fontWeight:"bold", fontSize:"15px"}}>실사일자</TableCell>
+              <TableCell align="center" sx={{fontWeight:"bold", fontSize:"15px"}}>품목 수</TableCell>
+              <TableCell align="center" sx={{fontWeight:"bold", fontSize:"15px"}}>관리</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -156,10 +156,10 @@ export default function StockAuditListPage() {
             ) : (
               filteredRows.map(row => (
                 <TableRow key={row.id}>
-                  <TableCell>{row.auditDate}</TableCell>
-                  <TableCell align="center">{row.itemCount}</TableCell>
-                  <TableCell align="center">
-                    <Button
+                  <TableCell align="center"  sx={{fontWeight:"bold", fontSize:"15px"}}>{row.auditDate}</TableCell>
+                  <TableCell align="center"  sx={{fontWeight:"bold", fontSize:"15px"}}>{row.itemCount}</TableCell>
+                  <TableCell align="center"  sx={{fontWeight:"bold", fontSize:"15px"}}>
+                    <Button  sx={{fontWeight:"bold", fontSize:"15px"}}
                       size="small"
                       onClick={() =>
                         navigate(`/stock-audit/${row.auditDate}`)

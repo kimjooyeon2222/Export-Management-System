@@ -34,7 +34,7 @@ export const ITEM_FORM_MAP = {
 
 export default function ItemPage() {
   
- const [openKindPicker, setOpenKindPicker] = useState(false);
+ const [openKindPicker, setOpenKindPicker] = useState(null);
 
 const ITEM_KIND_MAP = Object.fromEntries(
   ITEM_KIND_LIST.map(v => [v.code, v.name])
@@ -94,6 +94,7 @@ for (const row of targets) {
 
 
   alert("✅ 저장 완료");
+
   handleSearch();
 };
 
@@ -189,7 +190,7 @@ const handleSearch = async () => {
   }
 
   // 🔥 삭제 실행
-  if (!window.confirm(`${selectedRows.length}개 품목을 삭제할까요?`)) return;
+  if (!window.confirm(`${selectedRows.length}개 품목을 삭제할까요? \n이후 저장 버튼 눌러주셔야 반영됩니다.`)) return;
 
   setRows(prev =>
   prev.map(r =>
@@ -530,19 +531,27 @@ const handleSearch = async () => {
     ITEM_FORM_MAP[row.item_form] || row.item_form
   )}
 </TableCell>
-<TableCell align="center" sx={{ fontWeight: "bold", fontSize:"15px" }}>
+<TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
   {editMode && editingRowId === row.tempId ? (
-  <ItemKindPicker
-    value={row.item_kind}
-    onSelect={(selected) =>
-      handleCellChange(row.tempId, "item_kind", selected.code)
-    }
-  />
-) : (
-  ITEM_KIND_MAP[row.item_kind] || row.item_kind
-)}
-
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+      <TextField
+        size="small"
+        value={ITEM_KIND_MAP[row.item_kind] || ""}
+        InputProps={{ readOnly: true }}
+        onClick={() => {
+          setOpenKindPicker(row.tempId); // 어떤 행인지 저장
+        }}
+        sx={{
+          cursor: "pointer",
+          "& .MuiInputBase-input": { cursor: "pointer" }
+        }}
+      />
+    </Box>
+  ) : (
+    ITEM_KIND_MAP[row.item_kind] || row.item_kind
+  )}
 </TableCell>
+
 
 
                 <TableCell align="center"  sx={{ fontWeight: "bold", fontSize:"15px"  }}>
@@ -586,17 +595,14 @@ const handleSearch = async () => {
         </Table>
       </Paper>
         <ItemKindPicker
-  open={openKindPicker}
-  value={search.itemKind}
-  onClose={() => setOpenKindPicker(false)}
-  onSelect={(row) => {
-    setSearch(prev => ({
-      ...prev,
-      itemKind: row.code
-    }));
-    setOpenKindPicker(false);
+  open={Boolean(openKindPicker)}
+  onClose={() => setOpenKindPicker(null)}
+  onSelect={(selected) => {
+    handleCellChange(openKindPicker, "item_kind", selected.code);
+    setOpenKindPicker(null);
   }}
 />
+
 
     </Box>
     
