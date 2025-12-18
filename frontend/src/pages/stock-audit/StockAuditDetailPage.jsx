@@ -326,7 +326,9 @@ export default function StockAuditDetailPage() {
                             <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>발청소재</TableCell>
                             <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>적정재고</TableCell>
                             <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>박스입수량</TableCell>
-                            <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>삭제</TableCell>
+                            {editMode && (                     
+                                <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>삭제</TableCell>
+                            )}
                         </TableRow>
                     </TableHead>
 
@@ -341,122 +343,175 @@ export default function StockAuditDetailPage() {
                             rows.map(row => (
                                 <TableRow key={row.id ?? row.tempId}>
                                     {/* 품번 */}
-                                    <TableCell align="center" onClick={() => {
-                                        setTargetRowId(row.id ?? row.tempId);
-
-                                        setDialogOpen(true);
-                                    }}>
-                                        <TextField
-                                            size="small"
-                                            value={row.itemNo}
-                                            placeholder="품번 선택"
-                                            InputProps={{ readOnly: true }}
-                                            inputProps={{ style: { textAlign: "center", cursor: "pointer" } }}
-                                        />
+                                    <TableCell
+                                        align="center"
+                                        onClick={() => {
+                                            if (!editMode) return;
+                                            setTargetRowId(row.id ?? row.tempId);
+                                            setDialogOpen(true);
+                                        }}
+                                    >
+                                        {editMode ? (
+                                            <TextField
+                                                size="small"
+                                                value={row.itemNo}
+                                                placeholder="품번 선택"
+                                                InputProps={{ readOnly: true }}
+                                                inputProps={{ style: { textAlign: "center", cursor: "pointer" ,fontSize:"15px"} }}
+                                            />
+                                        ) : (
+                                            <Typography sx={{ fontSize: "15px", fontWeight: "bold" }}>{row.itemNo || "-"}</Typography>
+                                        )}
                                     </TableCell>
+
 
                                     {/* 품명 */}
-                                    <TableCell align="center" onClick={() => {
-                                        setTargetRowId(row.id ?? row.tempId);
-
-                                        setDialogOpen(true);
-                                    }}>
-                                        <TextField
-                                            size="small"
-                                            value={row.itemName}
-                                            placeholder="품명"
-                                            InputProps={{ readOnly: true }}
-                                            inputProps={{ style: { textAlign: "center", cursor: "pointer" } }}
-                                        />
+                                    <TableCell
+                                        align="center"
+                                        onClick={() => {
+                                            if (!editMode) return;
+                                            setTargetRowId(row.id ?? row.tempId);
+                                            setDialogOpen(true);
+                                        }}
+                                    >
+                                        {editMode ? (
+                                            <TextField
+                                                size="small"
+                                                value={row.itemName}
+                                                placeholder="품명 선택"
+                                                InputProps={{ readOnly: true }}
+                                                inputProps={{ style: { textAlign: "center", cursor: "pointer" } }}
+                                            />
+                                        ) : (
+                                            <Typography>{row.itemName || "-"}</Typography>
+                                        )}
                                     </TableCell>
+
 
                                     {/* 업체명 */}
-                                    <TableCell align="center" onClick={() => {
-                                        setTargetRowId(row.id ?? row.tempId);
-                                        setDialogOpen(true);
-                                    }}>
-                                        <TextField
-                                            size="small"
-                                            value={row.vendorName}
-                                            placeholder="업체명"
-                                            InputProps={{ readOnly: true }}
-                                            inputProps={{ style: { textAlign: "center", cursor: "pointer" } }}
-                                        />
+                                    <TableCell
+                                        align="center"
+                                        onClick={() => {
+                                            if (!editMode) return;
+                                            setTargetRowId(row.id ?? row.tempId);
+                                            setDialogOpen(true);
+                                        }}
+                                    >
+                                        {editMode ? (
+                                            <TextField
+                                                size="small"
+                                                value={row.vendorName}
+                                                placeholder="업체명 선택"
+                                                InputProps={{ readOnly: true }}
+                                                inputProps={{ style: { textAlign: "center", cursor: "pointer" } }}
+                                            />
+                                        ) : (
+                                            <Typography>{row.vendorName || "-"}</Typography>
+                                        )}
                                     </TableCell>
+
 
                                     {/* 실사수량 */}
                                     <TableCell align="center">
-                                        <TextField
-                                            size="small"
-                                            type="number"
-                                            value={row.auditQty}
-                                            onChange={e =>
-                                                handleChange(row.id ?? row.tempId, "auditQty", Number(e.target.value))
-                                            }
-                                            inputProps={{ style: { textAlign: "center" } }}
-                                        />
+                                        {editMode ? (
+                                            <TextField
+                                                size="small"
+                                                type="number"
+                                                value={row.auditQty}
+                                                onChange={e =>
+                                                    handleChange(row.id ?? row.tempId, "auditQty", Number(e.target.value))
+                                                }
+                                                inputProps={{ style: { textAlign: "center" } }}
+                                            />
+                                        ) : (
+                                            <Typography>{row.auditQty}</Typography>
+                                        )}
                                     </TableCell>
+
 
                                     {/* 불량 */}
                                     <TableCell align="center">
-                                        <TextField
-                                            size="small"
-                                            type="number"
-                                            value={row.defectQty}
-                                            onChange={e =>
-                                                handleChange(row.id ?? row.tempId, "defectQty", Number(e.target.value))
-                                            }
-                                            inputProps={{ style: { textAlign: "center" } }}
-                                        />
+                                        {editMode ? (
+                                            <TextField
+                                                size="small"
+                                                type="number"
+                                                value={row.defectQty}
+                                                onChange={e =>
+                                                    handleChange(row.id ?? row.tempId, "defectQty", Number(e.target.value))
+                                                }
+                                                inputProps={{ style: { textAlign: "center" } }}
+                                            />
+                                        ) : (
+                                            <Typography>{row.defectQty}</Typography>
+                                        )}
                                     </TableCell>
+
 
                                     {/* 발청소재 */}
                                     <TableCell align="center">
-                                        <TextField
-                                            size="small"
-                                            type="number"
-                                            value={row.shortageQty}
-                                            onChange={e =>
-                                                handleChange(row.id ?? row.tempId, "shortageQty", Number(e.target.value))
-                                            }
-                                            inputProps={{ style: { textAlign: "center" } }}
-                                        />
+                                        {editMode ? (
+                                            <TextField
+                                                size="small"
+                                                type="number"
+                                                value={row.shortageQty}
+                                                onChange={e =>
+                                                    handleChange(row.id ?? row.tempId, "shortageQty", Number(e.target.value))
+                                                }
+                                                inputProps={{ style: { textAlign: "center" } }}
+                                            />
+                                        ) : (
+                                            <Typography>{row.shortageQty}</Typography>
+                                        )}
                                     </TableCell>
+
 
                                     {/* 적정재고 */}
                                     <TableCell align="center">
-                                        <TextField
-                                            size="small"
-                                            type="number"
-                                            value={row.optimalQty}
-                                            onChange={e =>
-                                                handleChange(row.id ?? row.tempId, "optimalQty", Number(e.target.value))
-                                            }
-                                            inputProps={{ style: { textAlign: "center" } }}
-                                        />
+                                        {editMode ? (
+                                            <TextField
+                                                size="small"
+                                                type="number"
+                                                value={row.optimalQty}
+                                                onChange={e =>
+                                                    handleChange(row.id ?? row.tempId, "optimalQty", Number(e.target.value))
+                                                }
+                                                inputProps={{ style: { textAlign: "center" } }}
+                                            />
+                                        ) : (
+                                            <Typography>{row.optimalQty}</Typography>
+                                        )}
                                     </TableCell>
+
 
 
                                     {/* 박스 입수량 */}
                                     <TableCell align="center">
-                                        <TextField
-                                            size="small"
-                                            type="number"
-                                            value={row.boxQty}
-                                            onChange={e =>
-                                                handleChange(row.id ?? row.tempId, "boxQty", Number(e.target.value))
-                                            }
-                                            inputProps={{ style: { textAlign: "center" } }}
-                                        />
+                                        {editMode ? (
+                                            <TextField
+                                                size="small"
+                                                type="number"
+                                                value={row.boxQty}
+                                                onChange={e =>
+                                                    handleChange(row.id ?? row.tempId, "boxQty", Number(e.target.value))
+                                                }
+                                                inputProps={{ style: { textAlign: "center" } }}
+                                            />
+                                        ) : (
+                                            <Typography>{row.boxQty}</Typography>
+                                        )}
                                     </TableCell>
+
 
 
                                     {/* 삭제 */}
                                     <TableCell align="center">
-                                        <IconButton onClick={() => handleDelete(row.id ?? row.tempId)}>
-                                            <DeleteIcon />
-                                        </IconButton>
+                                        {editMode && (
+                                            <IconButton onClick={() => handleDelete(row.id ?? row.tempId)}>
+                                                <DeleteIcon />
+                                            </IconButton>
+                                        )}
                                     </TableCell>
+
                                 </TableRow>
                             ))
                         )}
