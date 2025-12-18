@@ -15,6 +15,7 @@ from models import OilItemList
 from models import EvInventory, EvSchedule, EvSetting
 from models import POManagement, POSetting
 from models import POSubRow 
+from models import StockAudit, StockAuditItem
 
 from models import DashboardMemo
 
@@ -1520,6 +1521,101 @@ def search_items():
     rows = q.order_by(ItemMaster.item_no.asc()).limit(200).all()
 
     return jsonify([r.to_dict() for r in rows])
+
+
+@app.route("/api/stock-audits", methods=["GET"])
+@jwt_required()
+def get_stock_audits():
+    rows = StockAudit.query.order_by(StockAudit.audit_date.desc()).all()
+    return jsonify([r.to_dict() for r in rows])
+
+@app.route("/api/stock-audits", methods=["POST"])
+@jwt_required()
+@admin_required
+def create_stock_audit():
+    data = request.json
+    audit_date = datetime.strptime(data["audit_date"], "%Y-%m-%d").date()
+
+    # 중복 방지
+    exists = StockAudit.query.filter_by(audit_date=audit_date).first()
+    if exists:
+        return jsonify({"error": "이미 존재하는 실사 날짜입니다."}), 400
+
+    audit = StockAudit(
+        audit_date=audit_date,
+        audit_year=audit_date.year,
+        audit_month=audit_date.month
+    )
+
+    db.session.add(audit)
+    db.session.commit()
+
+    return jsonify(audit.to_dict()), 201
+
+@app.route("/api/stock-audits/<int:audit_id>", methods=["GET"])
+@jwt_required()
+def get_stock_audit_detail(audit_id):
+    audit = StockAudit.query.get_or_404(audit_id)
+
+    return jsonify({
+        **audit.to_dict(),
+        "items": [i.to_dict() for i in audit.items]
+    })
+
+@app.route("/api/stock-audit-items/bulk", methods=["POST"])
+@jwt_required()
+@admin_required
+def save_stock_audit_items():
+    data = request.json
+    audit_id = data["audit_id"]
+    items = data["items"]
+
+    audit = StockAudit.query.get_or_404(audit_id)
+
+    for item in items:
+        if item.get("id"):
+            row = StockAuditItem.query.get(item["id"])
+        else:
+            row = StockAuditItem.query.filter_by(
+                audit_id=audit_id,
+                item_no=item["item_no"],
+                company_name=item.get("company_name")
+            ).first()
+
+        if not row:
+            row = StockAuditItem(
+                audit_id=audit_id,
+                item_no=item["item_no"],
+                company_name=item.get("company_name")
+            )
+
+        row.item_name = item.get("item_name")
+        row.audit_qty = item.get("audit_qty", 0)
+        row.defect_qty = item.get("defect_qty", 0)
+        row.shortage_qty = item.get("shortage_qty", 0)
+        row.optimal_qty = item.get("optimal_qty", 0)
+        row.box_qty = item.get("box_qty", 0)
+
+        db.session.add(row)
+
+    # 🔥 품목 수 자동 업데이트
+    audit.item_count = StockAuditItem.query.filter_by(
+        audit_id=audit_id
+    ).count()
+
+    db.session.commit()
+    return jsonify({"message": "saved"})
+
+
+@app.route("/api/stock-audits/<int:id>", methods=["DELETE"])
+@jwt_required()
+@admin_required
+def delete_stock_audit(id):
+    audit = StockAudit.query.get_or_404(id)
+    db.session.delete(audit)
+    db.session.commit()
+    return jsonify({"message": "deleted"})
+
 
 # ============================================
 # 서버 실행

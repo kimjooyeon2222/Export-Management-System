@@ -76,7 +76,7 @@ const MainRoutes = {
          element: <StockAuditPage />
         },
         {
-          path: ':auditDate',
+          path: ':auditId',
           element: <StockAuditDetailPage />
         }
       ]

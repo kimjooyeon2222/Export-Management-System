@@ -545,3 +545,87 @@ class ItemMaster(db.Model):
               "created_at": self.created_at.strftime("%Y-%m-%d %H:%M:%S") if self.created_at else "",
              "updated_at": self.updated_at.strftime("%Y-%m-%d %H:%M:%S") if self.updated_at else ""
          }
+# ===========================================
+# 📦 STOCK AUDIT (재고실사 헤더)
+# ===========================================
+class StockAudit(db.Model):
+    __tablename__ = "stock_audit"
+
+    id = db.Column(db.BigInteger, primary_key=True)
+
+    audit_date = db.Column(db.Date, nullable=False, unique=True)
+    audit_year = db.Column(db.Integer, nullable=False)
+    audit_month = db.Column(db.Integer, nullable=False)
+
+    item_count = db.Column(db.Integer, default=0)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )
+
+    # 🔥 실사 삭제 시 상세 자동 삭제
+    items = db.relationship(
+        "StockAuditItem",
+        backref="audit",
+        cascade="all, delete-orphan",
+        passive_deletes=True
+    )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "audit_date": self.audit_date.strftime("%Y-%m-%d"),
+            "audit_year": self.audit_year,
+            "audit_month": self.audit_month,
+            "item_count": self.item_count,
+        }
+
+# ===========================================
+# 📦 STOCK AUDIT ITEM (재고실사 상세)
+# ===========================================
+class StockAuditItem(db.Model):
+    __tablename__ = "stock_audit_item"
+
+    id = db.Column(db.BigInteger, primary_key=True)
+
+    audit_id = db.Column(
+        db.BigInteger,
+        db.ForeignKey("stock_audit.id", ondelete="CASCADE"),
+        nullable=False
+    )
+
+    item_no = db.Column(db.String(50), nullable=False)
+    item_name = db.Column(db.String(200))
+    company_name = db.Column(db.String(200))
+
+    audit_qty = db.Column(db.Integer, default=0)
+    defect_qty = db.Column(db.Integer, default=0)
+    shortage_qty = db.Column(db.Integer, default=0)
+    optimal_qty = db.Column(db.Integer, default=0)
+    box_qty = db.Column(db.Integer, default=0)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    __table_args__ = (
+        db.UniqueConstraint(
+            "audit_id", "item_no", "company_name",
+            name="uk_audit_item_vendor"
+        ),
+    )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "audit_id": self.audit_id,
+            "item_no": self.item_no,
+            "item_name": self.item_name,
+            "company_name": self.company_name,
+            "audit_qty": self.audit_qty,
+            "defect_qty": self.defect_qty,
+            "shortage_qty": self.shortage_qty,
+            "optimal_qty": self.optimal_qty,
+            "box_qty": self.box_qty,
+        }
