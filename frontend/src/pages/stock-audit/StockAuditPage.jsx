@@ -23,6 +23,30 @@ export default function StockAuditListPage() {
 
   const [rows, setRows] = useState([]);
 
+  const handleDeleteAudit = async (id) => {
+    if (!window.confirm("해당 재고실사를 삭제하시겠습니까?")) return;
+
+    try {
+      const res = await apiFetch(
+        `${import.meta.env.VITE_API_URL}/api/stock-audits/${id}`,
+        { method: "DELETE" }
+      );
+
+      if (!res.ok) {
+        const err = await res.json();
+        alert(err.error || "삭제 실패");
+        return;
+      }
+
+      // ✅ 화면에서 즉시 제거
+      setRows(prev => prev.filter(r => r.id !== id));
+    } catch (e) {
+      console.error(e);
+      alert("재고실사 삭제 중 오류 발생");
+    }
+  };
+
+
   useEffect(() => {
     apiFetch(`${import.meta.env.VITE_API_URL}/api/stock-audits`)
       .then(res => res.json())
@@ -260,16 +284,32 @@ export default function StockAuditListPage() {
                 <TableRow key={row.id}>
                   <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>{row.auditDate}</TableCell>
                   <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>{row.itemCount}</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
-                    <Button sx={{ fontWeight: "bold", fontSize: "15px" }}
-                      size="small"
-                      onClick={() =>
-                        navigate(`/stock-audit/${row.id}`)
-                      }
-                    >
-                      열기
-                    </Button>
+                  <TableCell
+                    align="center"
+                    sx={{ fontWeight: "bold", fontSize: "15px" }}
+                  >
+                    {!editMode && (
+                      <Button
+                        sx={{ fontWeight: "bold", fontSize: "15px" }}
+                        size="small"
+                        onClick={() => navigate(`/stock-audit/${row.id}`)}
+                      >
+                        열기
+                      </Button>
+                    )}
+
+                    {editMode && (
+                      <Button
+                        sx={{ fontWeight: "bold", fontSize: "15px" }}
+                        size="small"
+                        color="error"
+                        onClick={() => handleDeleteAudit(row.id)}
+                      >
+                        삭제
+                      </Button>
+                    )}
                   </TableCell>
+
                 </TableRow>
               ))
             )}
