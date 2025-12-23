@@ -366,7 +366,7 @@ console.log("🔥 URL inv:", JSON.stringify(inv));
         <Table size="small" stickyHeader>
           <TableHead sx={{ bgcolor: "#fff3cd" }}>
             <TableRow>
-              {["PO번호", "거래처", "품번", "품명", "규격", "수량(EA)","UNIT"].map((col) => (
+              {["PO번호", "거래처", "품번", "품명", "규격", "수량","UNIT"].map((col) => (
                 <TableCell key={col} align="center" sx={{ fontWeight: "bold" }}>
                   {col}
                 </TableCell>
