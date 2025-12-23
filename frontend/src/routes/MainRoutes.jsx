@@ -14,6 +14,11 @@ const StockAuditDetailPage = Loadable(
   lazy(() => import('pages/stock-audit/StockAuditDetailPage'))
 );
 
+const ForgingListPage = Loadable(
+  lazy(() => import('pages/forging/ForgingListPage'))
+);
+
+
 // render - color
 const Color = Loadable(lazy(() => import('pages/component-overview/color')));
 const Typography = Loadable(lazy(() => import('pages/component-overview/typography')));
@@ -24,7 +29,7 @@ const SamplePage = Loadable(lazy(() => import('pages/extra-pages/sample-page')))
 
 // render - Invoice Page, Packing List (추가)
 const InvoicePage = Loadable(lazy(() => import('pages/invoice/InvoicePage')));
-const PackingList = Loadable(lazy(() => import('pages/invoice/PackingList'))); 
+const PackingList = Loadable(lazy(() => import('pages/invoice/PackingList')));
 const ForgingPage = Loadable(lazy(() => import('pages/forging/ForgingPage')));
 const OilShipmentSchedule = Loadable(
   lazy(() => import('pages/OilShipment/OilShipmentSchedule'))
@@ -43,11 +48,11 @@ import RequireAuth from 'sections/auth/RequireAuth';
 
 const MainRoutes = {
   path: '/',
-    element: (
-       <RequireAuth>
+  element: (
+    <RequireAuth>
 
       <DashboardLayout />
-        </RequireAuth>
+    </RequireAuth>
 
   ),
   children: [
@@ -72,8 +77,8 @@ const MainRoutes = {
       path: 'stock-audit',
       children: [
         {
-         path: '',
-         element: <StockAuditPage />
+          path: '',
+          element: <StockAuditPage />
         },
         {
           path: ':auditId',
@@ -98,42 +103,46 @@ const MainRoutes = {
       element: <SamplePage />
     },
     {
-      path: 'invoice', 
+      path: 'invoice',
       element: <InvoicePage />
     },
     {
-      path: 'packing-list/:inv', 
+      path: 'packing-list/:inv',
       element: <PackingList />
     },
     {
-       path: 'forging', element: <ForgingPage /> 
+      path: 'forging',
+      children: [
+        {
+          path: '',
+          element: <ForgingListPage />
+        },
+        {
+          path: ':auditId',
+          element: <ForgingPage />
+        }
+      ]
     },
     {
-       path: 'oil-schedule',
-       element: <OilShipmentSchedule />
+      path: 'oil-schedule',
+      element: <OilShipmentSchedule />
     },
     {
-       path: 'axle-sub',
-       element: <AxleSubPage />
+      path: 'axle-sub',
+      element: <AxleSubPage />
     },
     {
-       path: 'ev-sub',
-       element: <EvSubPage />
+      path: 'ev-sub',
+      element: <EvSubPage />
     },
     {
       path: 'bracket',
       element: <BracketPage />
     },
     {
-       path: 'po-management',
+      path: 'po-management',
       element: <POManagementPage />
     },
-
-
-
-
-
-
   ]
 };
 

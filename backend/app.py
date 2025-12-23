@@ -9,7 +9,7 @@ from flask_jwt_extended import jwt_required
 from models import ItemMaster
 from sqlalchemy import asc
 
-
+from models import ForgingAudit
 from models import OilScheduleRow
 from models import OilItemList
 from models import EvInventory, EvSchedule, EvSetting
@@ -522,13 +522,12 @@ def get_schedule_rows():
     return jsonify([
         {
             "id": r.id,
+            "audit_id": r.audit_id,
             "inv_no": r.inv_no,
             "no": r.no,
             "status": r.status,
             "etd": r.etd,
             "eta": r.eta,
-            "month_depart": r.month_depart,
-            "month_arrive": r.month_arrive,
             "mq4_gear": r.mq4_gear,
             "mq4_pinion": r.mq4_pinion,
             "nx4_gear": r.nx4_gear,
@@ -621,32 +620,32 @@ def save_stock_items():
 @jwt_required()
 @admin_required
 def save_schedule_rows():
-    rows = request.json  # 리스트
+    data = request.json
 
-    # 기존 데이터 삭제
-    ScheduleRow.query.delete()
+    audit_id = data["audit_id"]
+    rows = data["rows"]
 
-    for row in rows:
+    # ⭐ 이 audit 데이터만 삭제
+    ScheduleRow.query.filter_by(audit_id=audit_id).delete()
+
+    for r in rows:
         db_row = ScheduleRow(
-            inv_no=row.get("inv_no"),
-            no=row.get("no"),
-            status=row.get("status"),
-            etd=row.get("etd"),
-            eta=row.get("eta"),
-            month_depart=row.get("month_depart"),
-            month_arrive=row.get("month_arrive"),
-
-            # ⭐ React가 보내는 key랑 맞춰줌
-            mq4_gear = int(row.get("mq4_gear", 0)),
-            mq4_pinion = int(row.get("mq4_pinion", 0)),
-            nx4_gear = int(row.get("nx4_gear", 0)),
-            nx4_pinion = int(row.get("nx4_pinion", 0)),
+            audit_id=audit_id,   # ⭐ 핵심
+            inv_no=r.get("inv_no"),
+            no=r.get("no"),
+            status=r.get("status"),
+            etd=r.get("etd"),
+            eta=r.get("eta"),
+            mq4_gear=int(r.get("mq4_gear") or 0),
+            mq4_pinion=int(r.get("mq4_pinion") or 0),
+            nx4_gear=int(r.get("nx4_gear") or 0),
+            nx4_pinion=int(r.get("nx4_pinion") or 0),
         )
-
         db.session.add(db_row)
 
     db.session.commit()
     return jsonify({"message": "saved"})
+
 
 # oil_schedule_row 전체 불러오기 API
 # GET /api/oil-schedule
@@ -1615,6 +1614,156 @@ def delete_stock_audit(id):
     db.session.delete(audit)
     db.session.commit()
     return jsonify({"message": "deleted"})
+
+
+# ============================================
+# 🔨 FORGING AUDIT LIST (GET)
+# ============================================
+@app.route("/api/forging-audits", methods=["GET"])
+@jwt_required()
+def get_forging_audits():
+    rows = ForgingAudit.query.order_by(
+        ForgingAudit.audit_date.desc()
+    ).all()
+
+    return jsonify([r.to_dict() for r in rows])
+
+# ============================================
+# 🔨 FORGING AUDIT CREATE (POST)
+# ============================================
+@app.route("/api/forging-audits", methods=["POST"])
+@jwt_required()
+@admin_required
+def create_forging_audit():
+    data = request.json
+    audit_date = datetime.strptime(
+        data["audit_date"], "%Y-%m-%d"
+    ).date()
+
+    # 중복 방지
+    exists = ForgingAudit.query.filter_by(
+        audit_date=audit_date
+    ).first()
+    if exists:
+        return jsonify({"error": "이미 존재하는 실사 날짜입니다."}), 400
+
+    audit = ForgingAudit(
+        audit_date=audit_date,
+        audit_year=audit_date.year,
+        audit_month=audit_date.month
+    )
+
+    db.session.add(audit)
+    db.session.commit()
+
+    return jsonify(audit.to_dict()), 201
+
+# ============================================
+# 🔨 FORGING AUDIT DELETE
+# ============================================
+@app.route("/api/forging-audits/<int:id>", methods=["DELETE"])
+@jwt_required()
+@admin_required
+def delete_forging_audit(id):
+    audit = ForgingAudit.query.get_or_404(id)
+    db.session.delete(audit)
+    db.session.commit()
+    return jsonify({"message": "deleted"})
+
+# ============================================
+# 🔨 FORGING AUDIT DETAIL (GET by ID)
+# ============================================
+@app.route("/api/forging-audits/<int:id>", methods=["GET"])
+@jwt_required()
+def get_forging_audit_detail(id):
+    audit = ForgingAudit.query.get_or_404(id)
+    return jsonify(audit.to_dict())
+
+@app.route("/api/forging-audits/<int:audit_id>/detail", methods=["GET"])
+@jwt_required()
+def forging_detail(audit_id):
+    audit = ForgingAudit.query.get_or_404(audit_id)
+
+    rows = ScheduleRow.query.filter_by(audit_id=audit_id).all()
+
+    return jsonify({
+        "audit_date": audit.audit_date.strftime("%Y-%m-%d"),
+        "writer": audit.writer,
+        "target_stock": audit.target_stock,
+        "rows": [
+            {
+                "id": r.id,
+                "inv_no": r.inv_no,
+                "no": r.no,
+                "status": r.status,
+                "etd": r.etd,
+                "eta": r.eta,
+                "mq4_gear": r.mq4_gear,
+                "mq4_pinion": r.mq4_pinion,
+                "nx4_gear": r.nx4_gear,
+                "nx4_pinion": r.nx4_pinion,
+            }
+            for r in rows
+        ]
+    })
+
+
+# ============================================
+# 🔨 FORGING AUDIT UPDATE (PUT)
+# ============================================
+@app.route("/api/forging-audits/<int:id>", methods=["PUT"])
+@jwt_required()
+@admin_required
+def update_forging_audit(id):
+    audit = ForgingAudit.query.get_or_404(id)
+    data = request.json
+
+    audit.writer = data.get("writer")
+    audit.target_stock = data.get("target_stock")
+
+    us_date = data.get("us_date")
+    if us_date:
+        audit.us_date = datetime.strptime(us_date, "%Y-%m-%d").date()
+
+    db.session.commit()
+    return jsonify({"message": "updated"})
+
+# GET /api/forging/inv-item-qty
+@app.route("/api/forging/inv-item-qty", methods=["POST"])
+@jwt_required()
+def get_forging_inv_item_qty():
+    try:
+        data = request.json
+        inv_no = data.get("inv_no")
+        item_code = data.get("item_code")
+        item_name = data.get("item_name")
+
+        print("🔥 qty API input:", inv_no, item_code, item_name)
+
+        if not inv_no or not item_code or not item_name:
+            print("❌ missing param")
+            return jsonify({"qty": 0})
+
+        invoice = Invoice.query.filter_by(inv_no=inv_no).first()
+        if not invoice:
+            print("❌ invoice not found")
+            return jsonify({"qty": 0})
+
+        rows = PackingList.query.filter(
+            PackingList.invoice_id == invoice.id,
+            PackingList.part_no == item_code,
+            PackingList.part_name == item_name
+        ).all()
+
+        print("🔥 qty rows:", [(r.part_no, r.part_name, r.qty) for r in rows])
+
+        total_qty = sum(int(r.qty or 0) for r in rows)
+
+        return jsonify({"qty": total_qty})
+
+    except Exception as e:
+        print("💥 qty API error:", e)
+        return jsonify({"qty": 0})
 
 
 # ============================================
