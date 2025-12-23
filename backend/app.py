@@ -1683,13 +1683,36 @@ def get_forging_audit_detail(id):
 @jwt_required()
 def forging_detail(audit_id):
     audit = ForgingAudit.query.get_or_404(audit_id)
-
     rows = ScheduleRow.query.filter_by(audit_id=audit_id).all()
+
+    # ✅ forging 기준 날짜로 stock_audit 조회
+    stock_items = []
+    if audit.us_date:
+        sa = StockAudit.query.filter_by(
+            audit_date=audit.us_date
+        ).first()
+
+        if sa:
+            stock_items = [
+                {
+                    "item_no": i.item_no,
+                    "item_name": i.item_name,
+                    "audit_qty": i.audit_qty,
+                    "defect_total": (i.defect_qty or 0) + (i.shortage_qty or 0),
+                    "box_qty": i.box_qty
+                }
+                for i in sa.items
+            ]
 
     return jsonify({
         "audit_date": audit.audit_date.strftime("%Y-%m-%d"),
+        "us_date": audit.us_date.strftime("%Y-%m-%d") if audit.us_date else None,
         "writer": audit.writer,
         "target_stock": audit.target_stock,
+
+        # 🔥🔥🔥 추가
+        "items": stock_items,
+
         "rows": [
             {
                 "id": r.id,
@@ -1698,10 +1721,6 @@ def forging_detail(audit_id):
                 "status": r.status,
                 "etd": r.etd,
                 "eta": r.eta,
-                "mq4_gear": r.mq4_gear,
-                "mq4_pinion": r.mq4_pinion,
-                "nx4_gear": r.nx4_gear,
-                "nx4_pinion": r.nx4_pinion,
             }
             for r in rows
         ]
@@ -1765,6 +1784,34 @@ def get_forging_inv_item_qty():
         print("💥 qty API error:", e)
         return jsonify({"qty": 0})
 
+# GET /api/stock-audit/by-date/<audit_date>
+@app.route("/api/stock-audit/by-date/<audit_date>", methods=["GET"])
+@jwt_required()
+def get_stock_audit_by_date(audit_date):
+    try:
+        audit_date_obj = datetime.strptime(audit_date, "%Y-%m-%d").date()
+
+        audit = StockAudit.query.filter_by(
+            audit_date=audit_date_obj
+        ).first()
+
+        if not audit:
+            return jsonify([])   # 실사 없으면 빈 배열
+
+        return jsonify([
+            {
+                "item_no": i.item_no,
+                "item_name": i.item_name,
+                "audit_qty": i.audit_qty,
+                "defect_total": (i.defect_qty or 0) + (i.shortage_qty or 0),
+                "optimal_qty": i.optimal_qty
+            }
+            for i in audit.items
+        ])
+
+    except Exception as e:
+        print("🔥 stock audit fetch error:", e)
+        return jsonify([]), 500
 
 # ============================================
 # 서버 실행

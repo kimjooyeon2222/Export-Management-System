@@ -56,6 +56,38 @@ export default function ForgingPage() {
     return Number(data.qty || 0);
   }
 
+  const applyStockAuditToItems = async (baseItems) => {
+    if (!usDate || !baseItems.length) return baseItems;
+
+    const res = await apiFetch(
+      `${API_BASE}/api/stock-audit/by-date/${usDate}`
+    );
+    const auditItems = await res.json();
+
+    if (!auditItems.length) return baseItems;
+
+    const auditMap = {};
+    auditItems.forEach(a => {
+      auditMap[a.item_no] = a;
+    });
+
+    return baseItems.map(it => {
+      const audit = auditMap[it.itemCode];
+      if (!audit) return it;
+
+      const overStock = Number(audit.audit_qty || 0);
+      const defect = Number(audit.defect_total || 0);
+      const optimalStock = Number(audit.optimal_qty || 0);
+
+      return {
+        ...it,
+        overStock,
+        defect,
+        normalStock: overStock - defect,
+        optimalStock
+      };
+    });
+  };
 
 
   async function loadRowQuantities(inv_no) {
@@ -102,11 +134,15 @@ export default function ForgingPage() {
   );
 
 
+  const scheduleSignature = scheduleItems
+    .map(it => it.itemCode)
+    .join("|");
+
   useEffect(() => {
     if (!scheduleItems.length) return;
     if (!rows.length) return;
 
-    console.log("🔥 품목 변경 → 모든 INV qty 재계산");
+    console.log("🔥 품번 변경 → 모든 INV qty 재계산");
 
     let cancelled = false;
 
@@ -132,27 +168,34 @@ export default function ForgingPage() {
     return () => {
       cancelled = true;
     };
-  }, [scheduleItems.length]);
-
-
+  }, [scheduleSignature]);
 
   const [itemDialogOpen, setItemDialogOpen] = useState(false);
   const [targetItemIndex, setTargetItemIndex] = useState(null);
-  const handleSelectItem = (item) => {
+  const handleSelectItem = async (item) => {
     if (targetItemIndex === null) return;
 
-    setItems(prev =>
-      prev.map((it, idx) =>
-        idx === targetItemIndex
-          ? {
-            ...it,
-            itemCode: item.item_no,
-            itemName: item.item_name,
-            unit: item.box_qty || 0, // 필요 시
-          }
-          : it
-      )
+    const nextItems = items.map((it, idx) =>
+      idx === targetItemIndex
+        ? {
+          ...it,
+          itemCode: item.item_no,
+          itemName: item.item_name,
+          unit: item.box_qty || 0,
+        }
+        : it
     );
+
+    console.log("✅ 선택 직후 nextItems", nextItems);
+    console.log("✅ usDate", usDate);
+
+    setItems(nextItems);
+
+    if (usDate) {
+      const withAudit = await applyStockAuditToItems(nextItems);
+      console.log("✅ 실사 반영 후 items", withAudit);
+      setItems(withAudit);
+    }
   };
 
   const { auditId } = useParams();
@@ -161,8 +204,8 @@ export default function ForgingPage() {
     switch (status) {
       case "초과":
         return {
-          bgcolor: "#fff2cc",     // 🔄 연노랑
-          color: "#7f6000",       // 🔄 갈색
+          bgcolor: "#fff2cc",     //  연노랑
+          color: "#7f6000",       //  갈색
           fontWeight: "bold",
           borderRadius: "6px",
           px: 1.2,
@@ -276,50 +319,56 @@ export default function ForgingPage() {
       );
       const data = await res.json();
 
-      // 🔹 기본 정보
-      setUsDate(data.audit_date || "");
+      // ✅ forging_audit는 "기준 날짜"만 관리
+      setUsDate(data.us_date || "");
       setWriter(data.writer || "");
-      setTargetStock(data.target_stock || 30000);
 
-      // 🔥🔥🔥 핵심 1: 과부족 상태표 품목 복원
-      const loadedItems = (data.items || []).map(it => ({
-        id: uuidv4(),
-        itemCode: it.item_code,
-        itemName: it.item_name,
-        overStock: Number(it.over_stock || 0),
-        defect: Number(it.defect || 0),
-        normalStock:
-          Number(it.over_stock || 0) - Number(it.defect || 0),
-        running: 0,
-        unit: Number(it.unit || 0),
-      }));
 
-      setItems(loadedItems);
+      // ✅ items는 여기서 세팅 ❌
+      setItems([]);
 
-      // 🔹 운송 스케줄
+      // 운송 스케줄만 복원
       const parsedRows = (data.rows || []).map(r => ({
         ...r,
         quantities: r.quantities || {},
         etd: r.etd ? parseKRDate(r.etd) : null,
         eta: r.eta ? parseUSDate(r.eta) : null,
-        status: r.status || ""   // ⭐ 서버값 있으면 쓰고, 없으면 비워둠
+        status: r.status || ""
       }));
 
       setRows(parsedRows);
-
-
     }
 
     if (auditId) loadForgingAuditDetail();
   }, [auditId]);
 
 
-
-
-
-
   const [writer, setWriter] = useState("");
   const [usDate, setUsDate] = useState("");  // YYYY-MM-DD
+  const itemSignature = items
+    .map(it => it.itemCode)
+    .join("|");
+
+
+  useEffect(() => {
+    if (!usDate || !items.length) return;
+
+    console.log("🔥 실사자료 반영 (품번 변경 감지)", usDate, items);
+
+    let cancelled = false;
+
+    (async () => {
+      const withAudit = await applyStockAuditToItems(items);
+      if (!cancelled) {
+        setItems(withAudit);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [usDate, itemSignature]);
+
   const getPeriod = (dateStr) => {
     if (!dateStr) return "";
 
@@ -345,24 +394,14 @@ export default function ForgingPage() {
   };
 
 
-
   /* ===============================
       🔶 상태값
   =============================== */
-  const [targetStock, setTargetStock] = useState(30000);
+  const [targetStock, setTargetStock] = useState(0);
   // 🔹 1) 운항중 합계 자동 계산
 
 
 
-  // 🔹 2) 정상재고 자동 계산 (기존재고 - 불량)
-  const updateNormalStock = () => {
-    setItems(prev =>
-      prev.map(it => ({
-        ...it,
-        normalStock: Number(it.overStock) - Number(it.defect || 0)
-      }))
-    );
-  };
 
 
 
@@ -507,9 +546,7 @@ export default function ForgingPage() {
                 })
               });
 
-
-
-              const cleanRows = rows.map(normalizeRow);
+              const cleanRows = rows
 
               // 3) schedule_rows 저장 ← 여기 핵심!!
               await apiFetch(`${API_BASE}/api/schedule-row/bulk`, {
@@ -718,7 +755,10 @@ export default function ForgingPage() {
               {items.map((it, idx) => {
                 const normal = it.normalStock;
                 const after = it.running + normal;
-                const status = judgeStatus(normal, targetStock);
+                const status = judgeStatus(
+                  normal,
+                  it.optimalStock ?? targetStock
+                );
 
                 return (
                   <TableRow key={idx}
@@ -810,72 +850,21 @@ export default function ForgingPage() {
 
                     {/* 실사자료 수량 */}
                     <TableCell align="center" sx={{ fontWeight: "bold", fontSize: 15 }}>
-                      {editMode ? (
-                        <TextField
-                          type="number"
-                          variant="standard"
-                          value={it.overStock}
-                          onChange={(e) => {
-                            const v = Number(e.target.value);
-
-                            setItems(prev =>
-                              prev.map((p, i) =>
-                                i === idx ? { ...p, overStock: v } : p
-                              )
-                            );
-
-                            updateNormalStock();
-                          }}
-                          sx={{
-                            width: 80,
-                            "& input": {
-                              textAlign: "center",
-                              fontSize: 15,
-                              fontWeight: "bold",
-                              color: "#1155cc"
-                            }
-                          }}
-                        />
-                      ) : (
-                        fmt(it.overStock)
-                      )}
+                      {fmt(it.overStock)}
                     </TableCell>
+
 
                     {/* 불량/발청 소재 */}
                     <TableCell align="center" sx={{ fontWeight: "bold", fontSize: 15 }}>
-                      {editMode ? (
-                        <TextField
-                          type="number"
-                          variant="standard"
-                          value={it.defect}
-                          onChange={(e) => {
-                            const v = Number(e.target.value);
-
-                            setItems(prev =>
-                              prev.map((p, i) =>
-                                i === idx ? { ...p, defect: v } : p
-                              )
-                            );
-
-                            updateNormalStock();
-                          }}
-                          sx={{
-                            width: 80,
-                            "& input": {
-                              textAlign: "center",
-                              fontSize: 15,
-                            }
-                          }}
-                        />
-                      ) : (
-                        fmt(it.defect)
-                      )}
+                      {fmt(it.defect)}
                     </TableCell>
+
 
                     {/* 적정재고 */}
                     <TableCell align="center" sx={{ fontWeight: "bold", fontSize: 15 }}>
-                      {fmt(targetStock)}
+                      {fmt(it.optimalStock ?? targetStock)}
                     </TableCell>
+
 
                     {/* 운항중 */}
                     <TableCell align="center" sx={{ fontWeight: "bold", fontSize: 15 }}>
@@ -1154,7 +1143,6 @@ export default function ForgingPage() {
                 <TableCell align="center">
                   <Typography sx={{ fontWeight: "bold", fontSize: "15px" }}>
                     {row.etd ? formatKRDate(row.etd) : ""}
-
 
                   </Typography>
                 </TableCell>
