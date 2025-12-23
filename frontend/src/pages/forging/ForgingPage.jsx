@@ -102,37 +102,37 @@ export default function ForgingPage() {
   );
 
 
-useEffect(() => {
-  if (!scheduleItems.length) return;
-  if (!rows.length) return;
+  useEffect(() => {
+    if (!scheduleItems.length) return;
+    if (!rows.length) return;
 
-  console.log("🔥 품목 변경 → 모든 INV qty 재계산");
+    console.log("🔥 품목 변경 → 모든 INV qty 재계산");
 
-  let cancelled = false;
+    let cancelled = false;
 
-  (async () => {
-    const updated = await Promise.all(
-      rows.map(async (row) => {
-        if (!row.inv_no) return row;
+    (async () => {
+      const updated = await Promise.all(
+        rows.map(async (row) => {
+          if (!row.inv_no) return row;
 
-        const quantities = await loadRowQuantities(row.inv_no);
+          const quantities = await loadRowQuantities(row.inv_no);
 
-        return {
-          ...row,
-          quantities
-        };
-      })
-    );
+          return {
+            ...row,
+            quantities
+          };
+        })
+      );
 
-    if (!cancelled) {
-      setRows(updated);
-    }
-  })();
+      if (!cancelled) {
+        setRows(updated);
+      }
+    })();
 
-  return () => {
-    cancelled = true;
-  };
-}, [scheduleItems.length]);
+    return () => {
+      cancelled = true;
+    };
+  }, [scheduleItems.length]);
 
 
 
@@ -636,10 +636,22 @@ useEffect(() => {
       {showStockPanel && (
 
         <Paper sx={{ p: 2, mb: 4, border: "2px solid #777" }}>
+
+          {/* ✅ 제목 영역 — 운송 스케줄 현황과 동일 */}
+          <Box sx={{ mb: 2 }}>
+            <Typography sx={{ fontWeight: "bold", fontSize: "18px", mt: 1 }}>
+              ※ 과부족 상태 ※
+            </Typography>
+
+
+          </Box>
+
+          {/* ✅ 버튼 영역 — 운송 스케줄 현황과 완전히 동일 */}
           <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2, mb: 1, gap: 1 }}>
             <Button
               variant="contained"
               color="success"
+
               size="small"
               disabled={!editMode}
               onClick={() =>
@@ -674,51 +686,7 @@ useEffect(() => {
             </Button>
           </Box>
 
-          {/* 🔥 가로 한 줄, 왼쪽 정렬 */}
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: 3,   // ← 제목과 기준 사이 간격
-              mb: 2
-            }}
-          >
-            {/* 왼쪽: 제목 */}
-            <Typography sx={{ fontWeight: "bold", fontSize: "18px" }}>
-              ※ 과부족 상태 ※
-            </Typography>
 
-            {/* 오른쪽: 적정재고 기준 (제목 바로 옆) */}
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <Typography sx={{ fontSize: "15px", fontWeight: "bold", color: "#777" }}>
-                적정재고 기준:
-              </Typography>
-
-
-              {editMode ? (
-                <TextField
-                  type="number"
-                  size="small"
-                  value={targetStock}
-                  onChange={(e) => setTargetStock(Number(e.target.value))}
-                  sx={{
-                    width: 120,
-                    "& input": {
-                      textAlign: "center",
-                      fontWeight: "bold",
-                      color: "#777",
-                    },
-                  }}
-                />
-              ) : (
-                <Typography sx={{ fontSize: "17px", fontWeight: "bold", color: "#777" }}>
-                  {fmt(targetStock)}
-                </Typography>
-              )}
-
-
-            </Box>
-          </Box>
 
 
           <Table size="small">
@@ -1178,7 +1146,7 @@ useEffect(() => {
                     align="center"
                     sx={{ fontWeight: "bold", fontSize: "14px" }}
                   >
-                    {row.quantities?.[it.itemCode] || ""}
+                    {fmt(row.quantities?.[it.itemCode])}
                   </TableCell>
                 ))}
 
