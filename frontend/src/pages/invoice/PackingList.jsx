@@ -195,7 +195,7 @@ console.log("🔥 URL inv:", JSON.stringify(inv));
           part_no: row["품번"] || "",
           part_name: row["품명"] || "",
           spec: row["규격"] || "",
-          qty: Number(row["수량(EA)"] || row["수량"] || 0),
+          qty: Number(row["수량"] || row["수량"] || 0),
           unit: row["UNIT"] || row["Unit"] || row["unit"] || "EA",
           invoice_id: invoiceId,
         }));
