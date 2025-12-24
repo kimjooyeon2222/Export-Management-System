@@ -16,6 +16,7 @@ from models import EvInventory, EvSchedule, EvSetting
 from models import POManagement, POSetting
 from models import POSubRow 
 from models import StockAudit, StockAuditItem
+from models import ForgingItem
 
 from models import DashboardMemo
 
@@ -525,15 +526,6 @@ def get_schedule_rows():
             "audit_id": r.audit_id,
             "inv_no": r.inv_no,
             "no": r.no,
-            "status": r.status,
-            "etd": r.etd,
-            "eta": r.eta,
-            "mq4_gear": r.mq4_gear,
-            "mq4_pinion": r.mq4_pinion,
-            "nx4_gear": r.nx4_gear,
-            "nx4_pinion": r.nx4_pinion,
-            "created_at": r.created_at,
-            "updated_at": r.updated_at,
         }
         for r in rows
     ])
@@ -630,16 +622,9 @@ def save_schedule_rows():
 
     for r in rows:
         db_row = ScheduleRow(
-            audit_id=audit_id,   # ⭐ 핵심
+            audit_id=audit_id,  
             inv_no=r.get("inv_no"),
-            no=r.get("no"),
-            status=r.get("status"),
-            etd=r.get("etd"),
-            eta=r.get("eta"),
-            mq4_gear=int(r.get("mq4_gear") or 0),
-            mq4_pinion=int(r.get("mq4_pinion") or 0),
-            nx4_gear=int(r.get("nx4_gear") or 0),
-            nx4_pinion=int(r.get("nx4_pinion") or 0),
+            no=r.get("no")
         )
         db.session.add(db_row)
 
@@ -1683,44 +1668,29 @@ def get_forging_audit_detail(id):
 @jwt_required()
 def forging_detail(audit_id):
     audit = ForgingAudit.query.get_or_404(audit_id)
+
     rows = ScheduleRow.query.filter_by(audit_id=audit_id).all()
-
-    # ✅ forging 기준 날짜로 stock_audit 조회
-    stock_items = []
-    if audit.us_date:
-        sa = StockAudit.query.filter_by(
-            audit_date=audit.us_date
-        ).first()
-
-        if sa:
-            stock_items = [
-                {
-                    "item_no": i.item_no,
-                    "item_name": i.item_name,
-                    "audit_qty": i.audit_qty,
-                    "defect_total": (i.defect_qty or 0) + (i.shortage_qty or 0),
-                    "box_qty": i.box_qty
-                }
-                for i in sa.items
-            ]
+    forging_items = ForgingItem.query.filter_by(audit_id=audit_id).all()
 
     return jsonify({
         "audit_date": audit.audit_date.strftime("%Y-%m-%d"),
         "us_date": audit.us_date.strftime("%Y-%m-%d") if audit.us_date else None,
         "writer": audit.writer,
-        "target_stock": audit.target_stock,
 
-        # 🔥🔥🔥 추가
-        "items": stock_items,
+        # ✅ forging_item 기준
+        "forging_items": [
+            {
+                "itemCode": i.item_no,
+                "itemName": i.item_name
+            }
+            for i in forging_items
+        ],
 
         "rows": [
             {
                 "id": r.id,
                 "inv_no": r.inv_no,
-                "no": r.no,
-                "status": r.status,
-                "etd": r.etd,
-                "eta": r.eta,
+                "no": r.no
             }
             for r in rows
         ]
@@ -1738,7 +1708,6 @@ def update_forging_audit(id):
     data = request.json
 
     audit.writer = data.get("writer")
-    audit.target_stock = data.get("target_stock")
 
     us_date = data.get("us_date")
     if us_date:
@@ -1812,6 +1781,86 @@ def get_stock_audit_by_date(audit_date):
     except Exception as e:
         print("🔥 stock audit fetch error:", e)
         return jsonify([]), 500
+
+@app.route("/api/forging-items/bulk", methods=["POST"])
+@jwt_required()
+@admin_required
+def save_forging_items():
+    data = request.json
+    audit_id = data["audit_id"]
+    items = data["items"]
+
+    # 기존 품목 삭제
+    ForgingItem.query.filter_by(audit_id=audit_id).delete()
+
+    for it in items:
+        if not it.get("itemCode") or not it.get("itemName"):
+            continue
+
+        db.session.add(ForgingItem(
+            audit_id=audit_id,
+            item_no=it["itemCode"],
+            item_name=it["itemName"]
+        ))
+
+    db.session.commit()
+    return jsonify({"message": "saved"})
+
+
+# ============================================
+# 🔥 FORGING 전용 실사 집계 API (업체명 무시)
+# ============================================
+@app.route("/api/stock-audit/forging/by-date/<audit_date>", methods=["GET"])
+@jwt_required()
+def get_stock_audit_for_forging(audit_date):
+    try:
+        audit_date_obj = datetime.strptime(audit_date, "%Y-%m-%d").date()
+
+        audit = StockAudit.query.filter_by(
+            audit_date=audit_date_obj
+        ).first()
+
+        if not audit:
+            return jsonify([])
+
+        from collections import defaultdict
+
+        result = defaultdict(lambda: {
+            "item_no": "",
+            "audit_qty": 0,
+            "defect_total": 0,
+            "optimal_qty": 0,
+        })
+
+        for i in audit.items:
+            r = result[i.item_no]
+            r["item_no"] = i.item_no
+            r["audit_qty"] += int(i.audit_qty or 0)
+            r["defect_total"] += int((i.defect_qty or 0) + (i.shortage_qty or 0))
+            r["optimal_qty"] = max(r["optimal_qty"], int(i.optimal_qty or 0))
+
+        return jsonify(list(result.values()))
+
+    except Exception as e:
+        print("🔥 forging stock audit error:", e)
+        return jsonify([]), 500
+
+
+# ⭐ INV 단위로 한 번에 qty 다 주는 API
+@app.route("/api/forging/inv-quantities/<inv_no>", methods=["GET"])
+@jwt_required()
+def get_forging_inv_quantities(inv_no):
+    invoice = Invoice.query.filter_by(inv_no=inv_no).first()
+    if not invoice:
+        return jsonify({})
+
+    rows = PackingList.query.filter_by(invoice_id=invoice.id).all()
+
+    qty_map = {}
+    for r in rows:
+        qty_map[r.part_no] = qty_map.get(r.part_no, 0) + int(r.qty or 0)
+
+    return jsonify(qty_map)
 
 # ============================================
 # 서버 실행

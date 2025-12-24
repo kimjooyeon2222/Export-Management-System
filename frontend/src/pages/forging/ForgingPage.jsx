@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -22,6 +22,55 @@ import ItemSearchDialog from "components/dialog/ItemSearchDialog";
 
 
 export default function ForgingPage() {
+  const invoiceCache = useRef({});
+  const qtyCache = useRef({});
+
+
+  async function hydrateRowByInv(row) {
+    if (!row.inv_no) return row;
+
+    // ✅ 이미 계산된 row면 스킵
+    if (row._hydrated) return row;
+
+    try {
+      let data = invoiceCache.current[row.inv_no];
+      if (!data) {
+        const res = await apiFetch(`${API_BASE}/api/invoice/${row.inv_no}`);
+        data = await res.json();
+        invoiceCache.current[row.inv_no] = data;
+      }
+
+      const etdDate = data?.etd ? parseKRDate(data.etd) : null;
+      const etaDate = data?.eta ? parseUSDate(data.eta) : null;
+      const today = todayUS();
+
+      let status = "";
+      if (!etaDate) status = "부산항 미입고";
+      else if (etaDate <= today) status = "입고완료";
+      else if (etdDate && etdDate > today) status = "선적대기중";
+      else status = "운항중";
+
+      let quantities = qtyCache.current[row.inv_no];
+      if (!quantities) {
+        quantities = await loadRowQuantities(row.inv_no);
+        qtyCache.current[row.inv_no] = quantities;
+      }
+
+      return {
+        ...row,
+        status,
+        etd: etdDate,
+        eta: etaDate,
+        month_depart: etdDate ? `${etdDate.getMonth() + 1}월` : "",
+        month_arrive: etaDate ? `${etaDate.getMonth() + 1}월` : "",
+        quantities,
+        _hydrated: true // ⭐ 핵심
+      };
+    } catch (e) {
+      console.error("❌ hydrate 실패:", row.inv_no, e);
+      return row;
+    }
+  }
 
 
 
@@ -60,7 +109,7 @@ export default function ForgingPage() {
     if (!usDate || !baseItems.length) return baseItems;
 
     const res = await apiFetch(
-      `${API_BASE}/api/stock-audit/by-date/${usDate}`
+      `${API_BASE}/api/stock-audit/forging/by-date/${usDate}`
     );
     const auditItems = await res.json();
 
@@ -138,37 +187,7 @@ export default function ForgingPage() {
     .map(it => it.itemCode)
     .join("|");
 
-  useEffect(() => {
-    if (!scheduleItems.length) return;
-    if (!rows.length) return;
 
-    console.log("🔥 품번 변경 → 모든 INV qty 재계산");
-
-    let cancelled = false;
-
-    (async () => {
-      const updated = await Promise.all(
-        rows.map(async (row) => {
-          if (!row.inv_no) return row;
-
-          const quantities = await loadRowQuantities(row.inv_no);
-
-          return {
-            ...row,
-            quantities
-          };
-        })
-      );
-
-      if (!cancelled) {
-        setRows(updated);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [scheduleSignature]);
 
   const [itemDialogOpen, setItemDialogOpen] = useState(false);
   const [targetItemIndex, setTargetItemIndex] = useState(null);
@@ -325,7 +344,20 @@ export default function ForgingPage() {
 
 
       // ✅ items는 여기서 세팅 ❌
-      setItems([]);
+      setItems(
+        (data.forging_items || []).map(it => ({
+          id: uuidv4(),
+          itemCode: it.itemCode,
+          itemName: it.itemName,
+          overStock: 0,
+          defect: 0,
+          normalStock: 0,
+          optimalStock: 0,
+          running: 0,
+          unit: 0,
+        }))
+      );
+
 
       // 운송 스케줄만 복원
       const parsedRows = (data.rows || []).map(r => ({
@@ -397,7 +429,7 @@ export default function ForgingPage() {
   /* ===============================
       🔶 상태값
   =============================== */
-  const [targetStock, setTargetStock] = useState(0);
+
   // 🔹 1) 운항중 합계 자동 계산
 
 
@@ -416,20 +448,32 @@ export default function ForgingPage() {
     return "적정재고미달";
   };
 
-  /* ===============================
-      🔶 엑셀 가감필요횟수 수식 그대로
-  =============================== */
-  const calcAdjust = (d6, d4, unit) => {
-    const diff = (d6 - d4) / unit;
-    if (diff <= 0.7) return -Math.ceil(diff);
-    return -Math.floor(diff);
-  };
 
   /* ===============================
       🔶 운송 스케줄 row
   =============================== */
   const [rows, setRows] = useState([]);
 
+  useEffect(() => {
+    if (!rows.length) return;
+    if (!scheduleItems.length) return; // ⭐ qty 계산 때문에 필요
+
+    let cancelled = false;
+
+    (async () => {
+      const hydrated = await Promise.all(
+        rows.map(r => hydrateRowByInv(r))
+      );
+
+      if (!cancelled) {
+        setRows(hydrated);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [scheduleSignature]);
 
   useEffect(() => {
     if (!rows.length || !items.length) return;
@@ -541,11 +585,17 @@ export default function ForgingPage() {
                 method: "PUT",
                 body: JSON.stringify({
                   writer,
-                  target_stock: targetStock,
                   us_date: formattedUsDate
                 })
               });
-
+              // 2️ forging_item (🔥 추가)
+              await apiFetch(`${API_BASE}/api/forging-items/bulk`, {
+                method: "POST",
+                body: JSON.stringify({
+                  audit_id: auditId,
+                  items: items
+                })
+              });
               const cleanRows = rows
 
               // 3) schedule_rows 저장 ← 여기 핵심!!
@@ -605,7 +655,7 @@ export default function ForgingPage() {
         <TextField
           label="북미 기준 날짜 (YYYY-MM-DD)"
           size="small"
-          placeholder="2025-11-03"
+          placeholder="YYYY-MM-DD"
           value={usDate}
           InputProps={{
             readOnly: !editMode,
@@ -757,7 +807,7 @@ export default function ForgingPage() {
                 const after = it.running + normal;
                 const status = judgeStatus(
                   normal,
-                  it.optimalStock ?? targetStock
+                  it.optimalStock
                 );
 
                 return (
@@ -862,7 +912,7 @@ export default function ForgingPage() {
 
                     {/* 적정재고 */}
                     <TableCell align="center" sx={{ fontWeight: "bold", fontSize: 15 }}>
-                      {fmt(it.optimalStock ?? targetStock)}
+                      {fmt(it.optimalStock)}
                     </TableCell>
 
 
@@ -892,8 +942,6 @@ export default function ForgingPage() {
                 );
               })}
             </TableBody>
-
-
           </Table>
         </Paper>
       )}

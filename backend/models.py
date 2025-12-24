@@ -99,7 +99,6 @@ class ScheduleRow(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
 
-    # ⭐⭐ 추가 (핵심)
     audit_id = db.Column(
         db.BigInteger,
         db.ForeignKey("forging_audit.id", ondelete="CASCADE"),
@@ -108,18 +107,14 @@ class ScheduleRow(db.Model):
 
     inv_no = db.Column(db.String(50))
     no = db.Column(db.String(50))
-    status = db.Column(db.String(50))
-    etd = db.Column(db.String(20))
-    eta = db.Column(db.String(20))
-
-    mq4_gear = db.Column(db.Integer, default=0)
-    mq4_pinion = db.Column(db.Integer, default=0)
-    nx4_gear = db.Column(db.Integer, default=0)
-    nx4_pinion = db.Column(db.Integer, default=0)
-
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )
+
 # ============================================================
 # OIL SCHEDULE ROW (OIL SHIPMENT 전용 스케줄)
 # ============================================================
@@ -649,7 +644,6 @@ class ForgingAudit(db.Model):
     audit_year = db.Column(db.Integer, nullable=False)
     audit_month = db.Column(db.Integer, nullable=False)
 
-    target_stock = db.Column(db.Integer)
     writer = db.Column(db.String(50))
     us_date = db.Column(db.Date)
 
@@ -667,3 +661,24 @@ class ForgingAudit(db.Model):
             "audit_year": self.audit_year,
             "audit_month": self.audit_month,
         }
+# ===========================================
+# 🔨 FORGING ITEM (단조 실사 선택 품목)
+# ===========================================
+class ForgingItem(db.Model):
+    __tablename__ = "forging_item"
+
+    id = db.Column(db.BigInteger, primary_key=True)
+
+    audit_id = db.Column(
+        db.BigInteger,
+        db.ForeignKey("forging_audit.id", ondelete="CASCADE"),
+        nullable=False
+    )
+
+    item_no = db.Column(db.String(50), nullable=False)
+    item_name = db.Column(db.String(200), nullable=False)
+
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow
+    )
