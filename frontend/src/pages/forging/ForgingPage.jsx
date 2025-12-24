@@ -540,7 +540,7 @@ export default function ForgingPage() {
       <Box sx={{ mb: -4 }}>
         <Button
           variant="outlined"
-          onClick={() => navigate("/")}
+          onClick={() => navigate(-1)}
           sx={{
             borderColor: "#0069a6ff",     // 갈색 테두리
             color: "#0056a6ff",           // 텍스트 색
@@ -553,7 +553,7 @@ export default function ForgingPage() {
             },
           }}
         >
-          ← 메인으로
+          ← 뒤로가기
         </Button>
       </Box>
 

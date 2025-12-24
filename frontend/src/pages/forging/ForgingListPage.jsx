@@ -120,6 +120,26 @@ export default function ForgingListPage() {
 
   return (
     <Box sx={{ p: 3 }}>
+      {/* ← 메인으로 버튼 */}
+      <Box sx={{ mb: 4 }}>
+        <Button
+          variant="outlined"
+          onClick={() => navigate("/")}
+          sx={{
+            borderColor: "#0069a6ff",
+            color: "#0056a6ff",
+            backgroundColor: "#ffffff",
+            fontWeight: "bold",
+            "&:hover": {
+              backgroundColor: "#ecfeffff",
+              borderColor: "#0069a6ff",
+              color: "#0085a6ff",
+            },
+          }}
+        >
+          ← 메인으로
+        </Button>
+      </Box>
       <Typography variant="h4" gutterBottom>
         Forging 실사 관리
       </Typography>
@@ -168,7 +188,7 @@ export default function ForgingListPage() {
         <Box sx={{ flexGrow: 1 }} />
 
         {!editMode && (
-          <Button
+          <Button sx={{ fontWeight: "bold", fontSize: "15px" }}
             variant="outlined"
             onClick={() => setEditMode(true)}
           >
@@ -178,14 +198,14 @@ export default function ForgingListPage() {
 
         {editMode && (
           <>
-            <Button
+            <Button sx={{ fontWeight: "bold", fontSize: "15px" }}
               variant="contained"
               onClick={handleCreate}
             >
               + 신규 Forging 실사
             </Button>
 
-            <Button
+            <Button sx={{ fontWeight: "bold", fontSize: "15px" }}
               variant="outlined"
               color="error"
               onClick={() => {
@@ -207,10 +227,10 @@ export default function ForgingListPage() {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell align="center" sx={{ fontWeight: "bold" }}>실사일자</TableCell>
-              <TableCell align="center" sx={{ fontWeight: "bold" }}>연도</TableCell>
-              <TableCell align="center" sx={{ fontWeight: "bold" }}>월</TableCell>
-              <TableCell align="center" sx={{ fontWeight: "bold" }}>관리</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>실사일자</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold" ,fontSize: "15px"}}>연도</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold",fontSize: "15px" }}>월</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>관리</TableCell>
             </TableRow>
           </TableHead>
 
@@ -224,12 +244,12 @@ export default function ForgingListPage() {
             ) : (
               filteredRows.map(row => (
                 <TableRow key={row.id}>
-                  <TableCell align="center">{row.audit_date}</TableCell>
-                  <TableCell align="center">{row.audit_year}</TableCell>
-                  <TableCell align="center">{row.audit_month}</TableCell>
-                  <TableCell align="center">
+                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>{row.audit_date}</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>{row.audit_year}</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>{row.audit_month}</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
                     {!editMode && (
-                      <Button
+                      <Button sx={{ fontWeight: "bold", fontSize: "15px" }}
                         size="small"
                         onClick={() =>
                           navigate(`/forging/${row.id}`)
@@ -240,7 +260,7 @@ export default function ForgingListPage() {
                     )}
 
                     {editMode && (
-                      <Button
+                      <Button sx={{ fontWeight: "bold", fontSize: "15px" }}
                         size="small"
                         color="error"
                         onClick={() => handleDelete(row.id)}
