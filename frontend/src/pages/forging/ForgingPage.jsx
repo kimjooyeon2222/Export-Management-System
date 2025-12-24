@@ -793,7 +793,7 @@ export default function ForgingPage() {
                   <TableCell
                     key={h}
                     align="center"
-                    sx={{ fontWeight: "bold", fontSize: 14 }}
+                    sx={{ fontWeight: "bold", fontSize: 15 }}
                   >
                     {h}
                   </TableCell>
@@ -852,7 +852,7 @@ export default function ForgingPage() {
 
 
                       ) : (
-                        <Typography sx={{ fontWeight: "bold" }}>
+                        <Typography sx={{ fontWeight: "bold", fontSize:"15px" }}>
                           {it.itemCode || "-"}
                         </Typography>
                       )}
@@ -892,7 +892,7 @@ export default function ForgingPage() {
 
 
                       ) : (
-                        <Typography>{it.itemName || "-"}</Typography>
+                        <Typography sx={{ fontWeight: "bold"}}>{it.itemName || "-"}</Typography>
                       )}
                     </TableCell>
 
@@ -1030,25 +1030,25 @@ export default function ForgingPage() {
         <Table size="small" sx={{ mt: 1, borderCollapse: "collapse" }}>
           <TableHead sx={{ bgcolor: "#ffe599", borderTop: "2px solid #000" }}>
             <TableRow>
-              <TableCell align="center">INV#</TableCell>
-              <TableCell align="center">NO</TableCell>
-              <TableCell align="center">운항여부</TableCell>
+              <TableCell align="center" sx={{fontSize:"15px", fontWeight:"bold"}}>INV#</TableCell>
+              <TableCell align="center" sx={{fontSize:"15px", fontWeight:"bold"}}>NO</TableCell>
+              <TableCell align="center" sx={{fontSize:"15px", fontWeight:"bold"}}>운항여부</TableCell>
 
               {/* ⭐ 품목명 헤더 */}
               {scheduleItems.map(it => (
                 <TableCell
                   key={it.itemCode}
                   align="center"
-                  sx={{ fontWeight: "bold", fontSize: "14px" }}
+                  sx={{ fontWeight: "bold", fontSize: "15px" }}
                 >
                   {it.itemName}
                 </TableCell>
               ))}
 
-              <TableCell align="center">ETD</TableCell>
-              <TableCell align="center">ETA</TableCell>
-              <TableCell align="center">선적월</TableCell>
-              <TableCell align="center">도착월</TableCell>
+              <TableCell align="center" sx={{fontSize:"15px", fontWeight:"bold"}}>ETD</TableCell>
+              <TableCell align="center" sx={{fontSize:"15px", fontWeight:"bold"}}>ETA</TableCell>
+              <TableCell align="center" sx={{fontSize:"15px", fontWeight:"bold"}}>선적월</TableCell>
+              <TableCell align="center" sx={{fontSize:"15px", fontWeight:"bold"}}>도착월</TableCell>
             </TableRow>
           </TableHead>
 
@@ -1155,7 +1155,7 @@ export default function ForgingPage() {
                     sx={{
                       width: 70,
                       "& .MuiInputBase-input": {
-                        fontSize: "14px",
+                        fontSize: "15px",
                         fontWeight: "bold",
                         textAlign: "center"   // ⭐ 이 위치가 가장 정확함!
                       }
@@ -1181,7 +1181,7 @@ export default function ForgingPage() {
                   <TableCell
                     key={it.itemCode}
                     align="center"
-                    sx={{ fontWeight: "bold", fontSize: "14px" }}
+                    sx={{ fontWeight: "bold", fontSize: "15px" }}
                   >
                     {fmt(row.quantities?.[it.itemCode])}
                   </TableCell>
@@ -1213,11 +1213,11 @@ export default function ForgingPage() {
 
 
                 {/* 🔹 선적월 & 도착월 */}
-                <TableCell align="center" sx={{ fontWeight: "bold" }}>
+                <TableCell align="center" sx={{ fontWeight: "bold", fontSize:"15px"}}>
                   {row.month_depart}
                 </TableCell>
 
-                <TableCell align="center" sx={{ fontWeight: "bold" }}>
+                <TableCell align="center" sx={{ fontWeight: "bold", fontSize:"15px" }}>
                   {row.month_arrive}
                 </TableCell>
 

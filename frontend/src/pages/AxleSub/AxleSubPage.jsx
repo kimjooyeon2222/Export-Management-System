@@ -493,7 +493,7 @@ const saveAxleData = async () => {
       <Box sx={{ mb: -4 }}>
         <Button
           variant="outlined"
-          onClick={() => navigate("/")}
+          onClick={() => navigate(-1)}
           sx={{
             borderColor: "#0069a6ff",
             color: "#0056a6ff",
@@ -506,7 +506,7 @@ const saveAxleData = async () => {
             },
           }}
         >
-          ← 메인으로
+          ← 뒤로가기
         </Button>
       </Box>
 

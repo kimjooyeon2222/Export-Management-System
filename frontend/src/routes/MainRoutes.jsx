@@ -17,6 +17,9 @@ const StockAuditDetailPage = Loadable(
 const ForgingListPage = Loadable(
   lazy(() => import('pages/forging/ForgingListPage'))
 );
+const AxleListPage = Loadable(
+  lazy(() => import('pages/AxleSub/AxleListPage'))
+);
 
 
 // render - color
@@ -129,8 +132,18 @@ const MainRoutes = {
     },
     {
       path: 'axle-sub',
-      element: <AxleSubPage />
+      children: [
+        {
+          path: '',
+          element: <AxleListPage />
+        },
+        {
+          path: ':auditId',
+          element: <AxleSubPage />
+        }
+      ]
     },
+
     {
       path: 'ev-sub',
       element: <EvSubPage />
