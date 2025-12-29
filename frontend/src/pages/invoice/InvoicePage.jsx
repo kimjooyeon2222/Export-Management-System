@@ -126,7 +126,6 @@ const handleDragEnd = async (event) => {
   // DB 저장
   await apiFetch(`${API_BASE}/api/invoices/sort`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(updatedSort),
   });
 };
@@ -265,7 +264,6 @@ const handleAdd = async () => {
 
   const res = await apiFetch(`${API_BASE}/api/invoices`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(newRow),
   });
 
@@ -284,7 +282,6 @@ const handleAdd = async () => {
     // 2) 서버(DB)에 업데이트 요청
     await apiFetch(`${API_BASE}/api/invoices/${id}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ [field]: value })
     });
   };

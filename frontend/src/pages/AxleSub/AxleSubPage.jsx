@@ -23,9 +23,44 @@ import { useRef } from "react";
 
 export default function AxleSubPage() {
 
+  const getCompanyColor = (company) => {
+    if (!company) return null;
+
+    // ✅ 1) 기존에 정의된 업체면 그대로 사용
+    if (axleCompanyColors[company]) {
+      return axleCompanyColors[company];
+    }
+
+    // ✅ 2) 신규 업체 → 이름 기반 자동 색상 생성
+    let hash = 0;
+    for (let i = 0; i < company.length; i++) {
+      hash = company.charCodeAt(i) + ((hash << 5) - hash);
+    }
+
+    const hue = Math.abs(hash) % 360;
+
+    // 너무 진하지 않게, 엑셀 느낌 유지
+    return `hsl(${hue}, 60%, 78%)`;
+  };
+
   const [scheduleRows, setScheduleRows] = useState([]); // 🔥 운송 스케줄
 
   const [axleRows, setAxleRows] = useState([]);
+  const companyGroups = React.useMemo(() => {
+    const map = new Map();
+
+    axleRows.forEach(r => {
+      if (!r.company) return;
+      if (!map.has(r.company)) {
+        map.set(r.company, []);
+      }
+      map.get(r.company).push(r);
+    });
+
+    return Array.from(map.entries());
+    // [ [companyName, rows[]], ... ]
+  }, [axleRows]);
+
   const axleItemSignature = axleRows
     .map(r => `${r.item_code}|${r.item_name}`)
     .join("|");
@@ -713,6 +748,44 @@ export default function AxleSubPage() {
           </Box>
 
 
+          <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 1, gap: 1 }}>
+            <Button
+              variant="contained"
+              color="success"
+              size="small"
+              disabled={!editMode}
+              onClick={() =>
+                setAxleRows(prev => [
+                  ...prev,
+                  {
+                    id: uuidv4(),        // 프론트용 임시 id
+                    item_code: "",
+                    item_name: "",
+                    company: "",
+                    box_qty: 0,
+                    actual_stock: 0,
+                    target_stock: 0,
+                  }
+                ])
+              }
+            >
+              + 품목추가
+            </Button>
+
+            <Button
+              variant="contained"
+              color="error"
+              size="small"
+              disabled={!editMode}
+              onClick={() =>
+                setAxleRows(prev =>
+                  prev.length > 1 ? prev.slice(0, -1) : prev
+                )
+              }
+            >
+              - 품목삭제
+            </Button>
+          </Box>
 
           <Table size="small" sx={{ "& *": { fontWeight: "bold" } }}>
 
@@ -775,6 +848,7 @@ export default function AxleSubPage() {
                           }}
                         />
                       ) : (
+
                         <Box
                           sx={{
                             display: "inline-block",
@@ -783,14 +857,15 @@ export default function AxleSubPage() {
                             borderRadius: "6px",
                             fontWeight: "bold",
                             fontSize: "15px",
-                            bgcolor: axleCompanyColors[row.company] || "#ddd",
-                            color: getContrastTextColor(axleCompanyColors[row.company]),
+                            bgcolor: getCompanyColor(row.company) || "#ddd",
+                            color: "#000",
                             minWidth: "90px",
                             textAlign: "center",
                           }}
                         >
                           {row.company}
                         </Box>
+
                       )}
                     </TableCell>
 
@@ -994,27 +1069,31 @@ export default function AxleSubPage() {
 
 
           <TableHead>
-
-            {/* 🔥 업체별 대형 헤더 (axleRows 연동) */}
             <TableRow sx={{ bgcolor: "#ffffff !important" }}>
               <TableCell colSpan={4} />
 
-              {axleRows.map(it => (
-                <TableCell
-                  key={it.item_code}
-                  align="center"
-                  sx={{
-                    fontWeight: "bold",
-                    fontSize: "16px",
-                    bgcolor: axleCompanyColors[it.company] || "#ddd",
-                    color: getContrastTextColor(axleCompanyColors[it.company]),
-                    borderBottom: "2px solid #b7b7b7"
-                  }}
-                >
-                  {it.company}
-                </TableCell>
-              ))}
+              {companyGroups.map(([company, rows]) => {
+                const bg = getCompanyColor(company);
+
+                return (
+                  <TableCell
+                    key={company}
+                    align="center"
+                    colSpan={rows.length}   // ⭐ 중요
+                    sx={{
+                      fontWeight: "bold",
+                      fontSize: "16px",
+                      bgcolor: bg || "#ddd",
+                      color: "#000",
+                      borderBottom: "2px solid #b7b7b7"
+                    }}
+                  >
+                    {company}
+                  </TableCell>
+                );
+              })}
             </TableRow>
+
 
 
             {/* 🔥 기존 품명 헤더 — 네가 준 코드 그대로 유지 */}
@@ -1023,11 +1102,18 @@ export default function AxleSubPage() {
               <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>ETD</TableCell>
               <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>ETA</TableCell>
               <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>상태</TableCell>
-              {axleRows.map(it => (
-                <TableCell key={it.item_code} align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>
-                  {it.item_name}
-                </TableCell>
-              ))}
+              {companyGroups.flatMap(([_, rows]) =>
+                rows.map(r => (
+                  <TableCell
+                    key={r.item_code}
+                    align="center"
+                    sx={{ fontSize: "15px", fontWeight: "bold" }}
+                  >
+                    {r.item_name}
+                  </TableCell>
+                ))
+              )}
+
 
             </TableRow>
 
@@ -1114,18 +1200,20 @@ export default function AxleSubPage() {
 
 
                 {/* 수량들 */}
-                {axleRows.map(it => (
-                  <TableCell
-                    key={it.item_code}
-                    align="center"
-                    sx={{ fontSize: "15px", fontWeight: "bold" }}
-                  >
-                    {formatNumber(
-                      row.quantities?.[it.item_code]?.[it.item_name]
-                    )}
-                  </TableCell>
+                {companyGroups.flatMap(([_, rows]) =>
+                  rows.map(it => (
+                    <TableCell
+                      key={it.item_code}
+                      align="center"
+                      sx={{ fontSize: "15px", fontWeight: "bold" }}
+                    >
+                      {formatNumber(
+                        row.quantities?.[it.item_code]?.[it.item_name]
+                      )}
+                    </TableCell>
+                  ))
+                )}
 
-                ))}
 
 
               </TableRow>

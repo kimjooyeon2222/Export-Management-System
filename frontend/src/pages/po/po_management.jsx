@@ -66,14 +66,12 @@ const removeSubRow = (parentId, subId) => {
     // 1) PO rows 저장
     await apiFetch(`${API_BASE}/api/po/bulk`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(poRows),
     });
 
     // 2) 북미 날짜 저장
     await apiFetch(`${API_BASE}/api/po/setting`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ us_date: usDate }),
     });
 

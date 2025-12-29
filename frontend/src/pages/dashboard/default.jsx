@@ -132,7 +132,6 @@ const saveMemo = async () => {
   try {
     await apiFetch(`${API_BASE}/memo`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ 
         text: note,
         user_date: userDate       // ⭐ 날짜 추가
