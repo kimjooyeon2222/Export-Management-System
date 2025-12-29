@@ -627,6 +627,7 @@ export default function ForgingPage() {
 
 
               alert("저장 완료되었습니다!");
+              setEditMode(false);
             } catch (e) {
               console.error(e);
               alert("저장 실패!");
