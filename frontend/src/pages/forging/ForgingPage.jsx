@@ -217,7 +217,25 @@ export default function ForgingPage() {
     }
   };
 
-  const { auditId } = useParams();
+  const { auditId: paramAuditId } = useParams();
+  const [auditId, setAuditId] = useState(paramAuditId || null);
+
+  useEffect(() => {
+    if (auditId) return; // 이미 있으면 스킵
+
+    async function loadLatestAudit() {
+      const res = await apiFetch(
+        `${API_BASE}/api/forging-audits/latest`
+      );
+      const data = await res.json();
+
+      if (data?.id) {
+        setAuditId(data.id);
+      }
+    }
+
+    loadLatestAudit();
+  }, []);
 
   const getForgingJudgeStyle = (status) => {
     switch (status) {
@@ -540,7 +558,7 @@ export default function ForgingPage() {
       <Box sx={{ mb: -4 }}>
         <Button
           variant="outlined"
-          onClick={() => navigate(-1)}
+          onClick={() => navigate("/")}
           sx={{
             borderColor: "#0069a6ff",     // 갈색 테두리
             color: "#0056a6ff",           // 텍스트 색
@@ -553,7 +571,7 @@ export default function ForgingPage() {
             },
           }}
         >
-          ← 뒤로가기
+          ← 메인으로
         </Button>
       </Box>
 
@@ -852,7 +870,7 @@ export default function ForgingPage() {
 
 
                       ) : (
-                        <Typography sx={{ fontWeight: "bold", fontSize:"15px" }}>
+                        <Typography sx={{ fontWeight: "bold", fontSize: "15px" }}>
                           {it.itemCode || "-"}
                         </Typography>
                       )}
@@ -892,7 +910,7 @@ export default function ForgingPage() {
 
 
                       ) : (
-                        <Typography sx={{ fontWeight: "bold"}}>{it.itemName || "-"}</Typography>
+                        <Typography sx={{ fontWeight: "bold" }}>{it.itemName || "-"}</Typography>
                       )}
                     </TableCell>
 
@@ -1030,9 +1048,9 @@ export default function ForgingPage() {
         <Table size="small" sx={{ mt: 1, borderCollapse: "collapse" }}>
           <TableHead sx={{ bgcolor: "#ffe599", borderTop: "2px solid #000" }}>
             <TableRow>
-              <TableCell align="center" sx={{fontSize:"15px", fontWeight:"bold"}}>INV#</TableCell>
-              <TableCell align="center" sx={{fontSize:"15px", fontWeight:"bold"}}>NO</TableCell>
-              <TableCell align="center" sx={{fontSize:"15px", fontWeight:"bold"}}>운항여부</TableCell>
+              <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>INV#</TableCell>
+              <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>NO</TableCell>
+              <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>운항여부</TableCell>
 
               {/* ⭐ 품목명 헤더 */}
               {scheduleItems.map(it => (
@@ -1045,10 +1063,10 @@ export default function ForgingPage() {
                 </TableCell>
               ))}
 
-              <TableCell align="center" sx={{fontSize:"15px", fontWeight:"bold"}}>ETD</TableCell>
-              <TableCell align="center" sx={{fontSize:"15px", fontWeight:"bold"}}>ETA</TableCell>
-              <TableCell align="center" sx={{fontSize:"15px", fontWeight:"bold"}}>선적월</TableCell>
-              <TableCell align="center" sx={{fontSize:"15px", fontWeight:"bold"}}>도착월</TableCell>
+              <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>ETD</TableCell>
+              <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>ETA</TableCell>
+              <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>선적월</TableCell>
+              <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>도착월</TableCell>
             </TableRow>
           </TableHead>
 
@@ -1210,14 +1228,12 @@ export default function ForgingPage() {
                   </Box>
                 </TableCell>
 
-
-
                 {/* 🔹 선적월 & 도착월 */}
-                <TableCell align="center" sx={{ fontWeight: "bold", fontSize:"15px"}}>
+                <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
                   {row.month_depart}
                 </TableCell>
 
-                <TableCell align="center" sx={{ fontWeight: "bold", fontSize:"15px" }}>
+                <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
                   {row.month_arrive}
                 </TableCell>
 

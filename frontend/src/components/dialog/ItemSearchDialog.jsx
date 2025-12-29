@@ -17,34 +17,18 @@ import { useState, useEffect } from "react";
 import { apiFetch } from "api/apiFetch";
 
 export default function ItemSearchDialog({ open, onClose, onSelect }) {
-
   const [keyword, setKeyword] = useState("");
-  const [debouncedKeyword, setDebouncedKeyword] = useState("");
-
-  useEffect(() => {
-    if (!open) return;
-
-    const t = setTimeout(() => {
-      setDebouncedKeyword(keyword.trim());
-    }, 300); // ⭐ 300ms debounce
-
-    return () => clearTimeout(t);
-  }, [keyword, open]);
-
   const [rows, setRows] = useState([]);
   const [selected, setSelected] = useState(null);
 
   useEffect(() => {
     if (!open) return;
-    if (!debouncedKeyword || debouncedKeyword.length < 2) {
-      setRows([]);
-      return;
-    }
 
     const fetchItems = async () => {
       const API = import.meta.env.VITE_API_URL;
-      const url = `${API}/api/items/search?keyword=${encodeURIComponent(debouncedKeyword)}`;
+      
 
+      const url = `${API}/api/items/search?keyword=${encodeURIComponent(keyword)}`;
       console.log("🔥 ItemSearchDialog fetch:", url);
 
       const res = await apiFetch(url);
@@ -53,8 +37,7 @@ export default function ItemSearchDialog({ open, onClose, onSelect }) {
     };
 
     fetchItems();
-  }, [open, debouncedKeyword]);
-
+  }, [open, keyword]);
 
   const handleClose = () => {
     setKeyword("");

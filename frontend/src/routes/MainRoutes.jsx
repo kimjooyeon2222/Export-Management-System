@@ -14,13 +14,6 @@ const StockAuditDetailPage = Loadable(
   lazy(() => import('pages/stock-audit/StockAuditDetailPage'))
 );
 
-const ForgingListPage = Loadable(
-  lazy(() => import('pages/forging/ForgingListPage'))
-);
-const AxleListPage = Loadable(
-  lazy(() => import('pages/AxleSub/AxleListPage'))
-);
-
 
 // render - color
 const Color = Loadable(lazy(() => import('pages/component-overview/color')));
@@ -115,16 +108,7 @@ const MainRoutes = {
     },
     {
       path: 'forging',
-      children: [
-        {
-          path: '',
-          element: <ForgingListPage />
-        },
-        {
-          path: ':auditId',
-          element: <ForgingPage />
-        }
-      ]
+      element: <ForgingPage />
     },
     {
       path: 'oil-schedule',
@@ -132,18 +116,8 @@ const MainRoutes = {
     },
     {
       path: 'axle-sub',
-      children: [
-        {
-          path: '',
-          element: <AxleListPage />
-        },
-        {
-          path: ':auditId',
-          element: <AxleSubPage />
-        }
-      ]
+      element: <AxleSubPage />
     },
-
     {
       path: 'ev-sub',
       element: <EvSubPage />

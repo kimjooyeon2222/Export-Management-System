@@ -1,9 +1,13 @@
 print("🔥 app.py 실행됨!")
 from dotenv import load_dotenv
 load_dotenv()
-from sqlalchemy import or_
 
+from sqlalchemy import or_
 import os
+print("🔥 CWD:", os.getcwd())
+print("🔥 ENV DB_USER:", os.getenv("DB_USER"))
+print("🔥 ENV DB_HOST:", os.getenv("DB_HOST"))
+
 from auth_utils import admin_required
 from flask_jwt_extended import jwt_required
 from models import ItemMaster
@@ -42,10 +46,12 @@ def to_date(value):
 
 
 from sqlalchemy import text
-print("🔥 Flask 실제 연결 DB:", Config.SQLALCHEMY_DATABASE_URI)
+print("🔥 Flask 실제 연결 DB:", Config.get_db_uri())
+
 
 app = Flask(__name__)
 app.config.from_object(Config)
+app.config["SQLALCHEMY_DATABASE_URI"] = Config.get_db_uri()
 
 
 jwt = JWTManager(app)   # ⭐ 이 줄 필수
@@ -85,7 +91,7 @@ def calc_status(etd, eta):
 
 
 @app.route("/")
-@jwt_required()
+
 
 def home():
     return "Flask + MySQL Connected!"
@@ -1863,9 +1869,60 @@ def get_forging_inv_quantities(inv_no):
     return jsonify(qty_map)
 
 # ============================================
+# 🔩 AXLE 전용 실사 집계 API
+# ============================================
+@app.route("/api/stock-audit/axle/by-date/<audit_date>", methods=["GET"])
+@jwt_required()
+def get_stock_audit_for_axle(audit_date):
+    try:
+        audit_date_obj = datetime.strptime(audit_date, "%Y-%m-%d").date()
+
+        audit = StockAudit.query.filter_by(
+            audit_date=audit_date_obj
+        ).first()
+
+        if not audit:
+            return jsonify([])
+
+        result = []
+
+        for i in audit.items:
+            result.append({
+                "item_no": i.item_no,
+                "item_name": i.item_name,
+                "audit_qty": i.audit_qty,
+                "defect_total": (i.defect_qty or 0) + (i.shortage_qty or 0),
+                "optimal_qty": i.optimal_qty,
+                "box_qty": i.box_qty,
+            })
+
+        return jsonify(result)
+
+    except Exception as e:
+        print("🔥 axle stock audit error:", e)
+        return jsonify([]), 500
+
+# GET /api/forging-audits/latest
+@app.route("/api/forging-audits/latest", methods=["GET"])
+@jwt_required()
+def get_latest_forging_audit():
+    audit = (
+        ForgingAudit.query
+        .order_by(ForgingAudit.audit_date.desc())
+        .first()
+    )
+
+    if not audit:
+        return jsonify(None)
+
+    return jsonify(audit.to_dict())
+
+# ============================================
 # 서버 실행
 # ============================================
 if __name__ == "__main__":
-    with app.app_context():
-        db.create_all()
-    app.run(debug=True, port=5001)
+    app.run(
+        host="0.0.0.0",   # ⭐ 핵심
+        port=5001,
+        debug=True
+    )
