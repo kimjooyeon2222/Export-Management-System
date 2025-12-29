@@ -581,7 +581,6 @@ def save_stock_setting():
     if not setting:
         setting = StockSetting()
 
-    setting.target_stock = data.get("target_stock")
     setting.writer = data.get("writer")
 
     us_date_str = data.get("us_date")
@@ -775,7 +774,15 @@ def get_axle_inventory():
         for axle, unit in rows
     ])
 
-
+@app.route("/api/axle/<int:id>", methods=["DELETE"])
+@jwt_required()
+@admin_required
+def delete_axle_item(id):
+    row = AxleInventory.query.get_or_404(id)
+    db.session.delete(row)
+    db.session.commit()
+    return jsonify({"message": "deleted"})
+    
 @app.route("/api/axle/<int:id>", methods=["PUT"])
 @jwt_required()
 @admin_required
@@ -855,7 +862,6 @@ def update_axle_setting():
     if not setting:
         setting = AxleSetting()
 
-    setting.target_stock = data.get("target_stock")
     setting.writer = data.get("writer")
 
     # 날짜는 안전하게 처리
@@ -904,7 +910,7 @@ def update_axle_schedule(id):
     data = request.json
 
     # React에서 보내는 모든 필드 업데이트
-    for key in ["inv_no", "etd", "eta", "plug", "gasket", "dowel_pin", "plate"]:
+    for key in ["inv_no"]:
         if key in data:
             setattr(row, key, data[key])
 
@@ -1933,6 +1939,8 @@ def get_latest_forging_audit():
         return jsonify(None)
 
     return jsonify(audit.to_dict())
+
+
 
 # ============================================
 # 서버 실행

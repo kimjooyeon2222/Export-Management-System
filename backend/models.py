@@ -182,9 +182,7 @@ class AxleInventory(db.Model):
     company = db.Column(db.String(50), nullable=False)
     item_name = db.Column(db.String(100), nullable=False)
     item_code = db.Column(db.String(100), nullable=False)
-    box_qty = db.Column(db.Integer, nullable=False)
 
-    actual_stock = db.Column(db.Integer, default=0)
 
     updated_at = db.Column(db.DateTime, default=datetime.utcnow,
                            onupdate=datetime.utcnow)
@@ -195,9 +193,6 @@ class AxleInventory(db.Model):
             "company": self.company,
             "item_name": self.item_name,
             "item_code": self.item_code,
-            "box_qty": self.box_qty,
-            "actual_stock": self.actual_stock,
-
             "updated_at": self.updated_at,
         }
 

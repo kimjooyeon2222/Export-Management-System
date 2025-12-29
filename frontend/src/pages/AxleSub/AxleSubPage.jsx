@@ -23,6 +23,11 @@ import { useRef } from "react";
 
 export default function AxleSubPage() {
 
+  const [deletedAxleIds, setDeletedAxleIds] = useState([]);
+
+  const [selectedRowIds, setSelectedRowIds] = useState([]);
+
+
   const getCompanyColor = (company) => {
     if (!company) return null;
 
@@ -195,7 +200,7 @@ export default function AxleSubPage() {
     if (!targetRowId) return;
 
     let nextRows = axleRows.map(r =>
-      r.id === targetRowId
+      r.tempId === targetRowId
         ? {
           ...r,
           item_code: item.item_no,
@@ -555,7 +560,14 @@ export default function AxleSubPage() {
         return;
       }
 
-      setAxleRows(data);
+      setAxleRows(
+        data.map(r => ({
+          ...r,
+          tempId: uuidv4(),   // ⭐ 추가
+          _isNew: false
+        }))
+      );
+
     } catch (err) {
       console.error("AXLE 데이터 로드 오류:", err);
       setAxleRows([]);
@@ -575,29 +587,67 @@ export default function AxleSubPage() {
   // ⭐ 저장 함수
   const saveAxleData = async () => {
     try {
-      // 1) AXLE 저장
-      for (let row of axleRows) {
-        const cleanRow = { ...row };
-        delete cleanRow.updated_at;
+      // 0️⃣ AXLE SETTING
+      await apiFetch(`${API_BASE}/api/axle-setting`, {
+        method: "PUT",
+        body: JSON.stringify({
+          writer,
+          us_date: usDate,
+        }),
+      });
 
-        await apiFetch(`${API_BASE}/api/axle/${row.id}`, {
-          method: "PUT",
-          body: JSON.stringify(cleanRow)
+      // 🔥 1️⃣ 삭제 먼저 처리
+      for (const id of deletedAxleIds) {
+        const res = await apiFetch(`${API_BASE}/api/axle/${id}`, {
+          method: "DELETE",
         });
+
+        if (!res.ok) {
+          throw new Error(`AXLE 삭제 실패: ${id}`);
+        }
       }
 
 
-      // 3) 스케줄 Bulk 저장
+      // 🔥 2️⃣ 삭제 목록 초기화
+      setDeletedAxleIds([]);
+
+      // 3️⃣ AXLE 저장 (POST / PUT)
+      for (let row of axleRows) {
+        const cleanRow = { ...row };
+
+        delete cleanRow.box_qty;
+        delete cleanRow.actual_stock;
+        delete cleanRow.target_stock;
+        delete cleanRow.updated_at;
+        delete cleanRow._isNew;
+        delete cleanRow.tempId;
+
+        if (row._isNew) {
+          const res = await apiFetch(`${API_BASE}/api/axle`, {
+            method: "POST",
+            body: JSON.stringify(cleanRow),
+          });
+          const saved = await res.json();
+          row.id = saved.id;
+          row._isNew = false;
+        } else {
+          await apiFetch(`${API_BASE}/api/axle/${row.id}`, {
+            method: "PUT",
+            body: JSON.stringify(cleanRow),
+          });
+        }
+      }
+
+      // 4️⃣ 스케줄 bulk 저장
       await apiFetch(`${API_BASE}/api/axle-schedule/bulk`, {
         method: "POST",
-        body: JSON.stringify(scheduleRows)
+        body: JSON.stringify(scheduleRows),
       });
 
       alert("저장 완료!");
       setEditMode(false);
 
-      // 4) 한 번만 최신 로드 + 최신 값으로 연동
-      const newSchedule = await fetchScheduleData();
+  
 
     } catch (err) {
       console.error("저장 오류:", err);
@@ -606,19 +656,25 @@ export default function AxleSubPage() {
   };
 
 
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await apiFetch(`${API_BASE}/api/axle-setting`);
+        const data = await res.json();
+
+        if (!data) return;
+
+        setWriter(data.writer || "");
+        setUsDate(data.us_date || "");
+      } catch (e) {
+        console.error("axle setting load error", e);
+      }
+    })();
+  }, []);
 
 
 
-  // ===============================
-  // 🔥  테이블 값 변경 핸들러
-  // ===============================
-  const updateCell = (id, field, value) => {
-    setAxleRows(prev =>
-      prev.map(row =>
-        row.id === id ? { ...row, [field]: value } : row
-      )
-    );
-  };
+
 
 
   return (
@@ -758,7 +814,9 @@ export default function AxleSubPage() {
                 setAxleRows(prev => [
                   ...prev,
                   {
-                    id: uuidv4(),        // 프론트용 임시 id
+                    id: null,
+                    tempId: uuidv4(),
+                    _isNew: true,          // ⭐ 신규 플래그
                     item_code: "",
                     item_name: "",
                     company: "",
@@ -777,14 +835,40 @@ export default function AxleSubPage() {
               color="error"
               size="small"
               disabled={!editMode}
-              onClick={() =>
-                setAxleRows(prev =>
-                  prev.length > 1 ? prev.slice(0, -1) : prev
-                )
-              }
+              onClick={() => {
+                // ✅ 아무 것도 선택 안 했을 때
+                if (selectedRowIds.length === 0) {
+                  alert("삭제할 행을 선택해주세요.");
+                  return;
+                }
+
+                setAxleRows(prev => {
+                  const toDelete = prev.filter(r =>
+                    selectedRowIds.includes(r.tempId)
+                  );
+
+                  // 🔥 DB에 있는 행만 삭제 목록에 기록
+                  toDelete.forEach(r => {
+                    if (r.id) {
+                      setDeletedAxleIds(ids => [...ids, r.id]);
+                    }
+                  });
+
+                  // 🔥 선택된 행 전부 제거
+                  return prev.filter(r =>
+                    !selectedRowIds.includes(r.tempId)
+                  );
+                });
+
+                // 선택 초기화
+                setSelectedRowIds([]);
+              }}
+
             >
               - 품목삭제
             </Button>
+
+
           </Box>
 
           <Table size="small" sx={{ "& *": { fontWeight: "bold" } }}>
@@ -816,20 +900,39 @@ export default function AxleSubPage() {
                 return (
 
                   <TableRow
-                    key={row.id}
+                    key={row.id ?? row.tempId}
+                    onClick={() => {
+                      if (!editMode) return;
+
+                      setSelectedRowIds(prev =>
+                        prev.includes(row.tempId)
+                          ? prev.filter(id => id !== row.tempId)   // 이미 선택 → 해제
+                          : [...prev, row.tempId]                  // 미선택 → 추가
+                      );
+                    }}
                     sx={{
-                      backgroundColor: judge === "적정재고미달" ? "#faeeee" : "inherit"
+                      cursor: editMode ? "pointer" : "default",
+                      backgroundColor:
+                        selectedRowIds.includes(row.tempId)
+                          ? "#ddeeff"           // ⭐ 다중 선택 강조
+                          : judge === "적정재고미달"
+                            ? "#faeeee"
+                            : "inherit"
+
                     }}
                   >
 
+
                     <TableCell
                       align="center"
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();          // ⭐ 추가
                         if (!editMode) return;
-                        setTargetRowId(row.id);
+                        setTargetRowId(row.tempId);
                         setItemDialogOpen(true);
                       }}
                     >
+
                       {editMode ? (
                         <TextField
                           size="small"
@@ -871,12 +974,14 @@ export default function AxleSubPage() {
 
                     <TableCell
                       align="center"
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();          // ⭐ 추가
                         if (!editMode) return;
-                        setTargetRowId(row.id);
+                        setTargetRowId(row.tempId);
                         setItemDialogOpen(true);
                       }}
                     >
+
                       {editMode ? (
                         <TextField
                           size="small"
@@ -901,12 +1006,14 @@ export default function AxleSubPage() {
 
                     <TableCell
                       align="center"
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();          // ⭐ 추가
                         if (!editMode) return;
-                        setTargetRowId(row.id);
+                        setTargetRowId(row.tempId);
                         setItemDialogOpen(true);
                       }}
                     >
+
                       {editMode ? (
                         <TextField
                           size="small"
