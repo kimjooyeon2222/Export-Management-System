@@ -995,55 +995,27 @@ export default function AxleSubPage() {
 
           <TableHead>
 
-            {/* 🔥 업체별 대형 헤더 */}
+            {/* 🔥 업체별 대형 헤더 (axleRows 연동) */}
             <TableRow sx={{ bgcolor: "#ffffff !important" }}>
               <TableCell colSpan={4} />
 
-              {/* PLUG + GASKET → 윤영테크 */}
-              <TableCell
-                colSpan={2}
-                align="center"
-                sx={{
-                  fontWeight: "bold",
-                  fontSize: "16px",
-                  bgcolor: "#FFD966",
-                  color: "#000",
-                  borderBottom: "2px solid #b7b7b7"
-                }}
-              >
-                윤영테크
-              </TableCell>
-
-              {/* DOWEL PIN → 대영이엔피 */}
-              <TableCell
-                colSpan={1}
-                align="center"
-                sx={{
-                  fontWeight: "bold",
-                  fontSize: "16px",
-                  bgcolor: "#A9D18E",
-                  color: "#000",
-                  borderBottom: "2px solid #b7b7b7"
-                }}
-              >
-                대영이엔피
-              </TableCell>
-
-              {/* PLATE → 신우신 */}
-              <TableCell
-                colSpan={1}
-                align="center"
-                sx={{
-                  fontWeight: "bold",
-                  fontSize: "16px",
-                  bgcolor: "#9BC2E6",
-                  color: "#000",
-                  borderBottom: "2px solid #b7b7b7"
-                }}
-              >
-                신우신
-              </TableCell>
+              {axleRows.map(it => (
+                <TableCell
+                  key={it.item_code}
+                  align="center"
+                  sx={{
+                    fontWeight: "bold",
+                    fontSize: "16px",
+                    bgcolor: axleCompanyColors[it.company] || "#ddd",
+                    color: getContrastTextColor(axleCompanyColors[it.company]),
+                    borderBottom: "2px solid #b7b7b7"
+                  }}
+                >
+                  {it.company}
+                </TableCell>
+              ))}
             </TableRow>
+
 
             {/* 🔥 기존 품명 헤더 — 네가 준 코드 그대로 유지 */}
             <TableRow sx={{ bgcolor: "#ffe599", borderTop: "2px solid #000" }}>
