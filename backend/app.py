@@ -754,10 +754,27 @@ def save_oil_items():
 
 @app.route("/api/axle", methods=["GET"])
 @jwt_required()
-
 def get_axle_inventory():
-    rows = AxleInventory.query.all()
-    return jsonify([r.to_dict() for r in rows])
+    rows = (
+        db.session.query(
+            AxleInventory,
+            ItemMaster.unit
+        )
+        .outerjoin(
+            ItemMaster,
+            AxleInventory.item_code == ItemMaster.item_no
+        )
+        .all()
+    )
+
+    return jsonify([
+        {
+            **axle.to_dict(),
+            "unit": unit   # ⭐ 여기서 unit 붙임
+        }
+        for axle, unit in rows
+    ])
+
 
 @app.route("/api/axle/<int:id>", methods=["PUT"])
 @jwt_required()

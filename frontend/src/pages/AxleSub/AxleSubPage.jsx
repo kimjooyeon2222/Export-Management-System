@@ -22,16 +22,49 @@ import { useRef } from "react";
 
 
 export default function AxleSubPage() {
+
   const [scheduleRows, setScheduleRows] = useState([]); // 🔥 운송 스케줄
 
   const [axleRows, setAxleRows] = useState([]);
+  const axleItemSignature = axleRows
+    .map(r => `${r.item_code}|${r.item_name}`)
+    .join("|");
+  useEffect(() => {
+    if (!scheduleRows.length || !axleRows.length) return;
+
+    let cancelled = false;
+
+    (async () => {
+      const refreshed = await Promise.all(
+        scheduleRows.map(async (row) => {
+          if (!row.inv_no) return row;
+
+          const quantities = await loadRowQuantities(row.inv_no);
+
+          return {
+            ...row,
+            quantities,        // ⭐ qty 재계산
+            _hydrated: false,  // ⭐ 기존 hydrate 무효화
+          };
+        })
+      );
+
+      if (!cancelled) {
+        setScheduleRows(refreshed);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [axleItemSignature]);
 
   const invoiceCache = useRef({});
   const qtyCache = useRef({});
 
   async function hydrateRowByInv(row) {
     if (!row.inv_no) return row;
-    if (row._hydrated) return row;
+
 
     try {
       let invoice = invoiceCache.current[row.inv_no];
@@ -44,9 +77,8 @@ export default function AxleSubPage() {
       const etdDate = invoice?.etd ? parseKRDate(invoice.etd) : null;
       const etaDate = invoice?.eta ? parseUSDate(invoice.eta) : null;
       const today = todayUS();
-      const cacheKey =
-        `${row.inv_no}|` +
-        axleRows.map(r => `${r.item_code}:${r.item_name}`).join(",");
+      const cacheKey = row.inv_no;
+
 
       let quantities = qtyCache.current[cacheKey];
       if (!quantities) {
@@ -693,7 +725,6 @@ export default function AxleSubPage() {
                 <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>{getKoreanMonthLabel(usDate)}</TableCell>
                 <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>적정재고</TableCell>
                 <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>운항중</TableCell>
-
                 <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>운항중 + 실사자료</TableCell>
                 <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>판단결과</TableCell>
               </TableRow>
