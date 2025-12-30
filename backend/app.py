@@ -661,7 +661,6 @@ def get_oil_schedule():
             "etd": r.etd,
             "eta": r.eta,
             "seq": r.seq,
-            "qty": r.qty
         })
 
     return jsonify(result)
@@ -686,7 +685,6 @@ def save_oil_schedule_bulk():
             etd=r.get("etd"),
             eta=r.get("eta"),
             seq=r.get("seq"),
-            qty=r.get("qty")
         )
         db.session.add(row)
 
@@ -745,6 +743,7 @@ def save_oil_items():
             code=row["code"],
             name=row["name"],
             spec=row["spec"],
+            unit=row.get("unit"),
         )
         db.session.add(item)
 
@@ -1412,6 +1411,7 @@ def update_dashboard_memo():
     return jsonify({"status": "success"})
 
 
+
 # ===========================================
 # 📦 ITEM MASTER 조회
 # ===========================================
@@ -1424,8 +1424,12 @@ def get_items():
     if request.args.get("itemNo"):
         q = q.filter(ItemMaster.item_no.like(f"%{request.args['itemNo']}%"))
 
+    # ✅ 품목명: 공백 무시 검색 (여기만 수정됨)
     if request.args.get("itemName"):
-        q = q.filter(ItemMaster.item_name.like(f"%{request.args['itemName']}%"))
+        keyword = request.args.get("itemName").replace(" ", "")
+        q = q.filter(
+            func.replace(ItemMaster.item_name, " ", "").like(f"%{keyword}%")
+        )
 
     if request.args.get("companyName"):
         q = q.filter(ItemMaster.company_name.like(f"%{request.args['companyName']}%"))
@@ -1440,8 +1444,7 @@ def get_items():
         q = q.filter(ItemMaster.item_form == request.args["itemForm"])
 
     if request.args.get("itemKind"):
-         q = q.filter(ItemMaster.item_kind == request.args["itemKind"])
-
+        q = q.filter(ItemMaster.item_kind == request.args["itemKind"])
 
     if request.args.get("unit"):
         q = q.filter(ItemMaster.unit == request.args["unit"])
@@ -1465,6 +1468,7 @@ def get_items():
     rows = q.limit(limit).all()
 
     return jsonify([r.to_dict() for r in rows])
+
 
 
 @app.route("/api/items", methods=["POST"])
@@ -1513,6 +1517,8 @@ def delete_item(id):
     db.session.commit()
     return jsonify({"message": "deleted"})
 
+from sqlalchemy import or_, and_, func
+
 @app.route("/api/items/search", methods=["GET"])
 @jwt_required()
 def search_items():
@@ -1520,18 +1526,29 @@ def search_items():
 
     q = ItemMaster.query
 
-    # 🔥 keyword 있을 때만 OR 검색
     if keyword:
-        q = q.filter(
-            or_(
-                ItemMaster.item_no.like(f"%{keyword}%"),
-                ItemMaster.item_name.like(f"%{keyword}%"),
-                ItemMaster.company_name.like(f"%{keyword}%")
-            )
-        )
+        # 🔥 1) 공백 기준 토큰화
+        tokens = keyword.split()
 
-    # 🔥 keyword 없어도 전체 반환
-    rows = q.order_by(ItemMaster.item_no.asc()).limit(200).all()
+        for t in tokens:
+            like = f"%{t}%"
+
+            q = q.filter(
+                or_(
+                    # 🔥 공백 제거 후 비교 (핵심)
+                    func.replace(ItemMaster.item_no, " ", "").ilike(like.replace(" ", "")),
+                    func.replace(ItemMaster.item_name, " ", "").ilike(like.replace(" ", "")),
+                    func.replace(ItemMaster.company_name, " ", "").ilike(like.replace(" ", "")),
+                    func.replace(ItemMaster.spec, " ", "").ilike(like.replace(" ", "")),
+                    func.replace(ItemMaster.unit, " ", "").ilike(like.replace(" ", "")),
+                )
+            )
+
+    rows = (
+        q.order_by(ItemMaster.item_no.asc())
+         .limit(200)
+         .all()
+    )
 
     return jsonify([r.to_dict() for r in rows])
 

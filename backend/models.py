@@ -129,7 +129,6 @@ class OilScheduleRow(db.Model):
     eta = db.Column(db.String(20))
 
     seq = db.Column(db.Integer, nullable=False, default=1)  # ★ 개선 1
-    qty = db.Column(db.String(50))
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -147,7 +146,6 @@ class OilScheduleRow(db.Model):
             "etd": self.etd,
             "eta": self.eta,
             "seq": self.seq,
-            "qty": self.qty,
             "created_at": self.created_at,
             "updated_at": self.updated_at,
         }
@@ -161,6 +159,7 @@ class OilItemList(db.Model):
     code = db.Column(db.String(100))
     name = db.Column(db.String(255))
     spec = db.Column(db.String(255))
+    unit = db.Column(db.String(20))  
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     def to_dict(self):
@@ -170,6 +169,7 @@ class OilItemList(db.Model):
             "code": self.code,
             "name": self.name,
             "spec": self.spec,
+            "unit": self.unit,
             "updated_at": self.updated_at,
         }
 # ===========================================

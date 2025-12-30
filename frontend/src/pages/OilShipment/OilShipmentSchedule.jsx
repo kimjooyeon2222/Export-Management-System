@@ -2,6 +2,7 @@ import OilInvoiceTimeline from "./OilInvoiceTimeline";
 import React, { useState, useEffect } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { useNavigate } from "react-router-dom";
+import UnitSearchDialog from "components/dialog/UnitSearchDialog";
 
 
 import {
@@ -21,6 +22,95 @@ import { apiFetch } from "api/apiFetch";
 
 
 export default function OilShipmentSchedule() {
+
+  const autoLoadQtyForAllInv = async (rows) => {
+    // inv_no 목록 추출 (빈 값 제외)
+    const invList = [...new Set(
+      rows
+        .map(r => r.inv_no)
+        .filter(inv => inv && inv.length > 0)
+    )];
+
+    for (const inv of invList) {
+      try {
+        const res = await apiFetch(
+          `${API_BASE}/api/oil/auto-load?inv_no=${inv}`
+        );
+        const qtyData = await res.json();
+
+        setScheduleRows(prev =>
+          prev.map(row => {
+            if (row.inv_no !== inv) return row;
+
+            const q = qtyData.find(
+              d => Number(d.seq) === Number(row.seq)
+            );
+
+            return {
+              ...row,
+              qty: q ? q.qty : row.qty,
+            };
+          })
+        );
+      } catch (e) {
+        console.error("초기 qty auto-load 실패:", inv, e);
+      }
+    }
+  };
+
+
+
+  const cellTextFieldSx = {
+    width: "95%",
+    "& .MuiInputBase-root": {
+      height: 34,
+      fontSize: "15px",
+      backgroundColor: "#fff",
+    },
+    "& input": {
+      textAlign: "center",
+      padding: "6px 8px",
+      fontWeight: "500",
+    },
+    "& fieldset": {
+      borderColor: "#d0d0d0",
+    },
+    "&:hover fieldset": {
+      borderColor: "#999",
+    },
+    "&.Mui-focused fieldset": {
+      borderColor: "#1976d2",
+      borderWidth: "1px",
+    },
+  };
+
+  const [unitDialogOpen, setUnitDialogOpen] = useState(false);
+
+  const handleSelectUnit = (row) => {
+    if (!targetOilNo) return;
+
+    setOilList(prev =>
+      prev.map(o =>
+        o.no === targetOilNo
+          ? {
+            ...o,
+            code: row.item_no,
+            name: row.item_name,
+            spec: row.spec,
+            unit: row.unit,
+          }
+          : o
+      )
+    );
+
+    setUnitDialogOpen(false);
+    setTargetOilNo(null);
+  };
+
+
+
+  const [targetOilNo, setTargetOilNo] = useState(null);
+
   const API_BASE = import.meta.env.VITE_API_URL;
   const [showOilList, setShowOilList] = useState(false);
 
@@ -34,7 +124,8 @@ export default function OilShipmentSchedule() {
       no: maxNo + 1,
       code: "",
       name: "",
-      spec: ""
+      spec: "",
+      unit: ""
     };
     setOilList(prev => [...prev, newRow]);
   };
@@ -220,8 +311,7 @@ export default function OilShipmentSchedule() {
               po_no: "",
               etd: "",
               eta: "",
-              seq: oil.no,   // ✅ oil_item_list.no 기준
-              qty: "",
+              seq: oil.no,
             });
           }
         });
@@ -250,7 +340,6 @@ export default function OilShipmentSchedule() {
         _groupKey: groupKey,   // ⭐ 핵심
         inv_no: groupKey,      // 초기에는 같게
         seq: oil.no,
-        qty: "",
       });
     });
 
@@ -284,9 +373,14 @@ export default function OilShipmentSchedule() {
         .filter(v => v !== "")
         .join(",");
 
+
       return {
-        ...row,
-        po_no: po
+        inv_no: row.inv_no,
+        po_no: po,
+        etd: row.etd,
+        eta: row.eta,
+        seq: row.seq,
+        // 🔥 qty intentionally excluded
       };
     });
 
@@ -312,21 +406,26 @@ export default function OilShipmentSchedule() {
 
   // 1) 초기 로딩 — oil_schedule_row 전체 불러오기
   useEffect(() => {
-    loadOilSchedule();
+    const init = async () => {
+      const res = await apiFetch(`${API_BASE}/api/oil-schedule`);
+      const data = await res.json();
+
+      if (!Array.isArray(data)) {
+        setScheduleRows([]);
+        return;
+      }
+
+      // 1️⃣ 구조 먼저 세팅
+      setScheduleRows(data);
+
+      // 2️⃣ qty 자동 연동 (🔥 핵심)
+      await autoLoadQtyForAllInv(data);
+    };
+
+    init();
   }, []);
-  const loadInvoiceInfo = async () => {
-    if (!inv) return;
 
-    const res = await apiFetch(`${API_BASE}/api/oil-invoice/${inv}`);
-    const data = await res.json();
-
-    if (!data.error) {
-      setPo(data.po_no || "");
-      setEtd(data.etd || "");
-      setEta(data.eta || "");
-    }
-  };
-
+ 
 
   const grouped = {};
 
@@ -474,53 +573,119 @@ export default function OilShipmentSchedule() {
             >
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ width: "8%", fontWeight: "bold" }}>순번</TableCell>
-                  <TableCell sx={{ width: "15%", fontWeight: "bold" }}>품번</TableCell>
-                  <TableCell sx={{ width: "25%", fontWeight: "bold" }}>품명</TableCell>
-                  <TableCell sx={{ width: "52%", fontWeight: "bold" }}>규격</TableCell>
+                  <TableCell align="center" sx={{ width: "6%", fontWeight: "bold" }}>
+                    순번
+                  </TableCell>
+                  <TableCell align="center" sx={{ width: "16%", fontWeight: "bold" }}>
+                    품번
+                  </TableCell>
+                  <TableCell align="center" sx={{ width: "22%", fontWeight: "bold" }}>
+                    품명
+                  </TableCell>
+                  <TableCell align="center" sx={{ width: "36%", fontWeight: "bold" }}>
+                    규격
+                  </TableCell>
+                  <TableCell align="center" sx={{ width: "20%", fontWeight: "bold" }}>
+                    단위
+                  </TableCell>
                 </TableRow>
               </TableHead>
+
 
               <TableBody>
                 {oilList.map((oil) => (
                   <TableRow key={oil.no}>
-                    <TableCell>{oil.no}</TableCell>
+                    <TableCell align="center" sx={{ verticalAlign: "middle" }}>{oil.no}</TableCell>
 
-                    <TableCell>
+                    <TableCell align="center" sx={{ verticalAlign: "middle" }}
+                      onClick={() => {
+                        if (!oilEditMode) return;
+                        setTargetOilNo(oil.no);
+                        setUnitDialogOpen(true);
+                      }}
+                    >
                       {oilEditMode ? (
                         <TextField
                           size="small"
                           value={oil.code}
-                          onChange={(e) => updateOilCell(oil.no, "code", e.target.value)}
+                          InputProps={{ readOnly: true }}
+                          sx={{
+                            width: "100%",
+                            "& input": {
+                              textAlign: "center",
+                              fontWeight: "bold",
+                              cursor: "pointer",
+                            },
+                          }}
                         />
                       ) : (
                         oil.code
                       )}
                     </TableCell>
 
-                    <TableCell>
+
+                    <TableCell align="center" sx={{ verticalAlign: "middle" }}
+                      onClick={() => {
+                        if (!oilEditMode) return;
+                        setTargetOilNo(oil.no);
+                        setUnitDialogOpen(true);
+                      }}
+                    >
                       {oilEditMode ? (
                         <TextField
                           size="small"
                           value={oil.name}
-                          onChange={(e) => updateOilCell(oil.no, "name", e.target.value)}
+                          InputProps={{ readOnly: true }}
                         />
                       ) : (
                         oil.name
                       )}
                     </TableCell>
 
-                    <TableCell>
+
+                    <TableCell
+                      align="center"
+                      sx={{
+                        verticalAlign: "middle",
+                        cursor: oilEditMode ? "pointer" : "default",
+                      }}
+                      onClick={(e) => {
+                        if (!oilEditMode) return;
+                        setTargetOilNo(oil.no);
+                        setUnitDialogOpen(true);
+                      }}
+                    >
+
                       {oilEditMode ? (
                         <TextField
                           size="small"
                           value={oil.spec}
-                          onChange={(e) => updateOilCell(oil.no, "spec", e.target.value)}
+                          InputProps={{ readOnly: true }}
                         />
                       ) : (
                         oil.spec
                       )}
                     </TableCell>
+
+                    <TableCell align="center" sx={{ verticalAlign: "middle" }}
+                      onClick={() => {
+                        if (!oilEditMode) return;
+                        setTargetOilNo(oil.no);
+                        setUnitDialogOpen(true);
+                      }}
+                    >
+                      {oilEditMode ? (
+                        <TextField
+                          size="small"
+                          value={oil.unit}
+                          InputProps={{ readOnly: true }}
+                        />
+                      ) : (
+                        oil.unit
+                      )}
+                    </TableCell>
+
+
                   </TableRow>
                 ))}
               </TableBody>
@@ -612,6 +777,7 @@ export default function OilShipmentSchedule() {
               {Object.values(grouped).map((inv) => (
                 <OilInvoiceTimeline
                   key={inv.groupKey}
+                  groupKey={inv.groupKey}
                   invoiceInfo={{
                     inv: inv.inv,
                     po: inv.po,
@@ -621,6 +787,7 @@ export default function OilShipmentSchedule() {
                   items={inv.items}
                   calendarDays={calendarDays}
                   editMode={editMode}
+                  oilList={oilList}
                   onUpdateHeader={(field, value) =>
                     updateHeader(inv.groupKey, field, value)
                   }
@@ -641,6 +808,15 @@ export default function OilShipmentSchedule() {
       </Box>
       {/* ================================ */}
 
+      {/* 🔥 Item 선택 Dialog (오일 관리 리스트용) */}
+      <UnitSearchDialog
+        open={unitDialogOpen}
+        onClose={() => {
+          setUnitDialogOpen(false);
+          setTargetOilNo(null);
+        }}
+        onSelect={handleSelectUnit}
+      />
 
     </Box>
   );

@@ -3,20 +3,22 @@ import { TableRow, TableCell, TextField } from "@mui/material";
 
 export default function OilInvoiceTimeline({
   invoiceInfo,
+  groupKey,
   items,
   onUpdateHeader,
   onUpdateSeq,
   editMode,
-  calendarDays
+  calendarDays,
+  oilList
 }) {
   /* ----------------------------------
         🔹 한국 / 미국 날짜 변환 함수
   ---------------------------------- */
   function parseKRDate(dateStr) {
-  if (!dateStr) return null;
-  const [y, m, d] = dateStr.split("-").map(Number);
-  return new Date(Date.UTC(y, m - 1, d, -9, 0, 0));  // 한국 00시 고정
-}
+    if (!dateStr) return null;
+    const [y, m, d] = dateStr.split("-").map(Number);
+    return new Date(Date.UTC(y, m - 1, d, -9, 0, 0));  // 한국 00시 고정
+  }
 
 
 
@@ -80,9 +82,21 @@ export default function OilInvoiceTimeline({
     return map;
   }, [items]);
 
+  // 🔹 seq(no) → unit 매핑 (표시용 변환 포함)
+  const getUnitBySeq = (seq) => {
+    const oil = oilList?.find(o => Number(o.no) === Number(seq));
+    const unit = oil?.unit || "";
+
+    // 🔥 표시용 변환
+    if (unit === "BULK") return "벌";
+
+    return unit;
+  };
+
 
   return (
     <TableRow>
+
       {/* INV */}
       <TableCell align="center">
         {editMode ? (
@@ -96,85 +110,54 @@ export default function OilInvoiceTimeline({
         )}
       </TableCell>
 
+
+
+
       {/* PO */}
-      {/* PO */}
-<TableCell align="center">
-  {editMode ? (
-    <TextField
-      size="small"
-      multiline
-      value={
-        Array.isArray(invoiceInfo.po)
-          ? invoiceInfo.po.join("\n")      // 배열 → 개행 문자열
-          : invoiceInfo.po || ""
-      }
-      onChange={(e) =>
-        onUpdateHeader("po", e.target.value)
-      }
-    />
-  ) : (
-    <span style={{ whiteSpace: "pre-line" }}>
-      {Array.isArray(invoiceInfo.po)
-        ? invoiceInfo.po.join("\n")        // 배열 → 개행 문자열
-        : (invoiceInfo.po || "-").split(",").join("\n")
-}
-    </span>
-  )}
-</TableCell>
+      <TableCell align="center">
+        <span style={{ whiteSpace: "pre-line" }}>
+          {Array.isArray(invoiceInfo.po)
+            ? invoiceInfo.po.join("\n")
+            : (invoiceInfo.po || "-").split(",").join("\n")}
+        </span>
+      </TableCell>
+
 
 
       {/* ETD */}
       <TableCell align="center">
-        {editMode ? (
-          <TextField
-            size="small"
-            value={invoiceInfo.etd || ""}
-            onChange={(e) => onUpdateHeader("etd", e.target.value)}
-          />
-        ) : (
-          invoiceInfo.etd || "-"
-        )}
+        {invoiceInfo.etd || "-"}
       </TableCell>
 
       {/* ETA */}
-<TableCell align="center">
-  {editMode ? (
-    <TextField
-      size="small"
-      value={invoiceInfo.eta || ""}
-      onChange={(e) => onUpdateHeader("eta", e.target.value)}
-    />
-  ) : (
-    <span
-      style={{
-        display: "inline-block",                 
-        backgroundColor: isIncoming ? "#ffe6eb" : "transparent",
-        borderRadius: "999px",
-        padding: isIncoming ? "2px 8px" : 0,    
-        color: isIncoming ? "red" : "inherit",
-        fontWeight: isIncoming ? "bold" : "normal",
-      }}
-    >
-      {invoiceInfo.eta || "-"}
-    </span>
-  )}
-</TableCell>
+      <TableCell align="center">
+        <span
+          style={{
+            display: "inline-block",
+            backgroundColor: isIncoming ? "#ffe6eb" : "transparent",
+            borderRadius: "999px",
+            padding: isIncoming ? "2px 8px" : 0,
+            color: isIncoming ? "red" : "inherit",
+            fontWeight: isIncoming ? "bold" : "normal",
+          }}
+        >
+          {invoiceInfo.eta || "-"}
+        </span>
+      </TableCell>
 
       {/* Calendar seq cells */}
-      {calendarDays.map((day) => (
-        <TableCell key={day} align="center" sx={{ backgroundColor: "#f1f8e9" }}>
-          {editMode ? (
-            <TextField
-              size="small"
-              value={seqMap[day] || ""}
-              onChange={(e) => onUpdateSeq(invoiceInfo.inv, day, e.target.value)}
-              sx={{ width: 45 }}
-            />
-          ) : (
-            seqMap[day] || "-"
-          )}
-        </TableCell>
-      ))}
+      {calendarDays.map((day) => {
+        const qty = seqMap[day];
+        const unit = getUnitBySeq(day);
+
+        return (
+          <TableCell key={day} align="center" sx={{ backgroundColor: "#f1f8e9" }}>
+            {qty ? `${qty}${unit}` : "-"}
+          </TableCell>
+
+        );
+      })}
+
     </TableRow>
   );
 }
