@@ -6,10 +6,12 @@ export default function OilInvoiceTimeline({
   groupKey,
   items,
   onUpdateHeader,
-  onUpdateSeq,
   editMode,
+  deleteSelectMode,
   calendarDays,
-  oilList
+  oilList,
+  selected,
+  onToggleSelect,
 }) {
   /* ----------------------------------
         🔹 한국 / 미국 날짜 변환 함수
@@ -95,7 +97,23 @@ export default function OilInvoiceTimeline({
 
 
   return (
-    <TableRow>
+    <TableRow
+      onClick={() => {
+        if (!editMode || !deleteSelectMode) return;
+        onToggleSelect(groupKey);
+      }}
+      sx={{
+        cursor: editMode && deleteSelectMode ? "pointer" : "default",
+        backgroundColor: selected ? "#e3f2fd" : "transparent",
+        borderLeft: selected ? "6px solid #1976d2" : "6px solid transparent",
+        "&:hover": {
+          backgroundColor:
+            editMode && deleteSelectMode ? "#f0f7ff" : "transparent",
+        },
+      }}
+    >
+
+
 
       {/* INV */}
       <TableCell align="center">
@@ -103,6 +121,7 @@ export default function OilInvoiceTimeline({
           <TextField
             size="small"
             value={invoiceInfo.inv || ""}
+            onClick={(e) => e.stopPropagation()}
             onChange={(e) => onUpdateHeader("inv", e.target.value)}
           />
         ) : (

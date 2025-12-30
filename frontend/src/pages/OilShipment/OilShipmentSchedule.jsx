@@ -22,6 +22,45 @@ import { apiFetch } from "api/apiFetch";
 
 
 export default function OilShipmentSchedule() {
+  const [deleteSelectMode, setDeleteSelectMode] = useState(false);
+  const [selectedGroups, setSelectedGroups] = useState([]);
+
+  const toggleGroupSelect = (groupKey) => {
+    setSelectedGroups(prev =>
+      prev.includes(groupKey)
+        ? prev.filter(k => k !== groupKey)
+        : [...prev, groupKey]
+    );
+  };
+
+  const deleteSelectedGroups = () => {
+    // 1️⃣ 아직 삭제 선택 모드가 아님 → 모드 진입
+    if (!deleteSelectMode) {
+      alert("삭제할 행을 선택하세요.\n아래 표에서 삭제할 행을 클릭하세요.");
+      setDeleteSelectMode(true);
+      return;
+    }
+
+    // 2️⃣ 삭제 선택 모드인데 선택 안 함
+    if (selectedGroups.length === 0) {
+      alert("삭제할 행을 하나 이상 선택하세요.");
+      return;
+    }
+
+    // 3️⃣ 실제 삭제
+    setScheduleRows(prev =>
+      prev.filter(r => {
+        const key = r._groupKey || r.inv_no;
+        return !selectedGroups.includes(key);
+      })
+    );
+
+    // 4️⃣ 상태 초기화
+    setSelectedGroups([]);
+    setDeleteSelectMode(false);
+  };
+
+
 
   const autoLoadQtyForAllInv = async (rows) => {
     // inv_no 목록 추출 (빈 값 제외)
@@ -397,9 +436,18 @@ export default function OilShipmentSchedule() {
       return;
     }
 
-    alert("저장 완료!");
-    loadOilSchedule();
+    // 🔥 저장 후 다시 로딩 + qty 재연동
+    const res2 = await apiFetch(`${API_BASE}/api/oil-schedule`);
+    const reloaded = await res2.json();
+
+    if (Array.isArray(reloaded)) {
+      setScheduleRows(reloaded);
+      await autoLoadQtyForAllInv(reloaded); // ⭐ 이게 핵심
+    }
+
     setEditMode(false);
+    setDeleteSelectMode(false);
+    setSelectedGroups([]);
   };
 
 
@@ -425,7 +473,7 @@ export default function OilShipmentSchedule() {
     init();
   }, []);
 
- 
+
 
   const grouped = {};
 
@@ -716,19 +764,12 @@ export default function OilShipmentSchedule() {
             <Button
               variant="outlined"
               color="error"
-              onClick={() => {
-                const groups = Object.keys(grouped);
-                if (groups.length === 0) return;
-                const lastGroupKey = Object.keys(grouped).slice(-1)[0];
-
-                setScheduleRows(prev =>
-                  prev.filter(r => r._groupKey !== lastGroupKey)
-                );
-
-              }}
+              onClick={deleteSelectedGroups}
             >
-              행 삭제
+              선택 행 삭제
             </Button>
+
+
 
             <Button
               variant="outlined"
@@ -787,7 +828,10 @@ export default function OilShipmentSchedule() {
                   items={inv.items}
                   calendarDays={calendarDays}
                   editMode={editMode}
+                  deleteSelectMode={deleteSelectMode}
                   oilList={oilList}
+                  selected={selectedGroups.includes(inv.groupKey)}
+                  onToggleSelect={toggleGroupSelect}
                   onUpdateHeader={(field, value) =>
                     updateHeader(inv.groupKey, field, value)
                   }
