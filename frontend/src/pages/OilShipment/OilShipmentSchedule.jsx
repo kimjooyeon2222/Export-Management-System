@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { useNavigate } from "react-router-dom";
 import UnitSearchDialog from "components/dialog/UnitSearchDialog";
+import { Tooltip } from "@mui/material";
 
 
 import {
@@ -203,7 +204,7 @@ export default function OilShipmentSchedule() {
     }
 
     alert("오일 관리 리스트 저장 완료!");
-    
+
     setOilEditMode(false);
   };
 
@@ -825,9 +826,55 @@ export default function OilShipmentSchedule() {
                 <TableCell align="center">ETD</TableCell>
                 <TableCell align="center">ETA</TableCell>
 
-                {calendarDays.map((day) => (
-                  <TableCell key={day} align="center">{day}</TableCell>
-                ))}
+                {calendarDays.map((day) => {
+                  const oil = oilList.find(o => Number(o.no) === Number(day));
+                  const oilName = oil?.name || "미지정 품목";
+
+                  return (
+                    <TableCell
+                      key={day}
+                      align="center"
+                      sx={{
+                        backgroundColor: "#f1f8e9",
+                        padding: 0,
+                        "&:hover": {
+                          backgroundColor: "#ffe6eb", // 🔥 hover 강조
+                        },
+                      }}
+                    >
+                      <Tooltip
+                        title={
+                          <span
+                            style={{
+                              fontSize: "18px",
+                              fontWeight: "bold",
+                              lineHeight: 1.4,
+                            }}
+                          >
+                            {oilName}
+                          </span>
+                        }
+                        arrow
+                        placement="top"
+                      >
+                        {/* 🔥 셀 전체를 덮는 영역 */}
+                        <div
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            padding: "10px 0",
+                            cursor: "help",
+                            fontWeight: "bold",
+                          }}
+                        >
+                          {day}
+                        </div>
+                      </Tooltip>
+                    </TableCell>
+                  );
+                })}
+
+
 
               </TableRow>
             </TableHead>
