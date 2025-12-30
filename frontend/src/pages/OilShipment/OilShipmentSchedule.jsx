@@ -187,8 +187,26 @@ export default function OilShipmentSchedule() {
       method: "POST",
       body: JSON.stringify(oilList),
     });
+
+    // 🔥 오일 관리 리스트 다시 로딩
+    const oilRes = await apiFetch(`${API_BASE}/api/oil-items`);
+    const newOilList = await oilRes.json();
+    setOilList(newOilList);
+
+    // 🔥 scheduleRows 재로딩
+    const schRes = await apiFetch(`${API_BASE}/api/oil-schedule`);
+    const reloaded = await schRes.json();
+
+    if (Array.isArray(reloaded)) {
+      setScheduleRows(reloaded);
+      await autoLoadQtyForAllInv(reloaded); // ⭐ 핵심
+    }
+
     alert("오일 관리 리스트 저장 완료!");
+    
+    setOilEditMode(false);
   };
+
 
   // HEADER 수정 (inv, po, etd, eta)
   const updateHeader = async (invKey, field, value) => {
