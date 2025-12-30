@@ -782,7 +782,7 @@ def delete_axle_item(id):
     db.session.delete(row)
     db.session.commit()
     return jsonify({"message": "deleted"})
-    
+
 @app.route("/api/axle/<int:id>", methods=["PUT"])
 @jwt_required()
 @admin_required
@@ -1940,6 +1940,38 @@ def get_latest_forging_audit():
 
     return jsonify(audit.to_dict())
 
+@app.route("/api/oil/auto-load", methods=["GET"])
+@jwt_required()
+def oil_auto_load():
+    inv_no = request.args.get("inv_no")
+    # 1️⃣ invoice 찾기
+    invoice = Invoice.query.filter_by(inv_no=inv_no).first()
+    if not invoice:
+        return jsonify({"error": "Invoice not found"}), 404
+
+    # 2️⃣ packing_list 조회
+    pack_rows = PackingList.query.filter_by(invoice_id=invoice.id).all()
+
+    # part_no → qty 합산
+    pack_qty = {}
+    for r in pack_rows:
+        pack_qty[r.part_no] = pack_qty.get(r.part_no, 0) + int(r.qty or 0)
+
+    # 3️⃣ oil_item_list 전체 조회
+    oil_items = OilItemList.query.all()
+
+    # 4️⃣ code 기준 JOIN → seq 매핑
+    result = []
+    for oil in oil_items:
+        qty = pack_qty.get(oil.code, 0)
+        result.append({
+            "seq": oil.no,
+            "code": oil.code,
+            "name": oil.name,
+            "qty": qty
+        })
+
+    return jsonify(result)
 
 
 # ============================================
