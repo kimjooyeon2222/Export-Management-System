@@ -647,7 +647,7 @@ export default function AxleSubPage() {
       alert("저장 완료!");
       setEditMode(false);
 
-  
+
 
     } catch (err) {
       console.error("저장 오류:", err);
@@ -1138,7 +1138,8 @@ export default function AxleSubPage() {
             /* 기본 border 제거는 border-top만 없애야 함 */
             "& th, & td": {
               borderTop: "0 !important",
-              padding: "6px 8px !important",
+              padding: "10px 12px !important",
+              verticalAlign: "middle",
             },
 
             /* 행×행 경계선은 여기서 추가 */
@@ -1149,6 +1150,9 @@ export default function AxleSubPage() {
             "& th": {
               borderBottom: "1px solid #e0e0e0 !important",
               fontWeight: "bold !important",
+            },
+            "& tr": {
+              minHeight: "48px",                 // ⭐ 과부족 표와 동일
             },
 
             /* 업체 헤더라면(첫 thead 줄) 위쪽 선 아예 제거 */
