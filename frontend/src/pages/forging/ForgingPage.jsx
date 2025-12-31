@@ -22,6 +22,22 @@ import ItemSearchDialog from "components/dialog/ItemSearchDialog";
 
 
 export default function ForgingPage() {
+  const stockBluePill = {
+    display: "inline-block",
+    px: 1.6,
+    py: 0.45,
+    borderRadius: "999px",
+    bgcolor: "#d0e7ff",      // ⭐ 한 톤 더 진한 하늘색
+    color: "#0d47a1",        // ⭐ 깊은 파랑 (텍스트 선명)
+    fontWeight: "bold",
+    fontSize: "14px",
+    lineHeight: 1.2,
+    textAlign: "center",
+    border: "1px solid #90caf9" // ⭐ 경계 또렷
+  };
+
+
+
   const invoiceCache = useRef({});
   const qtyCache = useRef({});
 
@@ -436,11 +452,11 @@ export default function ForgingPage() {
   };
 
   const getKoreanMonthLabel = (dateStr) => {
-    if (!dateStr) return "실사자료"; // 날짜 없으면 기본값
+    if (!dateStr) return "실사재고"; // 날짜 없으면 기본값
     const d = new Date(dateStr);
     const year = d.getFullYear() % 100;
     const month = d.getMonth() + 1;
-    return `${year}년 ${month}월 실사자료`;
+    return `${year}년 ${month}월 실사재고`;
   };
 
 
@@ -797,28 +813,128 @@ export default function ForgingPage() {
 
           <Table size="small">
             <TableHead sx={{ bgcolor: "#ffe599", borderTop: "2px solid #000" }}>
-              <TableRow>
-                {[
-                  "품번",
-                  "품목",
-                  getKoreanMonthLabel(usDate),   // 예: 25년 11월 실사자료
-                  "불량/발청 소재",
-                  "적정재고",
-                  "운항중",
-                  "기존재고-불량",
-                  "운항중+정상재고",
-                  "판정"
-                ].map(h => (
-                  <TableCell
-                    key={h}
-                    align="center"
-                    sx={{ fontWeight: "bold", fontSize: 15 }}
+              <TableRow
+                sx={{
+                  height: 56,            // ⭐ 헤더 행 높이 고정 (중요)
+                }}
+              >
+                <TableCell align="center" sx={{ fontWeight: "bold", fontSize: 15 }}>
+                  품번
+                </TableCell>
+
+                <TableCell align="center" sx={{ fontWeight: "bold", fontSize: 15 }}>
+                  품목
+                </TableCell>
+
+                <TableCell align="center" sx={{ fontWeight: "bold", fontSize: 15 }}>
+                  {getKoreanMonthLabel(usDate)}
+                </TableCell>
+
+                <TableCell align="center" sx={{ fontWeight: "bold", fontSize: 15 }}>
+                  불량/발청 소재
+                </TableCell>
+
+                <TableCell align="center" sx={{ fontWeight: "bold", fontSize: 15 }}>
+                  적정재고
+                </TableCell>
+
+                <TableCell
+                  align="center"
+                  sx={{
+                    fontWeight: "bold",
+                    fontSize: 15,
+                    padding: "6px 4px",
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: "inline-block",
+                      ...getStatusStyle("운항중"), // ⭐ 본문과 동일한 pill
+                      border: "1px solid rgba(196, 29, 127, 0.35)",
+                    }}
                   >
-                    {h}
-                  </TableCell>
-                ))}
+                    운항중
+                  </Box>
+                </TableCell>
+
+
+                {/* 🔥 문제의 컬럼 — 이렇게 써야 함 */}
+                <TableCell
+                  align="center"
+                  sx={{
+                    fontWeight: "bold",
+                    fontSize: 15,
+                    padding: "6px 4px",
+                  }}
+                >
+                  {/* 🔵 기존재고-불량 pill */}
+                  <Box sx={stockBluePill}>
+                    정상재고
+                  </Box>
+
+                  {/* 🔹 아래 설명 */}
+                  <Typography
+                    sx={{
+                      fontSize: "15px",
+                      color: "#555",
+                      lineHeight: 1.1,
+                      mt: 0.2,
+                      fontWeight: "bold"
+                    }}
+                  >
+                    (실사재고-불량)
+                  </Typography>
+                </TableCell>
+
+
+                <TableCell
+                  align="center"
+                  sx={{
+                    fontWeight: "bold",
+                    fontSize: 15,
+                    padding: "6px 4px",
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 0.6,
+                      flexWrap: "nowrap",
+                    }}
+                  >
+                    {/* 🔴 운항중 pill (본문/헤더와 동일) */}
+                    <Box
+                      sx={{
+                        display: "inline-block",
+                        ...getStatusStyle("운항중"),
+                        border: "1px solid rgba(196, 29, 127, 0.35)",
+
+
+                      }}
+                    >
+                      운항중
+                    </Box>
+
+                    <Typography sx={{ fontWeight: "bold", fontSize: "15px" }}>
+                      +
+                    </Typography>
+
+                    {/* 🔵 정상재고 pill */}
+                    <Box sx={stockBluePill}>
+                      정상재고
+                    </Box>
+                  </Box>
+                </TableCell>
+
+
+                <TableCell align="center" sx={{ fontWeight: "bold", fontSize: 15 }}>
+                  판정
+                </TableCell>
               </TableRow>
             </TableHead>
+
 
             <TableBody>
               {items.map((it, idx) => {

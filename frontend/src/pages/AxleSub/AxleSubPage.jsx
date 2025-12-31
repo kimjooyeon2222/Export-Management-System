@@ -1134,6 +1134,7 @@ export default function AxleSubPage() {
             position: "relative",
             borderCollapse: "collapse",
             borderSpacing: 0,
+            borderTop: "2px solid #000",   // ⭐⭐⭐ 여기 추가
 
             /* 기본 border 제거는 border-top만 없애야 함 */
             "& th, & td": {
@@ -1180,7 +1181,13 @@ export default function AxleSubPage() {
 
 
           <TableHead>
-            <TableRow sx={{ bgcolor: "#ffffff !important" }}>
+            <TableRow
+              sx={{
+                bgcolor: "#ffffff !important",
+                borderTop: "2px solid #000",   // ⭐ 추가
+              }}
+            >
+
               <TableCell colSpan={4} />
 
               {companyGroups.map(([company, rows]) => {
