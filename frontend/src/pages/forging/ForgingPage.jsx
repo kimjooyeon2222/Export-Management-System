@@ -835,8 +835,17 @@ export default function ForgingPage() {
                 </TableCell>
 
                 <TableCell align="center" sx={{ fontWeight: "bold", fontSize: 15 }}>
-                  적정재고
+                  <Box sx={{ lineHeight: 1.2 }}>
+                    적정재고
+                    <Typography
+                      component="div"
+                      sx={{ fontSize: 13, fontWeight: "bold", color: "#555" }}
+                    >
+                      (3개월)
+                    </Typography>
+                  </Box>
                 </TableCell>
+
 
                 <TableCell
                   align="center"
@@ -849,7 +858,7 @@ export default function ForgingPage() {
                   <Box
                     sx={{
                       display: "inline-block",
-                      ...getStatusStyle("운항중"), 
+                      ...getStatusStyle("운항중"),
                     }}
                   >
                     운항중
@@ -928,8 +937,17 @@ export default function ForgingPage() {
 
 
                 <TableCell align="center" sx={{ fontWeight: "bold", fontSize: 15 }}>
-                  판정
+                  <Box sx={{ lineHeight: 1.2 }}>
+                    판정
+                    <Typography
+                      component="div"
+                      sx={{ fontSize: 13, fontWeight: "bold", color: "#555" }}
+                    >
+                      (실사재고 기준)
+                    </Typography>
+                  </Box>
                 </TableCell>
+
               </TableRow>
             </TableHead>
 

@@ -880,7 +880,22 @@ export default function AxleSubPage() {
                 <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>품명</TableCell>
                 <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>박스 입수량</TableCell>
                 <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>{getKoreanMonthLabel(usDate)}</TableCell>
-                <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>적정재고</TableCell>
+                <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>
+                  <Box sx={{ lineHeight: 1.2 }}>
+                    적정재고
+                    <Typography
+                      component="div"
+                      sx={{
+                        fontSize: "13px",
+                        fontWeight: "bold",
+                        color: "#555",
+                      }}
+                    >
+                      (3개월)
+                    </Typography>
+                  </Box>
+                </TableCell>
+
                 <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>
                   <Box
                     sx={{
@@ -905,7 +920,22 @@ export default function AxleSubPage() {
                   + 실사재고
                 </TableCell>
 
-                <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>판단결과</TableCell>
+                <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>
+                  <Box sx={{ lineHeight: 1.2 }}>
+                    판단결과
+                    <Typography
+                      component="div"
+                      sx={{
+                        fontSize: "13px",
+                        fontWeight: "bold",
+                        color: "#555",
+                      }}
+                    >
+                      (실사재고 기준)
+                    </Typography>
+                  </Box>
+                </TableCell>
+
               </TableRow>
             </TableHead>
 
