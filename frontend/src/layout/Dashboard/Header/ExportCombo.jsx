@@ -10,6 +10,9 @@ export default function ExportCombo() {
   const open = Boolean(anchor);
 
   const [selectedLabel, setSelectedLabel] = useState("수출품목");
+  const isOilPage = location.pathname === "/oil-schedule";
+
+
 
   // 전체 메뉴
   const menuList = [
@@ -34,16 +37,16 @@ export default function ExportCombo() {
       setSelectedLabel("수출품목");       // 그 외 페이지는 default
     }
   }, [location.pathname]);
-  
+
 
   return (
     <Box sx={{ display: "flex", alignItems: "center", gap: 0.3, ml: 2 }}>
-      
+
       {/* INVOICE TRK 버튼 */}
       <Button
         onClick={() => navigate("/invoice")}
         sx={{
-          fontSize: 15,
+          fontSize: 14,
           fontWeight: 700,
           color: "#333",
           textTransform: "none",
@@ -68,12 +71,12 @@ export default function ExportCombo() {
         onClick={(e) => setAnchor(e.currentTarget)}
         endIcon={<ArrowDropDownIcon />}
         sx={{
-          fontWeight: 700,
+          fontWeight: 600,
           bgcolor: "#fafafa",
-          width: 150,
+          width: 130,
           justifyContent: "center",
           color: "#333",
-          fontSize: 15,
+          fontSize: 14,
           border: "1px solid #cfcfcf",
           borderRadius: "6px",
           textTransform: "none",
@@ -90,17 +93,17 @@ export default function ExportCombo() {
       >
         {selectedLabel}
       </Button>
-  {/* 🔥 수출품목 버튼 오른쪽 신규 버튼 2개 추가 */}
+      {/* 🔥 수출품목 버튼 오른쪽 신규 버튼 2개 추가 */}
       <Box sx={{ width: 8 }}></Box>
 
       <Button
-        onClick={() =>  navigate("/po-management")}
+        onClick={() => navigate("/po-management")}
         sx={{
-          fontSize: 15,
+          fontSize: 14,
           fontWeight: 700,
           color: "#333",
           textTransform: "none",
-          minWidth: 140,
+          minWidth: 130,
           whiteSpace: "nowrap",
           border: "1px solid #cfcfcf",
           borderRadius: "6px",
@@ -119,11 +122,11 @@ export default function ExportCombo() {
       <Button
         onClick={() => alert("운송 페이지는 준비중입니다.")}
         sx={{
-          fontSize: 15,
+          fontSize: 14,
           fontWeight: 700,
           color: "#333",
           textTransform: "none",
-          minWidth: 140,
+          minWidth: 130,
           whiteSpace: "nowrap",
           border: "1px solid #cfcfcf",
           borderRadius: "6px",
@@ -142,31 +145,31 @@ export default function ExportCombo() {
         open={open}
         anchorEl={anchor}
         onClose={() => setAnchor(null)}
-        PaperProps={{ style: { minWidth: 150 } }}
+        PaperProps={{ style: { minWidth: 130 } }}
       >
         {dropdownMenus.map(item => (
           <MenuItem
             key={item.path}
             onClick={() => {
-                if (item.label === "수출품 사진") {
-      // 🔥 외부 Google Drive 폴더로 연결
-      window.open(
-        "https://drive.google.com/drive/folders/1-dRvoG81-yMONR3NseliqnQGyQnjFSAD",
-        "_blank"
-      );
-      setAnchor(null);
-      return;
-    }
+              if (item.label === "수출품 사진") {
+                // 🔥 외부 Google Drive 폴더로 연결
+                window.open(
+                  "https://drive.google.com/drive/folders/1-dRvoG81-yMONR3NseliqnQGyQnjFSAD",
+                  "_blank"
+                );
+                setAnchor(null);
+                return;
+              }
 
               navigate(item.path);
               setAnchor(null);
             }}
             sx={{
               fontWeight: 600,
-              fontSize: "16px",
+              fontSize: "13px",
               display: "flex",
               justifyContent: "center",
-              py: 1.3,
+              py: 1.0,
               color: "#444",
               "&:hover": { backgroundColor: "#f2f6ff" }
             }}

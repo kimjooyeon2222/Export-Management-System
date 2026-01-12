@@ -1217,16 +1217,16 @@ export default function AxleSubPage() {
         >
 
 
-          {/* 상단 흰색 오버레이 — 빈칸 만드는 원인이었음 → 유지하되 충돌 수정 */}
+          {/* 상단 border 완전 차단용 오버레이 */}
           <Box
             sx={{
               position: "absolute",
-              top: 0,
+              top: "-2px",          // ⭐ border 위까지 덮기
               left: 0,
               width: "100%",
-              height: "3px",
+              height: "6px",        // ⭐ 충분히 크게
               bgcolor: "#ffffff",
-              zIndex: 20,
+              zIndex: 30,           // ⭐ 헤더보다 확실히 위
               pointerEvents: "none",
             }}
           />

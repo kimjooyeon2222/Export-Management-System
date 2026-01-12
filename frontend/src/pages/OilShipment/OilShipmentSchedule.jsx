@@ -22,7 +22,9 @@ import {
 import { apiFetch } from "api/apiFetch";
 
 
+
 export default function OilShipmentSchedule() {
+
   const [deleteSelectMode, setDeleteSelectMode] = useState(false);
   const [selectedGroups, setSelectedGroups] = useState([]);
 
@@ -555,6 +557,7 @@ export default function OilShipmentSchedule() {
 
 
   return (
+
     <Box p={3}>
       <Button
         variant="outlined"
@@ -562,7 +565,7 @@ export default function OilShipmentSchedule() {
         sx={{
           mt: 1,
           mb: 5,
-          fontSize: "15px",
+          fontSize: "13px",
           borderColor: "#0069a6ff",     // 갈색 테두리
           color: "#0056a6ff",           // 텍스트 색
           backgroundColor: "#ffffff", // 흰색 배경
@@ -580,7 +583,7 @@ export default function OilShipmentSchedule() {
 
       <Box sx={{ mt: 3 }}>
         {/* 제목 */}
-        <Typography variant="h5" fontWeight="bold" fontSize="20px">
+        <Typography variant="h5" fontWeight="bold" fontSize="18px">
           오일 운송일정 관리 (Oil Shipment Schedule)
         </Typography>
         {/* 오일 관리 리스트 (1~42) */}
@@ -597,7 +600,7 @@ export default function OilShipmentSchedule() {
         </Box>
         {showOilList && (
           <Paper sx={{ p: 2, mb: 7 }}>
-            <Typography variant="subtitle1" fontWeight="bold" mb={2} fontSize="18px">
+            <Typography variant="subtitle1" fontWeight="bold" mb={2} fontSize="16px">
               📘 오일 관리 리스트
             </Typography>
 
@@ -635,7 +638,7 @@ export default function OilShipmentSchedule() {
             <Table
               size="small"
               sx={{
-                "& td, & th": { fontSize: "18px" }
+                "& td, & th": { fontSize: "15px" }
               }}
             >
               <TableHead>
@@ -810,8 +813,9 @@ export default function OilShipmentSchedule() {
             size="small"
             sx={{
               "& td, & th": {
-                fontSize: "18px",
-                padding: "10px 6px"   // ← 세로 여백 늘림
+                fontSize: "15px",
+                padding: "10px 6px",
+                fontWeigt:"bold",   // ← 세로 여백 늘림
               },
               "& tr": {
                 height: "40px"        // ← 행 높이 증가
