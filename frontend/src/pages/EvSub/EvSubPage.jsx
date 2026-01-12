@@ -11,7 +11,8 @@ import {
   TableHead,
   TableRow,
   TableCell,
-  TableBody
+  TableBody,
+  Tooltip
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import HorizontalScroll from "./HorizontalScroll";
@@ -842,168 +843,197 @@ export default function EvSubPage() {
         )}
 
         {/* 🔥🔥 이 부분 추가!! */}
-        <HorizontalScroll>
-          <Box sx={{ width:"100%" }}>
-            {/* ← 여기에서 전체 테이블 가로 사이즈 확보 (28개 품목 때문에 길어짐) */}
 
-            <Table
-              size="small"
+        <Box sx={{ width: "100%" }}>
+          {/* ← 여기에서 전체 테이블 가로 사이즈 확보 (28개 품목 때문에 길어짐) */}
+
+          <Table
+            size="small"
+            sx={{
+              mt: 2,
+              position: "relative",  // ← 추가!!!
+              borderCollapse: "collapse !important",
+              borderSpacing: "0px !important",
+
+              "& td, & th": {
+                borderCollapse: "separate !important",
+                borderSpacing: "0 !important",
+                margin: 0,
+              }
+            }}
+          >
+
+            <Box
               sx={{
-                mt: 2,
-                position: "relative",  // ← 추가!!!
-                borderCollapse: "collapse !important",
-                borderSpacing: "0px !important",
-
-                "& td, & th": {
-                  borderCollapse: "separate !important",
-                  borderSpacing: "0 !important",
-                  margin: 0,
-                }
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                height: "3px",
+                bgcolor: "#ffffff",
+                zIndex: 10
               }}
-            >
-
-              <Box
-                sx={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  width: "100%",
-                  height: "3px",
-                  bgcolor: "#ffffff",
-                  zIndex: 10
-                }}
-              />
+            />
 
 
 
-              <TableHead>
+            <TableHead>
 
-                {/* 🔥 업체 그룹 헤더 동적 생성 */}
-                <TableRow sx={{ bgcolor: "#ffffff !important" }}>
-                  <TableCell colSpan={4} /> {/* INV / ETD / ETA / 상태 */}
+              {/* 🔥 업체 그룹 헤더 동적 생성 */}
+              <TableRow sx={{ bgcolor: "#ffffff !important" }}>
+                <TableCell colSpan={4} /> {/* INV / ETD / ETA / 상태 */}
 
-                  {companyGroups.map((g, idx) => {
-                    const [start, end] = g.range;
-                    const span = end - start + 1;
+                {companyGroups.map((g, idx) => {
+                  const [start, end] = g.range;
+                  const span = end - start + 1;
 
-                    return (
-                      <TableCell
-                        key={idx}
-                        colSpan={span}
-                        align="center"
-                        sx={{
-                          fontWeight: "bold",
-                          fontSize: "16px",
-                          bgcolor: companyColors[g.name],  // ← 업체별 색상 적용!
-                          color: "#000",
-
-                          borderBottom: "2px solid #b7b7b7",
-
-                        }}
-                      >
-                        {g.name}
-                      </TableCell>
-
-                    );
-                  })}
-                </TableRow>
-
-                {/* 🔥 품명 헤더 */}
-                <TableRow sx={{ bgcolor: "#ffe599" }}>
-                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>INV#</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>ETD</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>ETA</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>상태</TableCell>
-
-                  {PART_NAMES.map((name, idx) => (
+                  return (
                     <TableCell
                       key={idx}
+                      colSpan={span}
                       align="center"
                       sx={{
                         fontWeight: "bold",
-                        fontSize: "15px",
-                        cursor: "help"
+                        fontSize: "16px",
+                        bgcolor: companyColors[g.name],  // ← 업체별 색상 적용!
+                        color: "#000",
+
+                        borderBottom: "2px solid #b7b7b7",
+
                       }}
-                      title={name}   // ✅ hover 시 품명
                     >
-                      {idx + 1}
+                      {g.name}
+                    </TableCell>
+
+                  );
+                })}
+              </TableRow>
+
+              {/* 🔥 품명 헤더 */}
+              <TableRow sx={{ bgcolor: "#ffe599" }}>
+                <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>INV#</TableCell>
+                <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>ETD</TableCell>
+                <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>ETA</TableCell>
+                <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>상태</TableCell>
+
+                {PART_NAMES.map((name, idx) => (
+                  <TableCell
+                    key={idx}
+                    align="center"
+                    sx={{
+                      backgroundColor: "#ffe599",
+                      padding: 0,
+                      "&:hover": {
+                        backgroundColor: "#ffe6eb", // 🔥 Oil과 동일한 hover 색
+                      },
+                    }}
+                  >
+                    <Tooltip
+                      title={
+                        <span
+                          style={{
+                            fontSize: "18px",
+                            fontWeight: "bold",
+                            lineHeight: 1.4,
+                          }}
+                        >
+                          {name}
+                        </span>
+                      }
+                      arrow
+                      placement="top"
+                    >
+                      {/* 🔥 셀 전체를 덮는 hover 영역 */}
+                      <div
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          padding: "10px 0",
+                          cursor: "help",
+                          fontWeight: "bold",
+                          fontSize: "15px",
+                        }}
+                      >
+                        {idx + 1}
+                      </div>
+                    </Tooltip>
+                  </TableCell>
+                ))}
+
+
+              </TableRow>
+
+            </TableHead>
+
+
+
+            <TableBody>
+              {scheduleRows.map(row => (
+                <TableRow
+                  key={row.tempId}
+                  sx={{
+                    borderBottom: "1px solid #ddd",   // 🔥 얇은 회색 라인
+                    "& td": {
+                      borderBottom: "1px solid #ddd"  // 각 셀마다 동일 적용
+                    }
+                  }}
+                >
+
+
+                  {/* INV# (수정가능) */}
+                  <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>
+                    {editMode ? (
+                      <TextField
+                        size="small"
+                        value={row.inv_no || ""}
+                        onChange={e => handleInvChange(row.tempId, e.target.value)}
+                        sx={{ width: 120 }}
+                      />
+                    ) : (
+                      <span>{row.inv_no || ""}</span>
+                    )}
+                  </TableCell>
+
+
+                  {/* ETD (수정 불가, 표시만) */}
+                  <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>
+                    {row.etd}
+                  </TableCell>
+
+                  {/* ETA — 기존 색깔 박스 유지 */}
+                  <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>
+                    {getScheduleStatus(row.etd, row.eta) === "운항중" ? (
+                      <Box sx={getForgingStatusStyle("운항중")}>
+                        {row.eta}
+                      </Box>
+                    ) : (
+                      row.eta
+                    )}
+                  </TableCell>
+
+                  {/* 상태 — 기존 스타일 박스 유지 */}
+                  <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>
+                    <Box sx={getForgingStatusStyle(getScheduleStatus(row.etd, row.eta))}>
+                      {getScheduleStatus(row.etd, row.eta)}
+                    </Box>
+                  </TableCell>
+
+                  {/* 28개 품목 qty → 수정칸 없음 (숫자만 출력) */}
+                  {PART_NAMES.map((pname, idx) => (
+                    <TableCell key={idx} align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>
+                      {formatNumber(row[pname] || 0)}
                     </TableCell>
                   ))}
 
-
                 </TableRow>
-
-              </TableHead>
-
-
-
-              <TableBody>
-                {scheduleRows.map(row => (
-                  <TableRow
-                    key={row.tempId}
-                    sx={{
-                      borderBottom: "1px solid #ddd",   // 🔥 얇은 회색 라인
-                      "& td": {
-                        borderBottom: "1px solid #ddd"  // 각 셀마다 동일 적용
-                      }
-                    }}
-                  >
-
-
-                    {/* INV# (수정가능) */}
-                    <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>
-                      {editMode ? (
-                        <TextField
-                          size="small"
-                          value={row.inv_no || ""}
-                          onChange={e => handleInvChange(row.tempId, e.target.value)}
-                          sx={{ width: 120 }}
-                        />
-                      ) : (
-                        <span>{row.inv_no || ""}</span>
-                      )}
-                    </TableCell>
-
-
-                    {/* ETD (수정 불가, 표시만) */}
-                    <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>
-                      {row.etd}
-                    </TableCell>
-
-                    {/* ETA — 기존 색깔 박스 유지 */}
-                    <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>
-                      {getScheduleStatus(row.etd, row.eta) === "운항중" ? (
-                        <Box sx={getForgingStatusStyle("운항중")}>
-                          {row.eta}
-                        </Box>
-                      ) : (
-                        row.eta
-                      )}
-                    </TableCell>
-
-                    {/* 상태 — 기존 스타일 박스 유지 */}
-                    <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>
-                      <Box sx={getForgingStatusStyle(getScheduleStatus(row.etd, row.eta))}>
-                        {getScheduleStatus(row.etd, row.eta)}
-                      </Box>
-                    </TableCell>
-
-                    {/* 28개 품목 qty → 수정칸 없음 (숫자만 출력) */}
-                    {PART_NAMES.map((pname, idx) => (
-                      <TableCell key={idx} align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>
-                        {formatNumber(row[pname] || 0)}
-                      </TableCell>
-                    ))}
-
-                  </TableRow>
-                ))}
-              </TableBody>
+              ))}
+            </TableBody>
 
 
 
-            </Table>
-          </Box>
-        </HorizontalScroll>
+          </Table>
+        </Box>
+
 
       </Paper>
 
