@@ -1,6 +1,7 @@
 print("🔥 app.py 실행됨!")
 from dotenv import load_dotenv
-load_dotenv()
+load_dotenv(override=True)
+
 
 from sqlalchemy import or_
 import os

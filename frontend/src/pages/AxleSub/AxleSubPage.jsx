@@ -189,11 +189,11 @@ export default function AxleSubPage() {
   }
 
   const getKoreanMonthLabel = (dateStr) => {
-    if (!dateStr) return "실사자료";
+    if (!dateStr) return "실사재고";
     const d = new Date(dateStr);
     const year = d.getFullYear() % 100;
     const month = d.getMonth() + 1;
-    return `${year}년 ${month}월 실사자료`;
+    return `${year}년 ${month}월 실사재고`;
   };
 
   const handleSelectItem = async (item) => {
@@ -881,8 +881,30 @@ export default function AxleSubPage() {
                 <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>박스 입수량</TableCell>
                 <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>{getKoreanMonthLabel(usDate)}</TableCell>
                 <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>적정재고</TableCell>
-                <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>운항중</TableCell>
-                <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>운항중 + 실사자료</TableCell>
+                <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>
+                  <Box
+                    sx={{
+                      display: "inline-block",
+                      ...getForgingStatusStyle("운항중"),
+                    }}
+                  >
+                    운항중
+                  </Box>
+                </TableCell>
+                <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>
+                  <Box
+                    component="span"
+                    sx={{
+                      display: "inline-block",
+                      ...getForgingStatusStyle("운항중"),
+                      mr: 0.5,   // pill과 텍스트 사이 간격
+                    }}
+                  >
+                    운항중
+                  </Box>
+                  + 실사재고
+                </TableCell>
+
                 <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>판단결과</TableCell>
               </TableRow>
             </TableHead>
@@ -1184,7 +1206,7 @@ export default function AxleSubPage() {
             <TableRow
               sx={{
                 bgcolor: "#ffffff !important",
-                borderTop: "2px solid #000",   // ⭐ 추가
+                borderTop: "0 !important",  // ⭐ 추가
               }}
             >
 

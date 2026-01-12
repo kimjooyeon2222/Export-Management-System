@@ -849,8 +849,7 @@ export default function ForgingPage() {
                   <Box
                     sx={{
                       display: "inline-block",
-                      ...getStatusStyle("운항중"), // ⭐ 본문과 동일한 pill
-                      border: "1px solid rgba(196, 29, 127, 0.35)",
+                      ...getStatusStyle("운항중"), 
                     }}
                   >
                     운항중
@@ -882,7 +881,7 @@ export default function ForgingPage() {
                       fontWeight: "bold"
                     }}
                   >
-                    (실사재고-불량)
+                    (실사재고-불량/발청)
                   </Typography>
                 </TableCell>
 
@@ -909,7 +908,6 @@ export default function ForgingPage() {
                       sx={{
                         display: "inline-block",
                         ...getStatusStyle("운항중"),
-                        border: "1px solid rgba(196, 29, 127, 0.35)",
 
 
                       }}
