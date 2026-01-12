@@ -166,7 +166,7 @@ export default function ExportCombo() {
             }}
             sx={{
               fontWeight: 600,
-              fontSize: "13px",
+              fontSize: "14px",
               display: "flex",
               justifyContent: "center",
               py: 1.0,

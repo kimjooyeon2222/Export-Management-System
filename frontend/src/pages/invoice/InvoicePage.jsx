@@ -1059,10 +1059,10 @@ const arrived = delayedDate2 <= todayUS;
                   'CONT#',
                   'BL#',
                     <Box key="etdHeader" sx={{ textAlign: 'center', whiteSpace: 'pre-line' }}>
-                      ETD<br />(출발 예정일)
+                      ETD<br />(출발<br /> 예정일)
                     </Box>,
                     <Box key="etaHeader" sx={{ textAlign: 'center', whiteSpace: 'pre-line' }}>
-                      ETA<br />(공장 도착 예정일)
+                      ETA<br />(공장 도착 <br />예정일)
                     </Box>,
                     <Box key="delayed" sx={{ textAlign: 'center', lineHeight: 1.2 }}>
                       <Typography sx={{ fontWeight: 'bold' }}>DELAYED DATE</Typography>
@@ -1090,10 +1090,10 @@ const arrived = delayedDate2 <= todayUS;
                       <Typography sx={{ fontWeight: 'bold' }}>COUNT</Typography>
                       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1 }}>
                         <Box sx={{ width: 14, height: 14, bgcolor: '#ccf2e0', border: '1px solid #bbb' }} />
-                        <Typography sx={{ fontSize: '0.8rem', fontWeight: 'bold' }}>
+                        <Typography sx={{ fontSize: '0.7rem', fontWeight: 'bold' }}>
                           <Box component="span" sx={{ color: '#333' }}>:</Box>{' '}
                           <Box component="span" sx={{ color: 'red' }}>
-                            지연 경고<br /> (10일 이상)
+                            지연<br />경고<br /> (10일 <br />이상)
                           </Box>
                         </Typography>
                       </Box>
