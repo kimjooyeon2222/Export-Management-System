@@ -23,30 +23,55 @@ import { useRef } from "react";
 
 export default function AxleSubPage() {
 
+  const axleCompanyColors = {
+    "윤영테크": "#FFD966",
+    "대영이엔피": "#A9D18E",
+    "신우신": "#9BC2E6"
+  };
   const [deletedAxleIds, setDeletedAxleIds] = useState([]);
 
   const [selectedRowIds, setSelectedRowIds] = useState([]);
 
+  const axleCompanyColorMap = useRef({});
+  const usedAxleCompanyColors = useRef(
+    new Set(Object.values(axleCompanyColors))
+  );
 
   const getCompanyColor = (company) => {
     if (!company) return null;
 
-    // ✅ 1) 기존에 정의된 업체면 그대로 사용
+    // 1️⃣ 기존 업체 색상은 그대로
     if (axleCompanyColors[company]) {
       return axleCompanyColors[company];
     }
 
-    // ✅ 2) 신규 업체 → 이름 기반 자동 색상 생성
+    // 2️⃣ 이미 생성된 신규 업체 색상 재사용
+    if (axleCompanyColorMap.current[company]) {
+      return axleCompanyColorMap.current[company];
+    }
+
+    // 3️⃣ 신규 업체 색 생성 (Axle 톤 유지 + 충돌 방지)
     let hash = 0;
     for (let i = 0; i < company.length; i++) {
       hash = company.charCodeAt(i) + ((hash << 5) - hash);
     }
 
-    const hue = Math.abs(hash) % 360;
+    let hue = Math.abs(hash) % 360;
+    let color;
 
-    // 너무 진하지 않게, 엑셀 느낌 유지
-    return `hsl(${hue}, 60%, 78%)`;
+    do {
+      // ⭐ Axle 기존 색과 어울리는 엑셀톤
+      color = `hsl(${hue}, 50%, 72%)`;
+      hue = (hue + 23) % 360; // ⭐ 조금씩 이동하면서 충돌 회피
+    } while (usedAxleCompanyColors.current.has(color));
+
+    // 4️⃣ 캐시 + 사용 색 등록
+    usedAxleCompanyColors.current.add(color);
+    axleCompanyColorMap.current[company] = color;
+
+    return color;
   };
+
 
   const [scheduleRows, setScheduleRows] = useState([]); // 🔥 운송 스케줄
 
@@ -286,11 +311,6 @@ export default function AxleSubPage() {
     { name: "신우신", range: [3, 3] }     // PLATE
   ];
 
-  const axleCompanyColors = {
-    "윤영테크": "#FFD966",
-    "대영이엔피": "#A9D18E",
-    "신우신": "#9BC2E6"
-  };
 
   /* ----------------------------------
     🔹 날짜 변환 (ETD/ETA 표준화)
