@@ -13,28 +13,67 @@ import {
   Paper,
 } from "@mui/material";
 import { apiFetch } from "api/apiFetch";
+import UnitSearchDialog from "components/dialog/UnitSearchDialog";
 
 export default function PackingList() {
-
   const API = import.meta.env.VITE_API_URL;
+  const [itemDialogOpen, setItemDialogOpen] = useState(false);
+  const [targetRowId, setTargetRowId] = useState(null);
+
+  const handleSelectPackingItem = (item) => {
+    if (!targetRowId) return;
+
+    // 1️⃣ 화면 반영
+    setRows(prev =>
+      prev.map(r =>
+        r.id === targetRowId
+          ? {
+            ...r,
+            vendor: item.company_name || "",
+            partNo: item.item_no || "",
+            partName: item.item_name || "",
+            spec: item.spec || "",
+            unit: item.unit || "",
+          }
+          : r
+      )
+    );
+
+    // 2️⃣ DB 반영
+    apiFetch(`${API}/api/packing/${targetRowId}`, {
+      method: "PUT",
+      body: JSON.stringify({
+        vendor: item.company_name || "",
+        part_no: item.item_no || "",
+        part_name: item.item_name || "",
+        spec: item.spec || "",
+        unit: item.unit || "",
+      }),
+    });
+
+    setItemDialogOpen(false);
+    setTargetRowId(null);
+  };
+
+
 
   const { inv } = useParams();
   const [invoiceId, setInvoiceId] = useState(null);
-const [deleteMode, setDeleteMode] = useState(false);
-const [selectedRows, setSelectedRows] = useState([]);
+  const [deleteMode, setDeleteMode] = useState(false);
+  const [selectedRows, setSelectedRows] = useState([]);
 
-// 🔥 invoice 테이블 - invoice_id 가져오기
-useEffect(() => {
-  apiFetch(`${API}/api/invoice/${inv}`)
-    .then(res => res.json())
-    .then(data => {
-      setInvoiceId(data.id); // invoice.id가 진짜 invoice_id
-    })
-    .catch(err => console.error("Invoice load error:", err));
-}, [inv]);
-console.log("🔥 inv from URL:", inv);
-console.log("🔥 Fetch URL:", `${API}/api/invoice/${inv}/packing`);
-console.log("🔥 URL inv:", JSON.stringify(inv));
+  // 🔥 invoice 테이블 - invoice_id 가져오기
+  useEffect(() => {
+    apiFetch(`${API}/api/invoice/${inv}`)
+      .then(res => res.json())
+      .then(data => {
+        setInvoiceId(data.id); // invoice.id가 진짜 invoice_id
+      })
+      .catch(err => console.error("Invoice load error:", err));
+  }, [inv]);
+  console.log("🔥 inv from URL:", inv);
+  console.log("🔥 Fetch URL:", `${API}/api/invoice/${inv}/packing`);
+  console.log("🔥 URL inv:", JSON.stringify(inv));
 
   const navigate = useNavigate();
   const [isEditMode, setIsEditMode] = useState(false);
@@ -56,11 +95,11 @@ console.log("🔥 URL inv:", JSON.stringify(inv));
     apiFetch(`${API}/api/invoice/${inv}/packing`)
       .then(res => res.json())
       .then(data => {
-        
+
 
         const converted = data.map(r => ({
           id: r.id,
-          invoice_id: r.invoice_id, 
+          invoice_id: r.invoice_id,
           po: r.po_no,
           vendor: r.vendor,
           partNo: r.part_no,
@@ -76,48 +115,48 @@ console.log("🔥 URL inv:", JSON.stringify(inv));
 
   // 행 추가
   const handleAdd = async () => {
-  // 1) DB에서 packing_list의 max(id) 가져오기
-  const maxRes = await apiFetch(`${API}/api/packing/max-id`);
-  const maxData = await maxRes.json();
-  const nextId = (maxData.max_id || 0) + 1;
+    // 1) DB에서 packing_list의 max(id) 가져오기
+    const maxRes = await apiFetch(`${API}/api/packing/max-id`);
+    const maxData = await maxRes.json();
+    const nextId = (maxData.max_id || 0) + 1;
 
-  // 2) 새 row 생성
-  const newRow = {
-    id: nextId,
-    invoice_id: invoiceId,
-    po_no: "",
-    vendor: "",
-    part_no: "",
-    part_name: "",
-    spec: "",
-    qty: 0,
-    unit: "EA"
+    // 2) 새 row 생성
+    const newRow = {
+      id: nextId,
+      invoice_id: invoiceId,
+      po_no: "",
+      vendor: "",
+      part_no: "",
+      part_name: "",
+      spec: "",
+      qty: 0,
+      unit: ""
+    };
+
+    // 3) DB INSERT
+    const res = await apiFetch(`${API}/api/packing`, {
+      method: "POST",
+      body: JSON.stringify(newRow)
+    });
+
+    const created = await res.json();
+
+    // 4) 화면 반영
+    setRows(prev => [
+      ...prev,
+      {
+        id: newRow.id,
+        invoice_id: newRow.invoice_id,
+        po: newRow.po_no,
+        vendor: newRow.vendor,
+        partNo: newRow.part_no,
+        partName: newRow.part_name,
+        spec: newRow.spec,
+        qty: newRow.qty,
+        unit: newRow.unit
+      }
+    ]);
   };
-
-  // 3) DB INSERT
-  const res = await apiFetch(`${API}/api/packing`, {
-    method: "POST",
-    body: JSON.stringify(newRow)
-  });
-
-  const created = await res.json();
-
-  // 4) 화면 반영
-  setRows(prev => [
-    ...prev,
-    {
-      id: newRow.id,
-      invoice_id: newRow.invoice_id,
-      po: newRow.po_no,
-      vendor: newRow.vendor,
-      partNo: newRow.part_no,
-      partName: newRow.part_name,
-      spec: newRow.spec,
-      qty: newRow.qty,
-      unit: newRow.unit
-    }
-  ]);
-};
 
 
 
@@ -162,12 +201,12 @@ console.log("🔥 URL inv:", JSON.stringify(inv));
 
 
   // 엑셀 업로드 (CDN SheetJS)
-  
+
   const handleExcelUpload = async (event) => {
     if (!invoiceId) {
-  alert("invoice ID 로딩 중입니다. 1초 뒤 다시 시도하세요.");
-  return;
-}
+      alert("invoice ID 로딩 중입니다. 1초 뒤 다시 시도하세요.");
+      return;
+    }
 
     const file = event.target.files[0];
     if (!file) return;
@@ -260,95 +299,95 @@ console.log("🔥 URL inv:", JSON.stringify(inv));
           ← INVOICE로 돌아가기
         </Button>
 
-  <Box sx={{ display: "flex", gap: 1 }}>
+        <Box sx={{ display: "flex", gap: 1 }}>
 
-    {/* 🔵 엑셀 업로드 버튼 (수정모드 아니면 disabled) */}
-    <Button
-      variant="contained"
-      color="info"
-      size="small"
-      component="label"
-      disabled={!isEditMode}
-    >
-      엑셀 업로드
-      <input
-        type="file"
-        accept=".xlsx, .xls"
-        hidden
-        onChange={handleExcelUpload}
-        disabled={!isEditMode}
-      />
-    </Button>
+          {/* 🔵 엑셀 업로드 버튼 (수정모드 아니면 disabled) */}
+          <Button
+            variant="contained"
+            color="info"
+            size="small"
+            component="label"
+            disabled={!isEditMode}
+          >
+            엑셀 업로드
+            <input
+              type="file"
+              accept=".xlsx, .xls"
+              hidden
+              onChange={handleExcelUpload}
+              disabled={!isEditMode}
+            />
+          </Button>
 
-    {/* 🟢 행 추가 버튼 (수정모드에서만 가능) */}
-    <Button
-      variant="contained"
-      color="success"
-      size="small"
-      onClick={handleAdd}
-      disabled={!isEditMode}
-    >
-      추가
-    </Button>
+          {/* 🟢 행 추가 버튼 (수정모드에서만 가능) */}
+          <Button
+            variant="contained"
+            color="success"
+            size="small"
+            onClick={handleAdd}
+            disabled={!isEditMode}
+          >
+            추가
+          </Button>
 
-    {/* 🟠 수정 모드 버튼 — 그대로 유지 */}
-    <Button
-      variant="contained"
-      color={isEditMode ? "secondary" : "warning"}
-      size="small"
-      onClick={() => {
-        setIsEditMode((prev) => {
-          const newMode = !prev;
-          alert(
-            newMode
-              ? "🔧 수정 모드가 활성화되었습니다.\n셀을 클릭하면 데이터를 편집할 수 있습니다."
-              : "✅ 수정 모드가 종료되었습니다.\n표는 다시 읽기 전용이 됩니다."
-          );
-          return newMode;
-        });
-      }}
-    >
-      {isEditMode ? "수정 종료" : "수정 모드"}
-    </Button>
+          {/* 🟠 수정 모드 버튼 — 그대로 유지 */}
+          <Button
+            variant="contained"
+            color={isEditMode ? "secondary" : "warning"}
+            size="small"
+            onClick={() => {
+              setIsEditMode((prev) => {
+                const newMode = !prev;
+                alert(
+                  newMode
+                    ? "🔧 수정 모드가 활성화되었습니다.\n셀을 클릭하면 데이터를 편집할 수 있습니다."
+                    : "✅ 수정 모드가 종료되었습니다.\n표는 다시 읽기 전용이 됩니다."
+                );
+                return newMode;
+              });
+            }}
+          >
+            {isEditMode ? "수정 종료" : "수정 모드"}
+          </Button>
 
-    {/* 🔴 삭제 버튼 (수정모드 아닐 때는 disabled) */}
-    <Button
-      variant="contained"
-      color="error"
-      size="small"
-      disabled={!isEditMode}
-      onClick={async () => {
-        if (!isEditMode) return;
+          {/* 🔴 삭제 버튼 (수정모드 아닐 때는 disabled) */}
+          <Button
+            variant="contained"
+            color="error"
+            size="small"
+            disabled={!isEditMode}
+            onClick={async () => {
+              if (!isEditMode) return;
 
-        if (!deleteMode) {
-          setDeleteMode(true);
-          alert("🗑 삭제 모드 활성화\n행을 클릭해서 선택하세요.");
-          return;
-        }
+              if (!deleteMode) {
+                setDeleteMode(true);
+                alert("🗑 삭제 모드 활성화\n행을 클릭해서 선택하세요.");
+                return;
+              }
 
-        if (selectedRows.length === 0) {
-          alert("삭제할 항목이 없습니다.");
-          setDeleteMode(false);
-          return;
-        }
+              if (selectedRows.length === 0) {
+                alert("삭제할 항목이 없습니다.");
+                setDeleteMode(false);
+                return;
+              }
 
-        if (!window.confirm(`${selectedRows.length}개 항목을 삭제할까요?`)) {
-          return;
-        }
+              if (!window.confirm(`${selectedRows.length}개 항목을 삭제할까요?`)) {
+                return;
+              }
 
-        for (const id of selectedRows) {
-          await apiFetch(`${API}/api/packing/${id}`, { method: "DELETE" });
-        }
+              for (const id of selectedRows) {
+                await apiFetch(`${API}/api/packing/${id}`, { method: "DELETE" });
+              }
 
-        setRows(prev => prev.filter(r => !selectedRows.includes(r.id)));
-        setSelectedRows([]);
-        setDeleteMode(false);
-      }}
-    >
-      {deleteMode ? "삭제 실행" : "삭제"}
-    </Button>
+              setRows(prev => prev.filter(r => !selectedRows.includes(r.id)));
+              setSelectedRows([]);
+              setDeleteMode(false);
+            }}
+          >
+            {deleteMode ? "삭제 실행" : "삭제"}
+          </Button>
 
-  </Box>
+        </Box>
 
 
       </Box>
@@ -366,7 +405,7 @@ console.log("🔥 URL inv:", JSON.stringify(inv));
         <Table size="small" stickyHeader>
           <TableHead sx={{ bgcolor: "#fff3cd" }}>
             <TableRow>
-              {["PO번호", "거래처", "품번", "품명", "규격", "수량","UNIT"].map((col) => (
+              {["PO번호", "거래처", "품번", "품명", "규격", "수량", "UNIT"].map((col) => (
                 <TableCell key={col} align="center" sx={{ fontWeight: "bold" }}>
                   {col}
                 </TableCell>
@@ -377,123 +416,87 @@ console.log("🔥 URL inv:", JSON.stringify(inv));
           <TableBody>
             {rows.map((row, i) => (
               <TableRow
-  key={row.id}
-  sx={{
-    bgcolor: selectedRows.includes(row.id)
-      ? "#ffdddd"
-      : i % 2 === 0
-      ? "#ffffff"
-      : "#f8f8f8",
-    cursor: deleteMode ? "pointer" : "default"
-  }}
-  onClick={() => {
-    if (!deleteMode) return;
+                key={row.id}
+                sx={{
+                  bgcolor: selectedRows.includes(row.id)
+                    ? "#ffdddd"
+                    : i % 2 === 0
+                      ? "#ffffff"
+                      : "#f8f8f8",
+                  cursor: deleteMode ? "pointer" : "default"
+                }}
+                onClick={() => {
+                  if (!deleteMode) return;
 
-    if (selectedRows.includes(row.id)) {
-      setSelectedRows(prev => prev.filter(id => id !== row.id));
-    } else {
-      setSelectedRows(prev => [...prev, row.id]);
-    }
-  }}
->
+                  if (selectedRows.includes(row.id)) {
+                    setSelectedRows(prev => prev.filter(id => id !== row.id));
+                  } else {
+                    setSelectedRows(prev => [...prev, row.id]);
+                  }
+                }}
+              >
 
-                {[ "po", "vendor", "partNo", "partName", "spec", "qty","unit"].map(
+                {["po", "vendor", "partNo", "partName", "spec", "qty", "unit"].map(
                   (field, idx) => (
                     <TableCell
-  key={idx}
-  align="center"
-  sx={{
-    cursor: isEditMode ? "pointer" : "default",
+                      key={idx}
+                      align="center"
+                      sx={{
+                        cursor: isEditMode ? "pointer" : "default",
 
-  }}
-  onClick={() => {
+                      }}
+                      onClick={() => {
 
-    // 🔥 삭제 모드일 때는 수정 로직을 아예 막기
-    if (deleteMode) return;
+                        // 🔥 삭제 모드일 때는 수정 로직을 아예 막기
+                        if (deleteMode) return;
 
-    // 🔥 수정 모드 아닐 때 → 아무것도 안 함
-    if (!isEditMode) return;
+                        // 🔥 수정 모드 아닐 때 → 아무것도 안 함
+                        if (!isEditMode) return;
 
-    // 🔥 UNIT 은 클릭 시 prompt 금지 → select 로만 수정
-    if (field === "unit") return;
+                        // 🔥 Dialog 적용 대상
+                        if (["vendor", "partNo", "partName", "spec", "unit"].includes(field)) {
+                          setTargetRowId(row.id);
+                          setItemDialogOpen(true);
+                          return;
+                        }
 
-    // 🔥 기본 prompt 방식 유지
-    const value = prompt(`${field} 수정`, String(row[field] || ""));
-    if (value !== null) handleEdit(row.id, field, value);
-}}
 
->
+                        // 🔥 spec도 prompt 금지 (Dialog only)
+                        if (field === "spec") return;
+                        // 🔥 UNIT 은 클릭 시 prompt 금지 → select 로만 수정
+                        if (field === "unit") return;
 
-  {/* 🔥 UNIT만 드롭다운 + 직접입력 적용 */}
-  {isEditMode && field === "unit" ? (
+                        // 🔥 기본 prompt 방식 유지
+                        const value = prompt(`${field} 수정`, String(row[field] || ""));
+                        if (value !== null) handleEdit(row.id, field, value);
+                      }}
 
-    row.unit === "__custom__" ? (
-      // 🔸 직접 입력 모드 (input)
-      <input
-        autoFocus
-        defaultValue=""
-        placeholder="직접입력"
-        onBlur={(e) => {
-          const val = e.target.value.trim();
-          handleEdit(row.id, "unit", val || "EA");
-        }}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            const val = e.target.value.trim();
-            handleEdit(row.id, "unit", val || "EA");
-          }
-        }}
-        style={{
-          width: "80px",
-          padding: "4px 6px",
-          border: "1px solid #aaa",
-          borderRadius: "4px",
-        }}
-      />
-    ) : (
-      // 🔸 기본 드롭다운 모드
-      <select
-        value={row.unit}
-        onChange={(e) => {
-          if (e.target.value === "직접입력") {
-            handleEdit(row.id, "unit", "__custom__");
-          } else {
-            handleEdit(row.id, "unit", e.target.value);
-          }
-        }}
-        style={{
-          padding: "4px 6px",
-          borderRadius: "4px",
-          border: "1px solid #ccc",
-          fontSize: "0.9rem",
-        }}
-      >
-        {[
-          "드럼",
-          "벌",
-          "말",
-          "RL",
-          "EA",
-          "BOX",
-          "SET",
-          "KG",
-          "통",
-          "리터",
-          "직접입력",
-        ].map((u) => (
-          <option key={u} value={u}>
-            {u}
-          </option>
-        ))}
-      </select>
-    )
-  ) : (
-    // 🔥 기본 표시 (기존 로직 100% 유지)
-    field === "qty"
-      ? Number(row[field]).toLocaleString()
-      : row[field]
-  )}
-</TableCell>
+                    >
+
+                      {isEditMode && ["vendor", "partNo", "partName", "spec", "unit"].includes(field) ? (
+                        <input
+                          readOnly
+                          value={row[field] || ""}
+                          placeholder="선택"
+                          style={{
+                            width: "100%",
+                            textAlign: "center",
+                            fontWeight: "bold",
+                            cursor: "pointer",
+                            border: "1px solid #ccc",
+                            borderRadius: "4px",
+                            padding: "4px",
+                            background: "#fff",
+                          }}
+                        />
+                      ) : (
+                        field === "qty"
+                          ? Number(row[field]).toLocaleString()
+                          : row[field]
+                      )}
+
+
+                    </TableCell>
 
                   )
                 )}
@@ -502,6 +505,15 @@ console.log("🔥 URL inv:", JSON.stringify(inv));
           </TableBody>
         </Table>
       </Paper>
+      <UnitSearchDialog
+        open={itemDialogOpen}
+        onClose={() => {
+          setItemDialogOpen(false);
+          setTargetRowId(null);
+        }}
+        onSelect={handleSelectPackingItem}
+      />
+
     </Box>
   );
 }

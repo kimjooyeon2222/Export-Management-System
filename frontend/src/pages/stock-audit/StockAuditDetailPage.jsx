@@ -19,6 +19,14 @@ import UploadFileIcon from "@mui/icons-material/UploadFile";
 import { apiFetch } from "api/apiFetch";
 
 export default function StockAuditDetailPage() {
+    // 숫자 포맷 (1,000 단위 콤마)
+    const fmt = (num) =>
+        typeof num === "number"
+            ? num.toLocaleString()
+            : num
+                ? Number(num).toLocaleString()
+                : "0";
+
     useEffect(() => {
         const script = document.createElement("script");
         script.src =
@@ -318,16 +326,16 @@ export default function StockAuditDetailPage() {
                 <Table size="small">
                     <TableHead>
                         <TableRow>
-                            <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>품번</TableCell>
-                            <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>품명</TableCell>
-                            <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>업체명</TableCell>
-                            <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>실사수량</TableCell>
-                            <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>불량</TableCell>
-                            <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>발청소재</TableCell>
-                            <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>적정재고</TableCell>
-                            <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>박스입수량</TableCell>
-                            {editMode && (                     
-                                <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>삭제</TableCell>
+                            <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "16px" }}>품번</TableCell>
+                            <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "16px" }}>품명</TableCell>
+                            <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "16px" }}>업체명</TableCell>
+                            <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "16px" }}>실사수량</TableCell>
+                            <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "16px" }}>불량</TableCell>
+                            <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "16px" }}>발청소재</TableCell>
+                            <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "16px" }}>적정재고</TableCell>
+                            <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "16px" }}>박스입수량</TableCell>
+                            {editMode && (
+                                <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "16px" }}>삭제</TableCell>
                             )}
                         </TableRow>
                     </TableHead>
@@ -357,7 +365,7 @@ export default function StockAuditDetailPage() {
                                                 value={row.itemNo}
                                                 placeholder="품번 선택"
                                                 InputProps={{ readOnly: true }}
-                                                inputProps={{ style: { textAlign: "center", cursor: "pointer" ,fontSize:"15px"} }}
+                                                inputProps={{ style: { textAlign: "center", cursor: "pointer", fontSize: "15px" } }}
                                             />
                                         ) : (
                                             <Typography sx={{ fontSize: "15px", fontWeight: "bold" }}>{row.itemNo || "-"}</Typography>
@@ -383,7 +391,10 @@ export default function StockAuditDetailPage() {
                                                 inputProps={{ style: { textAlign: "center", cursor: "pointer" } }}
                                             />
                                         ) : (
-                                            <Typography>{row.itemName || "-"}</Typography>
+                                            <Typography sx={{ fontSize: "15px", fontWeight: "bold" }}>
+                                                {row.itemName || "-"}
+                                            </Typography>
+
                                         )}
                                     </TableCell>
 
@@ -406,7 +417,10 @@ export default function StockAuditDetailPage() {
                                                 inputProps={{ style: { textAlign: "center", cursor: "pointer" } }}
                                             />
                                         ) : (
-                                            <Typography>{row.vendorName || "-"}</Typography>
+                                            <Typography sx={{ fontSize: "15px", fontWeight: "bold" }}>
+                                                {row.vendorName || "-"}
+                                            </Typography>
+
                                         )}
                                     </TableCell>
 
@@ -424,7 +438,10 @@ export default function StockAuditDetailPage() {
                                                 inputProps={{ style: { textAlign: "center" } }}
                                             />
                                         ) : (
-                                            <Typography>{row.auditQty}</Typography>
+                                            <Typography sx={{ fontSize: "15px", fontWeight: "bold" }}>
+                                                {fmt(row.auditQty)}
+                                            </Typography>
+
                                         )}
                                     </TableCell>
 
@@ -442,7 +459,10 @@ export default function StockAuditDetailPage() {
                                                 inputProps={{ style: { textAlign: "center" } }}
                                             />
                                         ) : (
-                                            <Typography>{row.defectQty}</Typography>
+                                            <Typography sx={{ fontSize: "15px", fontWeight: "bold" }}>
+                                                {fmt(row.defectQty)}
+                                            </Typography>
+
                                         )}
                                     </TableCell>
 
@@ -460,7 +480,10 @@ export default function StockAuditDetailPage() {
                                                 inputProps={{ style: { textAlign: "center" } }}
                                             />
                                         ) : (
-                                            <Typography>{row.shortageQty}</Typography>
+                                            <Typography sx={{ fontSize: "15px", fontWeight: "bold" }}>
+                                                {fmt(row.shortageQty)}
+                                            </Typography>
+
                                         )}
                                     </TableCell>
 
@@ -478,7 +501,11 @@ export default function StockAuditDetailPage() {
                                                 inputProps={{ style: { textAlign: "center" } }}
                                             />
                                         ) : (
-                                            <Typography>{row.optimalQty}</Typography>
+                                            <Typography sx={{ fontSize: "15px", fontWeight: "bold" }}>
+                                                {fmt(row.optimalQty)}
+                                            </Typography>
+
+
                                         )}
                                     </TableCell>
 
@@ -497,7 +524,11 @@ export default function StockAuditDetailPage() {
                                                 inputProps={{ style: { textAlign: "center" } }}
                                             />
                                         ) : (
-                                            <Typography>{row.boxQty}</Typography>
+                                            <Typography sx={{ fontSize: "15px", fontWeight: "bold" }}>
+                                                {fmt(row.boxQty)}
+                                            </Typography>
+
+
                                         )}
                                     </TableCell>
 
