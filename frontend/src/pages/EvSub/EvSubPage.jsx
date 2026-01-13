@@ -1167,19 +1167,22 @@ export default function EvSubPage() {
                 borderCollapse: "separate !important",
                 borderSpacing: "0 !important",
                 margin: 0,
+
               }
             }}
           >
 
+            {/* 🔥 업체명 위 선 제거용 오버레이 (AxleSub와 동일) */}
             <Box
               sx={{
                 position: "absolute",
-                top: 0,
+                top: "-2px",      // ⭐ 테이블 상단선 위치
                 left: 0,
                 width: "100%",
-                height: "3px",
+                height: "6px",    // ⭐ 선보다 충분히 크게
                 bgcolor: "#ffffff",
-                zIndex: 10
+                zIndex: 20,
+                pointerEvents: "none",
               }}
             />
 
