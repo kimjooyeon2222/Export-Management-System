@@ -1771,11 +1771,11 @@ def get_forging_inv_item_qty():
         data = request.json
         inv_no = data.get("inv_no")
         item_code = data.get("item_code")
-        item_name = data.get("item_name")
 
-        print("🔥 qty API input:", inv_no, item_code, item_name)
 
-        if not inv_no or not item_code or not item_name:
+        print("🔥 qty API input:", inv_no, item_code)
+
+        if not inv_no or not item_code:
             print("❌ missing param")
             return jsonify({"qty": 0})
 
@@ -1787,7 +1787,6 @@ def get_forging_inv_item_qty():
         rows = PackingList.query.filter(
             PackingList.invoice_id == invoice.id,
             PackingList.part_no == item_code,
-            PackingList.part_name == item_name
         ).all()
 
         print("🔥 qty rows:", [(r.part_no, r.part_name, r.qty) for r in rows])

@@ -15,10 +15,44 @@ import {
   Tooltip
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import HorizontalScroll from "./HorizontalScroll";
 import { apiFetch } from "api/apiFetch";
+import { v4 as uuidv4 } from "uuid";
+import UnitSearchDialog from "components/dialog/UnitSearchDialog";
+
 
 export default function EvSubPage() {
+  const handleSelectEvItem = (item) => {
+    if (!targetEvRowId) return;
+
+    setInventoryRows(prev =>
+      prev.map(r =>
+        r.tempId === targetEvRowId
+          ? {
+            ...r,
+            company: item.company_name || "",
+            item_code: item.item_no,
+            item_name: item.item_name,
+          }
+          : r
+      )
+    );
+
+    setItemDialogOpen(false);
+    setTargetEvRowId(null);
+  };
+
+
+  const [itemDialogOpen, setItemDialogOpen] = useState(false);
+  const [targetEvRowId, setTargetEvRowId] = useState(null);
+
+  // 🔥 삭제 선택 모드
+  const [deleteMode, setDeleteMode] = useState(false);
+
+
+
+  // 🔥 선택된 행 (삭제용)
+  const [selectedEvRowIds, setSelectedEvRowIds] = useState([]);
+
   const getStockStatusStyle = (status) => {
     switch (status) {
       case "초과":
@@ -314,7 +348,7 @@ export default function EvSubPage() {
 
   const addRow = () => {
     const newRow = {
-      tempId: crypto.randomUUID(),
+      tempId: uuidv4(),
       inv_no: "",
       etd: "",
       eta: "",
@@ -427,7 +461,7 @@ export default function EvSubPage() {
       setScheduleRows(
         schedules.map((r) => ({
           ...r,
-          tempId: crypto.randomUUID(),   // ★ Axle와 동일하게 tempId 생성
+          tempId: uuidv4(),   // ★ Axle와 동일하게 tempId 생성
         }))
       );
 
@@ -697,13 +731,82 @@ export default function EvSubPage() {
       {showStockPanel && (
         <Paper sx={{ p: 2, mb: 4, border: "2px solid #777" }}>
           {/* 과부족 상태 제목 + 적정재고 입력 */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mb: 2
+            }}
+          >
             <Typography sx={{ fontWeight: "bold", fontSize: 18 }}>
               ※ 과부족 상태 ※
             </Typography>
 
+            {/* 🔥 수정모드일 때만 버튼 표시 */}
+            {editMode && (
+              <Box sx={{ display: "flex", gap: 1 }}>
+                <Button
+                  variant="contained"
+                  color="success"
+                  size="small"
+                  onClick={() => {
+                    setInventoryRows(prev => [
+                      ...prev,
+                      {
+                        id: null,
+                        tempId: uuidv4(),
+                        company: "",
+                        item_name: "",
+                        item_code: "",
+                        box_qty: 0,
+                        actual_stock: 0,
+                        target_stock: 0,
+                      }
+                    ]);
+                  }}
 
+                >
+                  + 품목추가
+                </Button>
+
+
+                <Button
+                  variant="contained"
+                  color="error"
+                  size="small"
+                  onClick={() => {
+                    // 1️⃣ 삭제 모드 진입
+                    if (!deleteMode) {
+                      setDeleteMode(true);
+                      setSelectedEvRowIds([]);
+                      return;
+                    }
+
+                    // 2️⃣ 선택 안 했을 때
+                    if (selectedEvRowIds.length === 0) {
+                      alert("삭제할 행을 선택하세요.");
+                      return;
+                    }
+
+                    // 3️⃣ 실제 삭제
+                    setInventoryRows(prev =>
+                      prev.filter(r => !selectedEvRowIds.includes(r.tempId))
+                    );
+
+                    // 4️⃣ 초기화
+                    setSelectedEvRowIds([]);
+                    setDeleteMode(false);
+                  }}
+                >
+                  {deleteMode ? "선택 삭제" : "- 품목삭제"}
+                </Button>
+
+
+              </Box>
+            )}
           </Box>
+
 
 
           <Table size="small">
@@ -721,8 +824,8 @@ export default function EvSubPage() {
               <TableRow>
                 <TableCell align="center">순번</TableCell>
                 <TableCell>업체명</TableCell>
-                <TableCell>품명</TableCell>
                 <TableCell>품번</TableCell>
+                <TableCell>품명</TableCell>
                 <TableCell>박스 입수량</TableCell>
                 <TableCell>실사자료</TableCell>
                 <TableCell>적정재고</TableCell>
@@ -746,39 +849,149 @@ export default function EvSubPage() {
 
                 return (
                   <TableRow
-                    key={idx}
+                    key={row.tempId || idx}
+                    onClick={() => {
+                      if (!editMode || !deleteMode) return;
+
+                      setSelectedEvRowIds(prev =>
+                        prev.includes(row.tempId)
+                          ? prev.filter(id => id !== row.tempId)
+                          : [...prev, row.tempId]
+                      );
+                    }}
+
                     sx={{
-                      backgroundColor: status === "적정재고미달" ? "#fdf1f3" : "inherit"
+                      cursor: editMode ? "pointer" : "default",
+
+                      backgroundColor: selectedEvRowIds.includes(row.tempId)
+                        ? "#cfe8ff"                         // ✅ 선택된 행 (Axle 느낌)
+                        : status === "적정재고미달"
+                          ? "#fdf1f3"
+                          : "inherit",
+
+                      "&:hover": editMode
+                        ? { backgroundColor: "#e3f2fd" }
+                        : {},
                     }}
                   >
+
                     {/* ✅ 순번 */}
                     <TableCell align="center" sx={{ fontWeight: "bold" }}>
                       {idx + 1}
                     </TableCell>
-                    <TableCell align="center">
-                      <Box
-                        sx={{
-                          display: "inline-block",
-                          px: 1.5,
-                          py: 0.3,
-                          borderRadius: "6px",
-                          fontWeight: "bold",
-                          bgcolor: companyColors[row.company] || "#ddd",
-                          color: getContrastTextColor(companyColors[row.company])
-                        }}
-                      >
-                        {row.company}
-                      </Box>
+
+                    <TableCell
+                      align="center"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!editMode) return;
+                        setTargetEvRowId(row.tempId);
+                        setItemDialogOpen(true);
+                      }}
+                    >
+                      {editMode ? (
+                        <TextField
+                          size="small"
+                          value={row.company}
+                          placeholder="업체 선택"
+                          InputProps={{ readOnly: true }}
+                          sx={{
+                            width: "100%",
+                            "& input": {
+                              textAlign: "center",
+                              fontWeight: "bold",
+                              cursor: "pointer",
+                            },
+                          }}
+                        />
+                      ) : (
+                        <Box
+                          sx={{
+                            display: "inline-block",
+                            px: 1.5,
+                            py: 0.3,
+                            borderRadius: "6px",
+                            fontWeight: "bold",
+                            bgcolor: companyColors[row.company] || "#ddd",
+                            color: getContrastTextColor(companyColors[row.company]),
+                            minWidth: "90px",
+                            textAlign: "center",
+                          }}
+                        >
+                          {row.company}
+                        </Box>
+                      )}
                     </TableCell>
 
 
-                    <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
-                      {row.item_name}
+
+                    <TableCell
+                      align="center"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!editMode) return;
+                        setTargetEvRowId(row.tempId);
+                        setItemDialogOpen(true);
+                      }}
+                    >
+                      {editMode ? (
+                        <TextField
+                          size="small"
+                          value={row.item_code}
+                          placeholder="품번 선택"
+                          InputProps={{ readOnly: true }}
+                          sx={{
+                            width: "100%",
+                            "& input": {
+                              textAlign: "center",
+                              fontWeight: "bold",
+                              cursor: "pointer",
+                            },
+                          }}
+                        />
+                      ) : (
+                        <Typography sx={{ fontWeight: "bold" }}>
+                          {row.item_code}
+                        </Typography>
+                      )}
                     </TableCell>
 
-                    <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
-                      {row.item_code}
+
+
+                    <TableCell
+                      align="center"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!editMode) return;
+                        setTargetEvRowId(row.tempId);
+                        setItemDialogOpen(true);
+                      }}
+                    >
+                      {editMode ? (
+                        <TextField
+                          size="small"
+                          value={row.item_name}
+                          placeholder="품목 선택"
+                          InputProps={{ readOnly: true }}
+                          sx={{
+                            width: "100%",
+                            "& input": {
+                              textAlign: "center",
+                              fontWeight: "bold",
+                              cursor: "pointer",
+                            },
+                          }}
+                        />
+                      ) : (
+                        <Typography sx={{ fontWeight: "bold" }}>
+                          {row.item_name}
+                        </Typography>
+                      )}
                     </TableCell>
+
+
+
+
 
                     <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
                       {formatNumber(row.box_qty)}
@@ -1033,6 +1246,15 @@ export default function EvSubPage() {
 
           </Table>
         </Box>
+
+        <UnitSearchDialog
+          open={itemDialogOpen}
+          onClose={() => {
+            setItemDialogOpen(false);
+            setTargetEvRowId(null);
+          }}
+          onSelect={handleSelectEvItem}
+        />
 
 
       </Paper>

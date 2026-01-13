@@ -97,7 +97,7 @@ export default function ForgingPage() {
       body: JSON.stringify({
         inv_no,
         item_code: itemCode,
-        item_name: itemName,
+
       }),
     });
 
@@ -180,7 +180,6 @@ export default function ForgingPage() {
       const qty = await fetchInvItemQty(
         inv_no,
         it.itemCode,
-        it.itemName
       );
 
       quantities[it.itemCode] = qty;

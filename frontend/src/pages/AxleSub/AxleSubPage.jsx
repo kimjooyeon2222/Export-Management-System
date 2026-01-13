@@ -67,7 +67,7 @@ export default function AxleSubPage() {
   }, [axleRows]);
 
   const axleItemSignature = axleRows
-    .map(r => `${r.item_code}|${r.item_name}`)
+    .map(r => r.item_code)
     .join("|");
   useEffect(() => {
     if (!scheduleRows.length || !axleRows.length) return;
@@ -153,29 +153,24 @@ export default function AxleSubPage() {
     const quantities = {};
 
     for (const r of axleRows) {
-      if (!r.item_code || !r.item_name) continue;
+      if (!r.item_code) continue;
 
-      const qty = await fetchInvItemQty(
+      quantities[r.item_code] = await fetchInvItemQty(
         inv_no,
-        r.item_code,
-        r.item_name
+        r.item_code
       );
-
-      quantities[r.item_code] ??= {};
-      quantities[r.item_code][r.item_name] = qty;
     }
-
 
     return quantities;
   }
 
-  async function fetchInvItemQty(inv_no, itemCode, itemName) {
+
+  async function fetchInvItemQty(inv_no, itemCode) {
     const res = await apiFetch(`${API_BASE}/api/forging/inv-item-qty`, {
       method: "POST",
       body: JSON.stringify({
         inv_no,
         item_code: itemCode,
-        item_name: itemName,
       }),
     });
 
@@ -397,20 +392,17 @@ export default function AxleSubPage() {
   };
 
   // 🔥 운항중 수량 계산 (오늘 날짜 기준)
-  const calcInTransit = (itemCode, itemName) => {
+  const calcInTransit = (itemCode) => {
     if (!Array.isArray(scheduleRows)) return 0;
 
     return scheduleRows
       .filter(r => getScheduleStatus(r.etd, r.eta) === "운항중")
       .reduce(
-        (sum, r) =>
-          sum +
-          (Number(
-            r.quantities?.[itemCode]?.[itemName]
-          ) || 0),
+        (sum, r) => sum + (Number(r.quantities?.[itemCode]) || 0),
         0
       );
   };
+
 
 
 
@@ -941,7 +933,7 @@ export default function AxleSubPage() {
 
             <TableBody>
               {axleRows.map((row) => {
-                const inTransit = calcInTransit(row.item_code, row.item_name);
+                const inTransit = calcInTransit(row.item_code);
 
                 const existing = row.actual_stock;                // 기존재고
                 const total = inTransit + existing;               // 총합
@@ -1378,7 +1370,8 @@ export default function AxleSubPage() {
                       sx={{ fontSize: "15px", fontWeight: "bold" }}
                     >
                       {formatNumber(
-                        row.quantities?.[it.item_code]?.[it.item_name]
+                        row.quantities?.[it.item_code] || 0
+
                       )}
                     </TableCell>
                   ))
