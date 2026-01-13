@@ -19,6 +19,13 @@ export default function PackingList() {
   const API = import.meta.env.VITE_API_URL;
   const [itemDialogOpen, setItemDialogOpen] = useState(false);
   const [targetRowId, setTargetRowId] = useState(null);
+  const packingPlaceholders = {
+    vendor: "거래처 선택",
+    partNo: "품번 선택",
+    partName: "품명 선택",
+    spec: "규격 선택",
+    unit: "UNIT 선택",
+  };
 
   const handleSelectPackingItem = (item) => {
     if (!targetRowId) return;
@@ -477,7 +484,7 @@ export default function PackingList() {
                         <input
                           readOnly
                           value={row[field] || ""}
-                          placeholder="선택"
+                          placeholder={packingPlaceholders[field] || "선택"}
                           style={{
                             width: "100%",
                             textAlign: "center",
