@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { EV_PART_MAP } from "./EVPartMap";
 
 import {
   Box,
@@ -18,14 +17,87 @@ import { useNavigate } from "react-router-dom";
 import { apiFetch } from "api/apiFetch";
 import { v4 as uuidv4 } from "uuid";
 import UnitSearchDialog from "components/dialog/UnitSearchDialog";
+import { useRef } from "react";
 
 
 export default function EvSubPage() {
+
+  // 업체별 헤더 색상 (이미지 기반 정확한 색상)
+  const companyColors = {
+    "금강기업": "#D64545",
+    "동일인더스트리": "#ED7D31",
+    "삼성금속": "#FFD966",
+    "와이엠": "#A9D18E",
+    "유신정밀공업": "#9BC2E6",
+    "화승알엔에이": "#74A8D4",
+    "평화산업": "#B4A7D6",
+    "풍성아이엔디": "#D5A6BD",
+    "대일 CST": "#A64D79"
+  };
+
+
+  const [inventoryRows, setInventoryRows] = useState([]);
+
+  const handleToggleEditMode = () => {
+    setEditMode(prev => !prev);
+  };
+
+
+  const companyColorMap = useRef({});
+
+  const usedCompanyColors = useRef(new Set(Object.values(companyColors)));
+
+  const getCompanyColor = (company) => {
+    if (!company) return null;
+
+    // 1️⃣ 기존 업체는 고정 색
+    if (companyColors[company]) {
+      return companyColors[company];
+    }
+
+    // 2️⃣ 이미 생성된 신규 업체 색
+    if (companyColorMap.current[company]) {
+      return companyColorMap.current[company];
+    }
+
+    // 3️⃣ 신규 업체 → 절대 안 겹치게 생성
+    let hash = 0;
+    for (let i = 0; i < company.length; i++) {
+      hash = company.charCodeAt(i) + ((hash << 5) - hash);
+    }
+
+    let hue = Math.abs(hash) % 360;
+    let color;
+
+    do {
+      color = `hsl(${hue}, 60%, 78%)`;
+      hue = (hue + 31) % 360; // ⭐ 계속 이동
+    } while (usedCompanyColors.current.has(color));
+
+    usedCompanyColors.current.add(color);
+    companyColorMap.current[company] = color;
+
+    return color;
+  };
+
+  // 🔥 품번(item_code) → 회사 색상
+  const getCompanyColorByItemCode = (itemCode) => {
+    if (!itemCode) return null;
+
+    const found = inventoryRows.find(r => r.item_code === itemCode);
+    if (!found?.company) return null;
+
+    // ⭐ 기존 업체 색 우선 + 신규 업체는 해시
+    return getCompanyColor(found.company);
+  };
+
+
   const handleSelectEvItem = (item) => {
     if (!targetEvRowId) return;
 
-    setInventoryRows(prev =>
-      prev.map(r =>
+    setInventoryRows(prev => {
+      // 1️⃣ 선택된 row 업데이트
+      const updated = prev.map(r =>
         r.tempId === targetEvRowId
           ? {
             ...r,
@@ -34,12 +106,41 @@ export default function EvSubPage() {
             item_name: item.item_name,
           }
           : r
-      )
+      );
+
+      // 2️⃣ 회사 기준으로 다시 정렬 (AXLE 핵심 로직)
+      const map = new Map();
+      updated.forEach(r => {
+        const key = r.company || "__EMPTY__";
+        if (!map.has(key)) map.set(key, []);
+        map.get(key).push(r);
+      });
+
+      // 3️⃣ 그룹 순서 유지 + 평탄화
+      const reordered = Array.from(map.values()).flat();
+
+      // 4️⃣ seq 재부여
+      return reordered.map((r, idx) => ({
+        ...r,
+        seq: idx + 1
+      }));
+    });
+
+    // 🔥 운송 스케줄 qty 슬롯 보장
+    setScheduleRows(prev =>
+      prev.map(row => ({
+        ...row,
+        quantities: {
+          ...row.quantities,
+          [item.item_no]: row.quantities?.[item.item_no] ?? 0,
+        },
+      }))
     );
 
     setItemDialogOpen(false);
     setTargetEvRowId(null);
   };
+
 
 
   const [itemDialogOpen, setItemDialogOpen] = useState(false);
@@ -105,30 +206,20 @@ export default function EvSubPage() {
   };
 
 
-  // ==========================================
-  // 🔥 품번 → 스케줄 표 컬럼(PART_NAMES 이름) 찾기
-  // ==========================================
-  const findPartNameByPartNo = (part_no) => {
-    for (const label of PART_NAMES) {
-      if (EV_PART_MAP[label]?.part_no === part_no) {
-        return label;
-      }
-    }
-    return null;
-  };
+
 
   // ==========================================
   // 🔥 EV 운항중 qty 합계 계산
   // ==========================================
-  const calcInTransitEV = (part_no) => {
-    if (!Array.isArray(scheduleRows)) return 0;
-
-    const partName = findPartNameByPartNo(part_no);
-    if (!partName) return 0;
+  // 🔥 scheduleRows 안에 item_code 기준 qty 합산
+  const calcInTransitEV = (itemCode) => {
+    if (!itemCode) return 0;
 
     return scheduleRows
-      .filter(r => getScheduleStatus(r.etd, r.eta) === "운항중") // 운항중 조건
-      .reduce((sum, r) => sum + (Number(r[partName]) || 0), 0);
+      .filter(r => getScheduleStatus(r.etd, r.eta) === "운항중")
+      .reduce((sum, r) => {
+        return sum + (Number(r.quantities?.[itemCode]) || 0);
+      }, 0);
   };
 
 
@@ -194,26 +285,24 @@ export default function EvSubPage() {
         (v || "").toString().trim().replace(/\s+/g, "").toUpperCase();
 
       // 3) qty 맵핑
-      const newRowData = {};
-      PART_NAMES.forEach(label => {
-        const partNo = EV_PART_MAP[label]?.part_no;
-        if (!partNo) {
-          newRowData[label] = 0;
-          return;
-        }
+      const newQuantities = {};
 
-        const key = normalize(partNo);
-        newRowData[label] = status === "운항중" ? (qty_map[key] || 0) : 0;
+      inventoryRows.forEach(item => {
+        newQuantities[item.item_code] =
+          status === "운항중"
+            ? (qty_map[item.item_code] || 0)
+            : 0;
       });
 
-      // 4) 스케줄 업데이트
+      // ✅ quantities 반드시 저장
       setScheduleRows(prev =>
         prev.map(r =>
           r.tempId === tempId
-            ? { ...r, etd, eta, status, ...newRowData }
+            ? { ...r, etd, eta, status, quantities: newQuantities }
             : r
         )
       );
+
 
     } catch (err) {
       console.error("INV 자동로드 실패:", err);
@@ -242,9 +331,13 @@ export default function EvSubPage() {
           status: row.status,
         };
 
-        PART_NAMES.forEach(name => {
-          cleanRow[name] = row[name] || 0;
+        cleanRow.quantities = {};
+
+        inventoryRows.forEach(item => {
+          cleanRow.quantities[item.item_code] =
+            row.quantities?.[item.item_code] || 0;
         });
+
 
         return cleanRow;
       });
@@ -309,20 +402,15 @@ export default function EvSubPage() {
       // =========================
       const newRowData = {};
 
-      PART_NAMES.forEach(label => {
-        const partNo = EV_PART_MAP[label]?.part_no;
+      const newQuantities = {};
 
-        if (!partNo) {
-          newRowData[label] = 0;
-          return;
-        }
-
-        const key = normalize(partNo);
-        const qty = qty_map[key] || 0;
-
-        // 운항중일 때만 qty 표시
-        newRowData[label] = status === "운항중" ? qty : 0;
+      inventoryRows.forEach(item => {
+        newQuantities[item.item_code] =
+          status === "운항중"
+            ? (qty_map[item.item_code] || 0)
+            : 0;
       });
+
 
       // =========================
       // 4) 최종 업데이트 (기존 로직 그대로)
@@ -330,7 +418,7 @@ export default function EvSubPage() {
       setScheduleRows(prev =>
         prev.map(row =>
           row.tempId === tempId
-            ? { ...row, etd, eta, status, ...newRowData }
+            ? { ...row, etd, eta, status, quantities: newQuantities }
             : row
         )
       );
@@ -346,48 +434,44 @@ export default function EvSubPage() {
   };
 
 
+
   const addRow = () => {
+    const newQuantities = {};
+
+    inventoryRows.forEach(item => {
+      newQuantities[item.item_code] = 0;
+    });
+
     const newRow = {
       tempId: uuidv4(),
       inv_no: "",
       etd: "",
       eta: "",
       status: "",
+      quantities: newQuantities,
     };
-
-    PART_NAMES.forEach(name => newRow[name] = 0);
 
     setScheduleRows(prev => [...prev, newRow]);
   };
 
 
+  const companyGroups = React.useMemo(() => {
+    const map = new Map();
+
+    inventoryRows.forEach(r => {
+      if (!r.company) return;
+      if (!map.has(r.company)) {
+        map.set(r.company, []);
+      }
+      map.get(r.company).push(r);
+    });
+
+    return Array.from(map.entries());
+    // [ [companyName, rows[]], ... ]
+  }, [inventoryRows]);
 
 
 
-  // 🔥 회사별 컬럼 구간 매핑
-  const companyGroups = [
-    { name: "금강기업", range: [0, 5] },
-    { name: "동일인더스트리", range: [6, 13] },
-    { name: "삼성금속", range: [14, 14] },
-    { name: "와이엠", range: [15, 15] },
-    { name: "유신정밀공업", range: [16, 16] },
-    { name: "화승알엔에이", range: [17, 19] },
-    { name: "평화산업", range: [20, 21] },
-    { name: "풍성아이엔디", range: [22, 25] },
-    { name: "대일 CST", range: [26, 27] }
-  ];
-  // 업체별 헤더 색상 (이미지 기반 정확한 색상)
-  const companyColors = {
-    "금강기업": "#D64545",
-    "동일인더스트리": "#ED7D31",
-    "삼성금속": "#FFD966",
-    "와이엠": "#A9D18E",
-    "유신정밀공업": "#9BC2E6",
-    "화승알엔에이": "#74A8D4",
-    "평화산업": "#B4A7D6",
-    "풍성아이엔디": "#D5A6BD",
-    "대일 CST": "#A64D79"
-  };
 
 
   /* ----------------------------------
@@ -425,7 +509,6 @@ export default function EvSubPage() {
 
   const [scheduleRows, setScheduleRows] = useState([]);
 
-  const [inventoryRows, setInventoryRows] = useState([]);
 
   const API_BASE = import.meta.env.VITE_API_URL;
   useEffect(() => {
@@ -452,7 +535,13 @@ export default function EvSubPage() {
       // 2) EV Inventory (ev_inventory)
       const resInv = await apiFetch(`${API_BASE}/api/ev-inventory`);
       const inventory = await resInv.json();
-      setInventoryRows(inventory);
+      setInventoryRows(
+        inventory.map((row, idx) => ({
+          ...row,
+          tempId: uuidv4(),
+          seq: idx + 1,   // ⭐ 최초 로딩 시 순번
+        }))
+      );
 
       // 3) EV Schedule (ev_schedule)
       const resSchedule = await apiFetch(`${API_BASE}/api/ev-schedule`);
@@ -561,38 +650,6 @@ export default function EvSubPage() {
     }
   };
 
-  // 운송 스케줄용 품명 28개
-  const PART_NAMES = [
-    "PIN DOWEL (10140)",
-    "PLUG TAPER",
-    "STUD",
-    "BOLT HEXAGON SOCKET HEAD (06121)",
-    "BOLT HEXAGON SOCKET HEAD (06141)",
-    "PIN DOWEL (04100)",
-    "DOWEL PIN 1",
-    "DOWEL PIN 2",
-    "OIL NIPPLE",
-    "RESOLVER PIN DOWEL",
-    "NIPPLE_NO.1 (DO364)",
-    "NIPPLE_NO.2 (DO364)",
-    "NIPPLE_NO.1 (NI364)",
-    "NIPPLE_NO.2 (NI364)",
-    "PIN DOWEL (10200)",
-    "M5 X 14 BOLT ASSY",
-    "WASHER WAVE",
-    "PIPE COOLING -D",
-    "PIPE COOLINGD (1XAB0)",
-    "PIPE COOLINGD (1XCA0)",
-    "BRK'T ASS'Y MOTOR MTG,LH",
-    "BRK'T ASS'Y MOTOR MTG,RH",
-    "KNOCK BUSH (10090)",
-    "KNOCK BUSH (08130)",
-    "STUD (08256K)",
-    "STUD (08206K)",
-    "보호용 캡 (GNT-1)",
-    "보호용 캡 (MRCAP)"
-  ];
-
   const formatNumber = (num) =>
     typeof num === "number"
       ? num.toLocaleString()
@@ -660,7 +717,7 @@ export default function EvSubPage() {
       <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2, gap: 1 }}>
         <Button
           variant="outlined"
-          onClick={() => setEditMode(!editMode)}
+          onClick={handleToggleEditMode}
           sx={{
             borderColor: editMode ? "#d32f2f" : "#1976d2",
             color: editMode ? "#d32f2f" : "#1976d2",
@@ -669,6 +726,7 @@ export default function EvSubPage() {
         >
           {editMode ? "수정모드 종료" : "수정모드 활성화"}
         </Button>
+
 
         <Button
           variant="contained"
@@ -751,20 +809,53 @@ export default function EvSubPage() {
                   color="success"
                   size="small"
                   onClick={() => {
-                    setInventoryRows(prev => [
-                      ...prev,
-                      {
-                        id: null,
-                        tempId: uuidv4(),
-                        company: "",
-                        item_name: "",
-                        item_code: "",
-                        box_qty: 0,
-                        actual_stock: 0,
-                        target_stock: 0,
+                    const newItem = {
+                      id: null,
+                      tempId: uuidv4(),
+                      seq: inventoryRows.length + 1, // 최초만 부여
+                      company: "",
+                      item_name: "",
+                      item_code: "",
+                      box_qty: 0,
+                      actual_stock: 0,
+                      target_stock: 0,
+                    };
+
+                    // 1️⃣ EV 재고에 추가
+                    setInventoryRows(prev => {
+                      const sameCompanyRows = prev.filter(r => r.company === newItem.company);
+                      const otherRows = prev.filter(r => r.company !== newItem.company);
+
+                      let insertIndex = prev.length;
+
+                      if (sameCompanyRows.length > 0) {
+                        const lastSame = sameCompanyRows[sameCompanyRows.length - 1];
+                        insertIndex = prev.findIndex(r => r.tempId === lastSame.tempId) + 1;
                       }
-                    ]);
+
+                      const next = [...prev];
+                      next.splice(insertIndex, 0, newItem);
+
+                      // ⭐ 순번 재정렬
+                      return next.map((r, idx) => ({
+                        ...r,
+                        seq: idx + 1
+                      }));
+                    });
+
+
+                    // 2️⃣ 모든 운송 스케줄 row에 qty 슬롯 자동 추가
+                    setScheduleRows(prev =>
+                      prev.map(r => ({
+                        ...r,
+                        quantities: {
+                          ...r.quantities,
+                          [newItem.item_code]: 0,
+                        },
+                      }))
+                    );
                   }}
+
 
                 >
                   + 품목추가
@@ -846,7 +937,7 @@ export default function EvSubPage() {
                 const total = row.actual_stock + transit;
 
                 const status = getStatus(row.actual_stock, proper);
-
+                const bg = getCompanyColorByItemCode(row.item_code);
                 return (
                   <TableRow
                     key={row.tempId || idx}
@@ -877,7 +968,7 @@ export default function EvSubPage() {
 
                     {/* ✅ 순번 */}
                     <TableCell align="center" sx={{ fontWeight: "bold" }}>
-                      {idx + 1}
+                      {row.seq}
                     </TableCell>
 
                     <TableCell
@@ -905,6 +996,7 @@ export default function EvSubPage() {
                           }}
                         />
                       ) : (
+
                         <Box
                           sx={{
                             display: "inline-block",
@@ -912,8 +1004,11 @@ export default function EvSubPage() {
                             py: 0.3,
                             borderRadius: "6px",
                             fontWeight: "bold",
-                            bgcolor: companyColors[row.company] || "#ddd",
-                            color: getContrastTextColor(companyColors[row.company]),
+
+
+                            bgcolor: bg,
+                            color: "#000",
+
                             minWidth: "90px",
                             textAlign: "center",
                           }}
@@ -1094,33 +1189,30 @@ export default function EvSubPage() {
 
               {/* 🔥 업체 그룹 헤더 동적 생성 */}
               <TableRow sx={{ bgcolor: "#ffffff !important" }}>
-                <TableCell colSpan={4} /> {/* INV / ETD / ETA / 상태 */}
+                <TableCell colSpan={4} />
 
-                {companyGroups.map((g, idx) => {
-                  const [start, end] = g.range;
-                  const span = end - start + 1;
+                {companyGroups.map(([company, rows]) => {
+                  const bg = getCompanyColor(company);
 
                   return (
                     <TableCell
-                      key={idx}
-                      colSpan={span}
+                      key={company}
                       align="center"
+                      colSpan={rows.length}   // ⭐ 핵심
                       sx={{
                         fontWeight: "bold",
                         fontSize: "16px",
-                        bgcolor: companyColors[g.name],  // ← 업체별 색상 적용!
+                        bgcolor: bg || "#ddd",
                         color: "#000",
-
-                        borderBottom: "2px solid #b7b7b7",
-
+                        borderBottom: "2px solid #b7b7b7"
                       }}
                     >
-                      {g.name}
+                      {company}
                     </TableCell>
-
                   );
                 })}
               </TableRow>
+
 
               {/* 🔥 품명 헤더 */}
               <TableRow sx={{ bgcolor: "#ffe599" }}>
@@ -1129,49 +1221,47 @@ export default function EvSubPage() {
                 <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>ETA</TableCell>
                 <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>상태</TableCell>
 
-                {PART_NAMES.map((name, idx) => (
-                  <TableCell
-                    key={idx}
-                    align="center"
-                    sx={{
-                      backgroundColor: "#ffe599",
-                      padding: 0,
-                      "&:hover": {
-                        backgroundColor: "#ffe6eb", // 🔥 Oil과 동일한 hover 색
-                      },
-                    }}
-                  >
-                    <Tooltip
-                      title={
-                        <span
+                {companyGroups.flatMap(([_, rows]) =>
+                  rows.map((item, idx) => (
+                    <TableCell
+                      key={item.item_code}
+                      align="center"
+                      sx={{
+                        backgroundColor: "#ffe599",
+                        padding: 0,
+                        "&:hover": {
+                          backgroundColor: "#ffe6eb",
+                        },
+                      }}
+                    >
+                      <Tooltip
+                        title={
+                          <span style={{ fontSize: "18px", fontWeight: "bold" }}>
+                            {item.item_name}
+                          </span>
+                        }
+                        arrow
+                        placement="top"
+                      >
+                        <div
                           style={{
-                            fontSize: "18px",
+                            width: "100%",
+                            height: "100%",
+                            padding: "10px 0",
+                            cursor: "help",
                             fontWeight: "bold",
-                            lineHeight: 1.4,
+                            fontSize: "15px",
                           }}
                         >
-                          {name}
-                        </span>
-                      }
-                      arrow
-                      placement="top"
-                    >
-                      {/* 🔥 셀 전체를 덮는 hover 영역 */}
-                      <div
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          padding: "10px 0",
-                          cursor: "help",
-                          fontWeight: "bold",
-                          fontSize: "15px",
-                        }}
-                      >
-                        {idx + 1}
-                      </div>
-                    </Tooltip>
-                  </TableCell>
-                ))}
+                          {item.seq}
+
+
+                        </div>
+                      </Tooltip>
+                    </TableCell>
+                  ))
+                )}
+
 
 
               </TableRow>
@@ -1232,11 +1322,19 @@ export default function EvSubPage() {
                   </TableCell>
 
                   {/* 28개 품목 qty → 수정칸 없음 (숫자만 출력) */}
-                  {PART_NAMES.map((pname, idx) => (
-                    <TableCell key={idx} align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>
-                      {formatNumber(row[pname] || 0)}
-                    </TableCell>
-                  ))}
+                  {companyGroups.flatMap(([_, rows]) =>
+                    rows.map(item => (
+                      <TableCell
+                        key={item.item_code}
+                        align="center"
+                        sx={{ fontWeight: "bold" }}
+                      >
+                        {formatNumber(row.quantities?.[item.item_code] || 0)}
+                      </TableCell>
+                    ))
+                  )}
+
+
 
                 </TableRow>
               ))}
