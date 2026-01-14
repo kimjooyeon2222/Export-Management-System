@@ -967,10 +967,59 @@ export default function EvSubPage() {
                 <TableCell>품명</TableCell>
                 <TableCell>박스 입수량</TableCell>
                 <TableCell>실사재고</TableCell>
-                <TableCell>적정재고</TableCell>
-                <TableCell>운항중</TableCell>
-                <TableCell>운항중 + 실사재고</TableCell>
-                <TableCell>판단결과</TableCell>
+                <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>
+                  <Box sx={{ lineHeight: 1.2 }}>
+                    적정재고
+                    <Typography
+                      component="div"
+                      sx={{
+                        fontSize: "13px",
+                        fontWeight: "bold",
+                        color: "#555",
+                      }}
+                    >
+                      (3개월)
+                    </Typography>
+                  </Box>
+                </TableCell>
+                <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>
+                  <Box
+                    sx={{
+                      display: "inline-block",
+                      ...getForgingStatusStyle("운항중"),
+                    }}
+                  >
+                    운항중
+                  </Box>
+                </TableCell>
+                <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>
+                  <Box
+                    component="span"
+                    sx={{
+                      display: "inline-block",
+                      ...getForgingStatusStyle("운항중"),
+                      mr: 0.5,   // pill과 텍스트 사이 간격
+                    }}
+                  >
+                    운항중
+                  </Box>
+                  + 실사재고
+                </TableCell>
+                <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>
+                  <Box sx={{ lineHeight: 1.2 }}>
+                    판단결과
+                    <Typography
+                      component="div"
+                      sx={{
+                        fontSize: "13px",
+                        fontWeight: "bold",
+                        color: "#555",
+                      }}
+                    >
+                      (실사재고 기준)
+                    </Typography>
+                  </Box>
+                </TableCell>
               </TableRow>
             </TableHead>
 
