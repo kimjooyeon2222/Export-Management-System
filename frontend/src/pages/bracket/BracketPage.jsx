@@ -734,7 +734,7 @@ export default function BracketPage() {
           <TableHead
             sx={{
               "& tr:first-of-type th": {
-                borderTop: "0 !important",   // ⭐ 추가
+                borderTop: "0 !important",  
               },
             }}
           >

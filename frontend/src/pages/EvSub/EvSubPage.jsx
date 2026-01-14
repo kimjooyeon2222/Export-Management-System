@@ -385,6 +385,8 @@ export default function EvSubPage() {
       });
 
       alert("저장 완료!");
+      setEditMode(false);
+
     } catch (e) {
       console.error("EV 저장 실패:", e);
       alert("저장 중 오류 발생");
