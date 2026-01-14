@@ -937,7 +937,8 @@ export default function EvSubPage() {
                 const total = row.actual_stock + transit;
 
                 const status = getStatus(row.actual_stock, proper);
-                const bg = getCompanyColorByItemCode(row.item_code);
+                const bg = getCompanyColor(row.company);
+
                 return (
                   <TableRow
                     key={row.tempId || idx}
