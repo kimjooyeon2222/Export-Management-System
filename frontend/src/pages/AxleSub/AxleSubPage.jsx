@@ -219,24 +219,37 @@ export default function AxleSubPage() {
   const handleSelectItem = async (item) => {
     if (!targetRowId) return;
 
-    let nextRows = axleRows.map(r =>
+    let updated = axleRows.map(r =>
       r.tempId === targetRowId
         ? {
           ...r,
           item_code: item.item_no,
           item_name: item.item_name,
           company: item.company_name || r.company,
-
         }
         : r
     );
 
-    nextRows = await applyAxleAuditToRowsPure(nextRows);
-    setAxleRows(nextRows);
+    // 🔥 1️⃣ 업체 기준 재정렬
+    const map = new Map();
+
+    updated.forEach(r => {
+      const key = r.company || "__EMPTY__";
+      if (!map.has(key)) map.set(key, []);
+      map.get(key).push(r);
+    });
+
+    updated = Array.from(map.values()).flat();
+
+    // 🔥 2️⃣ 실사 반영
+    updated = await applyAxleAuditToRowsPure(updated);
+
+    setAxleRows(updated);
 
     setItemDialogOpen(false);
     setTargetRowId(null);
   };
+
 
 
   const [itemDialogOpen, setItemDialogOpen] = useState(false);
