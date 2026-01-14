@@ -15,8 +15,105 @@ import {
 import { v4 as uuidv4 } from "uuid";
 import { useNavigate } from "react-router-dom";
 import { apiFetch } from "api/apiFetch";
+import UnitSearchDialog from "components/dialog/UnitSearchDialog";
+import { useRef } from "react";
 
 export default function BracketPage() {
+
+  const [showSchedulePanel, setShowSchedulePanel] = useState(false);
+
+  // 🔥 삭제 선택 모드
+  const [deleteMode, setDeleteMode] = useState(false);
+
+  // 🔥 선택된 품목 (row id)
+  const [selectedBrRowIds, setSelectedBrRowIds] = useState([]);
+
+  const bracketCompanyColors = {
+    "디케이메탈": "#FFD966",
+  };
+  const companyColorMap = useRef({});
+  const usedCompanyColors = useRef(
+    new Set(Object.values(bracketCompanyColors))
+  );
+
+  const getBracketCompanyColor = (company) => {
+    if (!company) return "#ddd";
+
+    // 1️⃣ 기존 고정 색상
+    if (bracketCompanyColors[company]) {
+      return bracketCompanyColors[company];
+    }
+
+    // 2️⃣ 이미 생성된 색상
+    if (companyColorMap.current[company]) {
+      return companyColorMap.current[company];
+    }
+
+    // 3️⃣ 신규 업체 → 이름 기반 해시
+    let hash = 0;
+    for (let i = 0; i < company.length; i++) {
+      hash = company.charCodeAt(i) + ((hash << 5) - hash);
+    }
+
+    let hue = Math.abs(hash) % 360;
+    let color;
+
+    // ⭐ 이미 쓰는 색상이랑 절대 안 겹치게
+    do {
+      color = `hsl(${hue}, 60%, 78%)`;
+      hue = (hue + 37) % 360;
+    } while (usedCompanyColors.current.has(color));
+
+    usedCompanyColors.current.add(color);
+    companyColorMap.current[company] = color;
+
+    return color;
+  };
+  const openBracketItemDialog = (e, rowId) => {
+    e.stopPropagation();
+    if (!editMode) return;
+    setTargetBrRowId(rowId);
+    setItemDialogOpen(true);
+  };
+
+  const handleSelectBracketItem = (item) => {
+    if (!targetBrRowId) return;
+
+    setBracketRows(prev => {
+      // 1️⃣ 선택된 행 업데이트
+      let updated = prev.map(r =>
+        r.id === targetBrRowId
+          ? {
+            ...r,
+            company: item.company_name || "",
+            item_code: item.item_no,
+            item_name: item.item_name,
+          }
+          : r
+      );
+
+      // 2️⃣ 회사 기준으로 재정렬 (EVSub와 동일)
+      const map = new Map();
+
+      updated.forEach(r => {
+        const key = r.company || "__EMPTY__";
+        if (!map.has(key)) map.set(key, []);
+        map.get(key).push(r);
+      });
+
+      // 3️⃣ 다시 평탄화
+      updated = Array.from(map.values()).flat();
+
+      return updated;
+    });
+
+    setItemDialogOpen(false);
+    setTargetBrRowId(null);
+  };
+
+
+  const [itemDialogOpen, setItemDialogOpen] = useState(false);
+  const [targetBrRowId, setTargetBrRowId] = useState(null);
   const [scheduleRows, setScheduleRows] = useState([]);
 
   const [showStockPanel, setShowStockPanel] = useState(false);
@@ -213,9 +310,7 @@ export default function BracketPage() {
   };
 
 
-  const bracketCompanyColors = {
-    "디케이메탈": "#FFD966",
-  };
+
 
   const getPeriod = (dateStr) => {
     if (!dateStr) return "";
@@ -348,6 +443,24 @@ export default function BracketPage() {
       target_stock: 0,
     },
   ]);
+
+  // 🔥 BRACKET 업체별 그룹 (AxleSub 로직 그대로)
+  const bracketCompanyGroups = React.useMemo(() => {
+    const map = new Map();
+
+    bracketRows.forEach(r => {
+      if (!r.company || !r.item_code) return;
+
+      if (!map.has(r.company)) {
+        map.set(r.company, []);
+      }
+      map.get(r.company).push(r);
+    });
+
+    return Array.from(map.entries());
+    // [ [companyName, rows[]], ... ]
+  }, [bracketRows]);
+
 
   // 적정재고 수정 시 전체 행 반영
   useEffect(() => {
@@ -574,42 +687,137 @@ export default function BracketPage() {
       {showStockPanel && (
 
         <Paper sx={{ p: 2, mb: 4, border: "2px solid #777" }}>
-          <Box sx={{ display: "flex", mb: 2, gap: 3 }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mb: 2,
+            }}
+          >
             <Typography sx={{ fontWeight: "bold", fontSize: 18 }}>
               ※ 과부족 상태 ※
             </Typography>
 
-            {editMode ? (
-              <TextField
-                label="적정재고 기준"
-                size="small"
-                type="number"
-                value={targetStock}
-                onChange={(e) => setTargetStock(Number(e.target.value))}
-                InputLabelProps={{ sx: { fontSize: "16px", fontWeight: "bold" } }}
-                sx={{ width: 160 }}
-              />
-            ) : (
-              <Typography sx={{ fontSize: 16, fontWeight: "bold", ml: 1, color: "#777" }}>
-                적정재고 기준: {formatNumber(targetStock)}
-              </Typography>
+            {editMode && (
+              <Box sx={{ display: "flex", gap: 1 }}>
+                <Button
+                  variant="contained"
+                  color="success"
+                  size="small"
+                  onClick={() => {
+                    const newRow = {
+                      id: uuidv4(),          // ⭐ 임시 ID
+                      company: "",
+                      item_code: "",
+                      item_name: "",
+                      actual_stock: 0,
+                      target_stock: targetStock,
+                    };
+
+                    setBracketRows(prev => [...prev, newRow]);
+                  }}
+                >
+                  + 품목추가
+                </Button>
+
+                <Button
+                  variant="contained"
+                  color="error"
+                  size="small"
+                  onClick={() => {
+                    // 1️⃣ 삭제 모드 진입
+                    if (!deleteMode) {
+                      setDeleteMode(true);
+                      setSelectedBrRowIds([]);
+                      return;
+                    }
+
+                    // 2️⃣ 선택 안 했을 때
+                    if (selectedBrRowIds.length === 0) {
+                      alert("삭제할 품목을 선택하세요.");
+                      return;
+                    }
+
+                    // 3️⃣ 실제 삭제
+                    setBracketRows(prev =>
+                      prev.filter(r => !selectedBrRowIds.includes(r.id))
+                    );
+
+                    // 4️⃣ 초기화
+                    setSelectedBrRowIds([]);
+                    setDeleteMode(false);
+                  }}
+                >
+                  {deleteMode ? "선택 삭제" : "- 품목삭제"}
+                </Button>
+              </Box>
             )}
           </Box>
+
 
           <Table size="small" sx={{ "& *": { fontWeight: "bold", fontSize: "15px" } }}>
             <TableHead sx={{ bgcolor: "#ffe599", borderTop: "2px solid #000" }}>
               <TableRow>
                 <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>업체명</TableCell>
-                <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>품명</TableCell>
                 <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>품번</TableCell>
-                <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>실사자료</TableCell>
-                <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>적정재고</TableCell>
+                <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>품명</TableCell>
+                <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>실사재고</TableCell>
+                <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>
+                  <Box sx={{ lineHeight: 1.2 }}>
+                    적정재고
+                    <Typography
+                      component="div"
+                      sx={{
+                        fontSize: "13px",
+                        fontWeight: "bold",
+                        color: "#555",
+                      }}
+                    >
+                      (3개월)
+                    </Typography>
+                  </Box>
+                </TableCell>
 
-                {/* ⭐ 추가되는 두 컬럼 */}
-                <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>운항중</TableCell>
-                <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>운항중 + 실사자료</TableCell>
+                <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>
+                  <Box
+                    sx={{
+                      display: "inline-block",
+                      ...getForgingStatusStyle("운항중"),
+                    }}
+                  >
+                    운항중
+                  </Box>
+                </TableCell>
+                <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>
+                  <Box
+                    component="span"
+                    sx={{
+                      display: "inline-block",
+                      ...getForgingStatusStyle("운항중"),
+                      mr: 0.5,   // pill과 텍스트 사이 간격
+                    }}
+                  >
+                    운항중
+                  </Box>
+                  + 실사재고
+                </TableCell>
 
-                <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>판단결과</TableCell>
+                <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>
+                  <Box sx={{ lineHeight: 1.2 }}>
+                    판단결과
+                    <Typography
+                      component="div"
+                      sx={{
+                        fontSize: "13px",
+                        fontWeight: "bold",
+                        color: "#555",
+                      }}
+                    >
+                      (실사재고 기준)
+                    </Typography>
+                  </Box>
+                </TableCell>
               </TableRow>
             </TableHead>
 
@@ -642,24 +850,104 @@ export default function BracketPage() {
                     }}
                   >
 
-                    <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
-                      <Box
-                        sx={{
-                          display: "inline-block",
-                          px: 1.5,
-                          py: 0.4,
-                          borderRadius: "6px",
-                          fontWeight: "bold",
-                          bgcolor: bracketCompanyColors[row.company] || "#ddd",
-                          color: getContrastTextColor(bracketCompanyColors[row.company]),
-                        }}
-                      >
-                        {row.company}
-                      </Box>
+                    <TableCell
+                      align="center"
+                      onClick={(e) => openBracketItemDialog(e, row.id)}
+                    >
+                      {editMode ? (
+                        <TextField
+                          size="small"
+                          value={row.company}
+                          placeholder="업체 선택"
+                          InputProps={{ readOnly: true }}
+                          sx={{
+                            width: "100%",
+                            "& input": {
+                              textAlign: "center",
+                              fontWeight: "bold",
+                              cursor: "pointer",
+                            },
+                          }}
+                        />
+                      ) : (
+                        <Box
+                          sx={{
+                            display: "inline-block",
+                            px: 1.5,
+                            py: 0.3,
+                            borderRadius: "6px",
+                            fontWeight: "bold",
+                            bgcolor: getBracketCompanyColor(row.company),
+
+                            color: "#000",
+                            minWidth: "90px",
+                            textAlign: "center",
+                          }}
+                        >
+                          {row.company}
+                        </Box>
+                      )}
                     </TableCell>
 
-                    <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>{row.item_name}</TableCell>
-                    <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>{row.item_code}</TableCell>
+
+
+                    <TableCell
+                      align="center"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!editMode) return;
+                        setTargetBrRowId(row.id);
+                        setItemDialogOpen(true);
+                      }}
+                    >
+                      {editMode ? (
+                        <TextField
+                          size="small"
+                          value={row.item_code}
+                          placeholder="품번 선택"
+                          InputProps={{ readOnly: true }}
+                          sx={{
+                            width: "100%",
+                            "& input": {
+                              textAlign: "center",
+                              fontWeight: "bold",
+                              cursor: "pointer",
+                            },
+                          }}
+                        />
+                      ) : (
+                        <Typography sx={{ fontWeight: "bold" }}>
+                          {row.item_code}
+                        </Typography>
+                      )}
+                    </TableCell>
+
+                    <TableCell
+                      align="center"
+                      onClick={(e) => openBracketItemDialog(e, row.id)}
+                    >
+                      {editMode ? (
+                        <TextField
+                          size="small"
+                          value={row.item_name}
+                          placeholder="품목 선택"
+                          InputProps={{ readOnly: true }}
+                          sx={{
+                            width: "100%",
+                            "& input": {
+                              textAlign: "center",
+                              fontWeight: "bold",
+                              cursor: "pointer",
+                            },
+                          }}
+                        />
+                      ) : (
+                        <Typography sx={{ fontWeight: "bold" }}>
+                          {row.item_name}
+                        </Typography>
+                      )}
+                    </TableCell>
+
 
                     {/* 실사자료 */}
                     <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>{formatNumber(actual)}</TableCell>
@@ -694,27 +982,28 @@ export default function BracketPage() {
           ※ 운송 스케줄 현황 ※
         </Typography>
 
-        <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
-          <Button
-            variant="contained"
-            color="success"
-            size="small"
-            disabled={!editMode}
-            onClick={addRow}
-          >
-            + 행추가
-          </Button>
+        {editMode && (
+          <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
+            <Button
+              variant="contained"
+              color="success"
+              size="small"
+              onClick={addRow}
+            >
+              + 행추가
+            </Button>
 
-          <Button
-            variant="contained"
-            color="error"
-            size="small"
-            disabled={!editMode}
-            onClick={deleteRow}
-          >
-            - 행삭제
-          </Button>
-        </Box>
+            <Button
+              variant="contained"
+              color="error"
+              size="small"
+              onClick={deleteRow}
+            >
+              - 행삭제
+            </Button>
+          </Box>
+        )}
+
 
         <Table size="small" sx={{ mt: 2, position: "relative", }}>
           {/* 🔥 상단 border 차단용 오버레이 */}
@@ -734,30 +1023,34 @@ export default function BracketPage() {
           <TableHead
             sx={{
               "& tr:first-of-type th": {
-                borderTop: "0 !important",  
+                borderTop: "0 !important",
               },
             }}
           >
 
 
-            {/* 🔥 1행: LH/RH 위에만 디케이메탈 헤더 */}
+            {/* 🔥 1행: 업체별 헤더 (동적 생성) */}
             <TableRow sx={{ bgcolor: "#ffffff !important" }}>
-              <TableCell colSpan={4} />  {/* INV / ETD / ETA / 상태 → 빈칸 */}
+              <TableCell colSpan={4} />
 
-              <TableCell
-                colSpan={2}
-                align="center"
-                sx={{
-                  fontWeight: "bold",
-                  fontSize: "16px",
-                  bgcolor: "#FFD966",
-                  color: getContrastTextColor("#FFD966"),
-                  borderBottom: "2px solid #b7b7b7"
-                }}
-              >
-                디케이메탈
-              </TableCell>
+              {bracketCompanyGroups.map(([company, rows]) => (
+                <TableCell
+                  key={company}
+                  align="center"
+                  colSpan={rows.length}   // ⭐ 품목 수만큼
+                  sx={{
+                    fontWeight: "bold",
+                    fontSize: "16px",
+                    bgcolor: getBracketCompanyColor(company),
+                    color: "#000",
+                    borderBottom: "2px solid #b7b7b7",
+                  }}
+                >
+                  {company}
+                </TableCell>
+              ))}
             </TableRow>
+
 
             {/* 🔥 2행: 기존 품명 헤더 */}
             <TableRow sx={{ bgcolor: "#ffe599", borderTop: "2px solid #000" }}>
@@ -773,12 +1066,18 @@ export default function BracketPage() {
               <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
                 상태
               </TableCell>
-              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
-                LH MCT
-              </TableCell>
-              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
-                RH MCT
-              </TableCell>
+              {bracketCompanyGroups.flatMap(([_, rows]) =>
+                rows.map(r => (
+                  <TableCell
+                    key={r.item_code}
+                    align="center"
+                    sx={{ fontWeight: "bold", fontSize: "15px" }}
+                  >
+                    {r.item_name}
+                  </TableCell>
+                ))
+              )}
+
             </TableRow>
 
           </TableHead>
@@ -820,18 +1119,38 @@ export default function BracketPage() {
                   </Box>
                 </TableCell>
 
-                <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
-                  {formatNumber(row.bracket_LH)}
-                </TableCell>
+                {bracketCompanyGroups.flatMap(([_, rows]) =>
+                  rows.map(it => (
+                    <TableCell
+                      key={it.item_code}
+                      align="center"
+                      sx={{ fontWeight: "bold", fontSize: "15px" }}
+                    >
+                      {formatNumber(
+                        it.item_code === "55228-T00800"
+                          ? row.bracket_LH
+                          : it.item_code === "55228-T00830"
+                            ? row.bracket_RH
+                            : 0
+                      )}
+                    </TableCell>
+                  ))
+                )}
 
-                <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
-                  {formatNumber(row.bracket_RH)}
-                </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </Paper>
+      <UnitSearchDialog
+        open={itemDialogOpen}
+        onClose={() => {
+          setItemDialogOpen(false);
+          setTargetBrRowId(null);
+        }}
+        onSelect={handleSelectBracketItem}
+      />
+
     </Box>
   );
 }
