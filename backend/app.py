@@ -1990,6 +1990,31 @@ def oil_auto_load():
 
     return jsonify(result)
 
+@app.route("/api/stock-audit/ev/by-date/<audit_date>", methods=["GET"])
+@jwt_required()
+def get_stock_audit_for_ev(audit_date):
+    from datetime import datetime
+
+    audit_date_obj = datetime.strptime(audit_date, "%Y-%m-%d").date()
+
+    audit = StockAudit.query.filter_by(
+        audit_date=audit_date_obj
+    ).first()
+
+    if not audit:
+        return jsonify([])
+
+    result = []
+
+    for i in audit.items:
+        result.append({
+            "item_no": i.item_no,
+            "audit_qty": i.audit_qty,
+            "optimal_qty": i.optimal_qty,
+            "box_qty": i.box_qty,   # ⭐ 이게 핵심
+        })
+
+    return jsonify(result)
 
 # ============================================
 # 서버 실행

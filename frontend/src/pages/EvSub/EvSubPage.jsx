@@ -21,6 +21,33 @@ import { useRef } from "react";
 
 
 export default function EvSubPage() {
+  // 🔥 EV 재고실사 → 박스입수량 / 실사재고 / 적정재고 연동
+  const applyEvAuditToRowsPure = async (rows) => {
+    if (!usDate || !rows.length) return rows;
+
+    const res = await apiFetch(
+      `${API_BASE}/api/stock-audit/ev/by-date/${usDate}`
+    );
+    const audits = await res.json();
+
+    const auditMap = {};
+    audits.forEach(a => {
+      auditMap[a.item_no] = a;
+    });
+
+    return rows.map(r => {
+      const audit = auditMap[r.item_code];
+      if (!audit) return r;
+
+      return {
+        ...r,
+        actual_stock: Number(audit.audit_qty || 0),
+        target_stock: Number(audit.optimal_qty || 0),
+        box_qty: Number(audit.box_qty || r.box_qty || 0),
+      };
+    });
+  };
+
 
   // 업체별 헤더 색상 (이미지 기반 정확한 색상)
   const companyColors = {
@@ -91,13 +118,11 @@ export default function EvSubPage() {
     return getCompanyColor(found.company);
   };
 
-
   const handleSelectEvItem = (item) => {
     if (!targetEvRowId) return;
 
     setInventoryRows(prev => {
-      // 1️⃣ 선택된 row 업데이트
-      const updated = prev.map(r =>
+      let updated = prev.map(r =>
         r.tempId === targetEvRowId
           ? {
             ...r,
@@ -108,7 +133,7 @@ export default function EvSubPage() {
           : r
       );
 
-      // 2️⃣ 회사 기준으로 다시 정렬 (AXLE 핵심 로직)
+      // 회사 기준 정렬
       const map = new Map();
       updated.forEach(r => {
         const key = r.company || "__EMPTY__";
@@ -116,17 +141,16 @@ export default function EvSubPage() {
         map.get(key).push(r);
       });
 
-      // 3️⃣ 그룹 순서 유지 + 평탄화
-      const reordered = Array.from(map.values()).flat();
+      updated = Array.from(map.values()).flat();
 
-      // 4️⃣ seq 재부여
-      return reordered.map((r, idx) => ({
+      // seq 재부여
+      return updated.map((r, idx) => ({
         ...r,
-        seq: idx + 1
+        seq: idx + 1,
       }));
     });
 
-    // 🔥 운송 스케줄 qty 슬롯 보장
+    // schedule qty 슬롯 유지 (기존 그대로)
     setScheduleRows(prev =>
       prev.map(row => ({
         ...row,
@@ -140,6 +164,7 @@ export default function EvSubPage() {
     setItemDialogOpen(false);
     setTargetEvRowId(null);
   };
+
 
 
 
@@ -665,6 +690,18 @@ export default function EvSubPage() {
   // 작성자 + 북미 날짜
   const [writer, setWriter] = useState("");
   const [usDate, setUsDate] = useState("");
+  useEffect(() => {
+    if (!usDate || inventoryRows.length === 0) return;
+
+    (async () => {
+      const hydrated = await applyEvAuditToRowsPure(inventoryRows);
+      setInventoryRows(hydrated);
+    })();
+  }, [
+    usDate,
+    inventoryRows.map(r => r.item_code).join("|")  // ⭐⭐⭐ 핵심
+  ]);
+
 
 
   // 과부족 패널 토글
