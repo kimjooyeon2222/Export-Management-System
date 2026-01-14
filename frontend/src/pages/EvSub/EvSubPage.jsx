@@ -918,10 +918,10 @@ export default function EvSubPage() {
                 <TableCell>품번</TableCell>
                 <TableCell>품명</TableCell>
                 <TableCell>박스 입수량</TableCell>
-                <TableCell>실사자료</TableCell>
+                <TableCell>실사재고</TableCell>
                 <TableCell>적정재고</TableCell>
                 <TableCell>운항중</TableCell>
-                <TableCell>운항중 + 실사자료</TableCell>
+                <TableCell>운항중 + 실사재고</TableCell>
                 <TableCell>판단결과</TableCell>
               </TableRow>
             </TableHead>
