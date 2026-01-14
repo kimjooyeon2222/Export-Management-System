@@ -2016,6 +2016,28 @@ def get_stock_audit_for_ev(audit_date):
 
     return jsonify(result)
 
+
+@app.route("/api/ev-inventory/bulk", methods=["POST"])
+@jwt_required()
+@admin_required
+def save_ev_inventory_bulk():
+    rows = request.json
+    EvInventory.query.delete()
+
+    for r in rows:
+        db.session.add(EvInventory(
+            company=r.get("company"),
+            item_code=r.get("item_code"),
+            item_name=r.get("item_name"),
+            box_qty=r.get("box_qty", 0),
+            actual_stock=r.get("actual_stock", 0),
+            target_stock=r.get("target_stock", 0),
+        ))
+
+    db.session.commit()
+    return jsonify({"message": "saved"})
+
+
 # ============================================
 # 서버 실행
 # ============================================

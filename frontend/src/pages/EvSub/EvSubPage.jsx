@@ -337,45 +337,56 @@ export default function EvSubPage() {
 
   const saveSchedule = async () => {
     try {
-      // =========================
-      // 1️⃣ EV 설정 저장 (작성자 / 날짜)
-      // =========================
+      // 1️⃣ EV Setting
       await apiFetch(`${API_BASE}/api/ev-setting`, {
         method: "PUT",
         body: JSON.stringify({
-          writer: writer,     // state
-          us_date: usDate,    // YYYY-MM-DD
+          writer,
+          us_date: usDate,
         }),
       });
 
+      // 2️⃣ 🔥 EV Inventory (과부족 상태표)
+      await apiFetch(`${API_BASE}/api/ev-inventory/bulk`, {
+        method: "POST",
+        body: JSON.stringify(
+          inventoryRows.map(r => ({
+            company: r.company,
+            item_code: r.item_code,
+            item_name: r.item_name,
+            box_qty: r.box_qty,
+            actual_stock: r.actual_stock,
+            target_stock: r.target_stock,
+          }))
+        ),
+      });
+
+      // 3️⃣ EV Schedule
       const payload = scheduleRows.map(row => {
-        const cleanRow = {
+        const clean = {
           inv_no: row.inv_no,
           etd: row.etd,
           eta: row.eta,
           status: row.status,
+          quantities: {},
         };
 
-        cleanRow.quantities = {};
-
         inventoryRows.forEach(item => {
-          cleanRow.quantities[item.item_code] =
+          clean.quantities[item.item_code] =
             row.quantities?.[item.item_code] || 0;
         });
 
-
-        return cleanRow;
+        return clean;
       });
 
-      const res = await apiFetch(`${API_BASE}/api/ev-schedule/bulk`, {
+      await apiFetch(`${API_BASE}/api/ev-schedule/bulk`, {
         method: "POST",
         body: JSON.stringify(payload),
       });
 
       alert("저장 완료!");
-
-    } catch (err) {
-      console.error("저장 실패:", err);
+    } catch (e) {
+      console.error("EV 저장 실패:", e);
       alert("저장 중 오류 발생");
     }
   };
@@ -1366,7 +1377,8 @@ export default function EvSubPage() {
                   {companyGroups.flatMap(([_, rows]) =>
                     rows.map(item => (
                       <TableCell
-                        key={item.item_code}
+                        key={`${item.item_code}-${item.seq}`}
+
                         align="center"
                         sx={{ fontWeight: "bold" }}
                       >
