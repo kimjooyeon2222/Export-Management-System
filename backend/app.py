@@ -2070,6 +2070,15 @@ def get_stock_audit_for_bracket(audit_date):
         print("🔥 bracket stock audit error:", e)
         return jsonify([]), 500
 
+@app.route("/api/br-inventory/<int:id>", methods=["DELETE"])
+@jwt_required()
+@admin_required
+def delete_br_inventory(id):
+    row = BrInventory.query.get_or_404(id)
+    db.session.delete(row)
+    db.session.commit()
+    return jsonify({"message": "deleted"})
+
 # ============================================
 # 서버 실행
 # ============================================

@@ -310,14 +310,45 @@ export default function BracketPage() {
       });
 
       // 2) 각 품목(actual_stock) 저장
+      // 2) BRACKET 품목 저장 (신규/기존 분기)
       for (const row of bracketRows) {
-        await apiFetch(`${API_BASE}/api/br-inventory/${row.id}`, {
-          method: "PUT",
-          body: JSON.stringify({
-            actual_stock: row.actual_stock,
-          }),
-        });
+        if (row.id) {
+          // ✅ 기존 데이터 → PUT
+          await apiFetch(`${API_BASE}/api/br-inventory/${row.id}`, {
+            method: "PUT",
+            body: JSON.stringify({
+              company: row.company,
+              item_code: row.item_code,
+              item_name: row.item_name,
+              actual_stock: row.actual_stock,
+
+
+            }),
+          });
+        } else {
+          // ✅ 신규 데이터 → POST
+          const res = await apiFetch(`${API_BASE}/api/br-inventory`, {
+            method: "POST",
+            body: JSON.stringify({
+              company: row.company,
+              item_code: row.item_code,
+              item_name: row.item_name,
+              actual_stock: row.actual_stock,
+            }),
+          });
+
+          const saved = await res.json();
+
+          setBracketRows(prev =>
+            prev.map(r =>
+              r.tempId === row.tempId
+                ? { ...r, id: saved.id }
+                : r
+            )
+          );
+        }
       }
+
 
       // 3) 스케줄 저장
       const schedulePayload = scheduleRows.map((row) => ({
@@ -737,7 +768,7 @@ export default function BracketPage() {
                   variant="contained"
                   color="error"
                   size="small"
-                  onClick={() => {
+                  onClick={async () => {
                     // 1️⃣ 삭제 모드 진입
                     if (!deleteMode) {
                       setDeleteMode(true);
@@ -745,24 +776,36 @@ export default function BracketPage() {
                       return;
                     }
 
-                    // 2️⃣ 선택 안 했을 때
+                    // 2️⃣ 삭제 모드인데 선택 안 함 → alert
                     if (selectedBrRowIds.length === 0) {
-                      alert("삭제할 품목을 선택하세요.");
+                      alert("삭제할 행을 선택하세요.");
                       return;
                     }
 
-                    // 3️⃣ 실제 삭제
+                    // 3️⃣ DB 삭제 (id 있는 것만)
+                    for (const tempId of selectedBrRowIds) {
+                      const row = bracketRows.find(r => r.tempId === tempId);
+                      if (row?.id) {
+                        await apiFetch(`${API_BASE}/api/br-inventory/${row.id}`, {
+                          method: "DELETE",
+                        });
+                      }
+                    }
+
+                    // 4️⃣ 프론트 삭제
                     setBracketRows(prev =>
                       prev.filter(r => !selectedBrRowIds.includes(r.tempId))
                     );
 
-                    // 4️⃣ 초기화
+
+                    // 5️⃣ 초기화
                     setSelectedBrRowIds([]);
                     setDeleteMode(false);
                   }}
                 >
                   {deleteMode ? "선택 삭제" : "- 품목삭제"}
                 </Button>
+
               </Box>
             )}
           </Box>
@@ -856,10 +899,25 @@ export default function BracketPage() {
                 return (
                   <TableRow
                     key={row.id ?? row.tempId}
+                    onClick={() => {
+                      if (!editMode) return;
+
+                      setSelectedBrRowIds(prev =>
+                        prev.includes(row.tempId)
+                          ? prev.filter(id => id !== row.tempId)   // 이미 선택 → 해제
+                          : [...prev, row.tempId]                  // 미선택 → 추가
+                      );
+                    }}
                     sx={{
-                      backgroundColor: status === "적정재고미달" ? "#fbeaea" : "inherit"
+                      cursor: editMode ? "pointer" : "default",
+                      backgroundColor: selectedBrRowIds.includes(row.tempId)
+                        ? "#ddeeff"          // ⭐ 선택 강조 (AxleSub 동일)
+                        : status === "적정재고미달"
+                          ? "#fbeaea"
+                          : "inherit",
                     }}
                   >
+
 
                     <TableCell
                       align="center"
@@ -935,7 +993,7 @@ export default function BracketPage() {
 
                     <TableCell
                       align="center"
-                      onClick={(e) => openBracketItemDialog(e, row.id)}
+                      onClick={(e) => openBracketItemDialog(e, row.tempId)}
                     >
                       {editMode ? (
                         <TextField
