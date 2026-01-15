@@ -19,8 +19,58 @@ import UnitSearchDialog from "components/dialog/UnitSearchDialog";
 import { useRef } from "react";
 
 export default function BracketPage() {
+  const API_BASE = import.meta.env.VITE_API_URL;
+  async function loadBracketRowQuantities(inv_no) {
+    if (!inv_no) return {};
+    if (!bracketRows.length) return null;
 
-  const [showSchedulePanel, setShowSchedulePanel] = useState(false);
+    // ✅ cache hit
+    if (qtyCache.current[inv_no]) {
+      return qtyCache.current[inv_no];
+    }
+
+    // ✅ INV 기준 1번만 호출
+    const res = await apiFetch(`${API_BASE}/api/br/auto-load/${inv_no}`);
+    if (!res.ok) return {};
+
+    const data = await res.json(); // { qty_map }
+
+    const quantities = {};
+    for (const r of bracketRows) {
+      if (!r.item_code) continue;
+      quantities[r.item_code] = Number(data.qty_map?.[r.item_code] || 0);
+    }
+
+    // ✅ 빈 객체 캐시 금지
+    if (Object.keys(quantities).length > 0) {
+      qtyCache.current[inv_no] = quantities;
+    }
+
+    return quantities;
+  }
+
+
+  const qtyCache = useRef({});
+
+  const [scheduleRows, setScheduleRows] = useState([]);
+
+  const scheduleInvSignature = scheduleRows
+    .map(r => r.inv_no)
+    .join("|");
+
+  const [bracketRows, setBracketRows] = useState([]);
+  const bracketItemSignature = bracketRows
+    .map(r => r.item_code)
+    .join("|");
+
+
+
+  useEffect(() => {
+    qtyCache.current = {};
+  }, [bracketItemSignature]);
+
+
+
 
   // 🔥 삭제 선택 모드
   const [deleteMode, setDeleteMode] = useState(false);
@@ -79,9 +129,10 @@ export default function BracketPage() {
   const handleSelectBracketItem = (item) => {
     if (!targetBrRowId) return;
 
-    setBracketRows(prev => {
-      // 1️⃣ 선택된 행 업데이트
-      let updated = prev.map(r =>
+
+
+    setBracketRows(prev =>
+      prev.map(r =>
         r.id === targetBrRowId
           ? {
             ...r,
@@ -90,22 +141,10 @@ export default function BracketPage() {
             item_name: item.item_name,
           }
           : r
-      );
+      )
+    );
 
-      // 2️⃣ 회사 기준으로 재정렬 (EVSub와 동일)
-      const map = new Map();
 
-      updated.forEach(r => {
-        const key = r.company || "__EMPTY__";
-        if (!map.has(key)) map.set(key, []);
-        map.get(key).push(r);
-      });
-
-      // 3️⃣ 다시 평탄화
-      updated = Array.from(map.values()).flat();
-
-      return updated;
-    });
 
     setItemDialogOpen(false);
     setTargetBrRowId(null);
@@ -114,40 +153,11 @@ export default function BracketPage() {
 
   const [itemDialogOpen, setItemDialogOpen] = useState(false);
   const [targetBrRowId, setTargetBrRowId] = useState(null);
-  const [scheduleRows, setScheduleRows] = useState([]);
 
   const [showStockPanel, setShowStockPanel] = useState(false);
 
-  // ================================================
-  // 🔥 BRACKET 품번 기준으로 packing_list 합산하는 함수
-  // ================================================
-  async function calcBracketQty(invNo) {
-    const API_BASE = import.meta.env.VITE_API_URL;
 
-    try {
-      // packing_list 불러오기 (특정 INV)
-      const res = await apiFetch(`${API_BASE}/api/packing-list/by-inv/${invNo}`);
-      const items = await res.json();
 
-      let LH = 0;
-      let RH = 0;
-
-      items.forEach(item => {
-        if (item.part_no === "55228-T00800") {
-          LH += Number(item.qty || 0);
-        }
-        if (item.part_no === "55228-T00830") {
-          RH += Number(item.qty || 0);
-        }
-      });
-
-      return { LH, RH };
-
-    } catch (err) {
-      console.error("🚨 BRACKET qty 계산 오류:", err);
-      return { LH: 0, RH: 0 };
-    }
-  }
 
 
   // 🔥 페이지 로딩 시 DB에서 데이터 불러오기
@@ -184,28 +194,49 @@ export default function BracketPage() {
         const schRes = await apiFetch(`${API_BASE}/api/br-schedule`);
         const schedule = await schRes.json();
 
-        let updated = [];
+        const baseRows = schedule.map(row => ({
+          tempId: uuidv4(),
+          ...row,
+          quantities: {},
+        }));
 
-        for (const row of schedule) {
-          // ETA/ETD 기반 상태 체크
-          const status = getScheduleStatus(row.etd, row.eta);
+        // 🔥 inv_no 기준으로 ETD / ETA / qty 다시 불러오기
+        const hydrated = await Promise.all(
+          baseRows.map(async (row) => {
+            if (!row.inv_no) return row;
 
-          // 운항중일 때만 qty 계산
-          let qty = { LH: 0, RH: 0 };
-          if (status === "운항중") {
-            qty = await calcBracketQty(row.inv_no);
-          }
+            // 1️⃣ qty 로딩
+            const quantities = await loadBracketRowQuantities(row.inv_no);
 
-          updated.push({
-            tempId: uuidv4(),
-            ...row,
-            bracket_LH: qty.LH,
-            bracket_RH: qty.RH,
-            status,
-          });
-        }
+            // 2️⃣ ETD / ETA 로딩
+            let etd = row.etd;
+            let eta = row.eta;
 
-        setScheduleRows(updated);
+            try {
+              const res = await apiFetch(`${API_BASE}/api/invoice/${row.inv_no}`);
+              const ship = await res.json();
+
+              if (!ship?.error) {
+                etd = ship.etd || "";
+                eta = ship.eta || "";
+              }
+            } catch (e) {
+              console.error("hydrate invoice error:", e);
+            }
+
+            return {
+              ...row,
+              etd,
+              eta,
+              quantities,
+            };
+          })
+        );
+
+        // ✅ 여기서 딱 한 번 set
+        setScheduleRows(hydrated);
+
+
 
 
       } catch (err) {
@@ -213,19 +244,27 @@ export default function BracketPage() {
       }
     }
 
+
     loadAll();
   }, []);
 
-  // 🔥 스케줄 로드 후 INV 기반 자동 데이터 로딩
   useEffect(() => {
-    if (scheduleRows.length === 0) return;
+    if (!bracketRows.length || !scheduleRows.length) return;
 
-    scheduleRows.forEach(row => {
-      if (row.inv_no) {
-        handleAutoLoad(row.tempId, row.inv_no);
-      }
-    });
-  }, [scheduleRows.length]);
+    (async () => {
+      const recalculated = await Promise.all(
+        scheduleRows.map(async r => {
+          if (!r.inv_no) return r;
+
+          const quantities = await loadBracketRowQuantities(r.inv_no);
+          return { ...r, quantities };
+        })
+      );
+
+      setScheduleRows(recalculated);
+    })();
+  }, [bracketItemSignature, scheduleInvSignature]);
+
 
   // ⭐ 전체 저장 함수
   const handleSave = async () => {
@@ -425,24 +464,7 @@ export default function BracketPage() {
 
   const [targetStock, setTargetStock] = useState(0);
 
-  const [bracketRows, setBracketRows] = useState([
-    {
-      id: 1,
-      company: "디케이메탈",
-      item_name: "BRACKET-MTG; LH MCT",
-      item_code: "55228-T00800",
-      actual_stock: 0,
-      target_stock: 0,
-    },
-    {
-      id: 2,
-      company: "디케이메탈",
-      item_name: "BRACKET-MTG; RH MCT",
-      item_code: "55228-T00830",
-      actual_stock: 0,
-      target_stock: 0,
-    },
-  ]);
+
 
   // 🔥 BRACKET 업체별 그룹 (AxleSub 로직 그대로)
   const bracketCompanyGroups = React.useMemo(() => {
@@ -472,43 +494,7 @@ export default function BracketPage() {
     );
   }, [targetStock]);
 
-  async function handleAutoLoad(tempId, invNo) {
-    if (!invNo.trim()) return;
 
-    const API_BASE = import.meta.env.VITE_API_URL;
-
-    try {
-      const res = await apiFetch(`${API_BASE}/api/br/auto-load/${invNo}`);
-      const data = await res.json();
-
-      if (data.error) return;
-
-      const { etd, eta, status, qty_map } = data;
-
-      // LH / RH 계산
-      const LH = qty_map["55228-T00800"] || 0;
-      const RH = qty_map["55228-T00830"] || 0;
-
-      // scheduleRows 업데이트
-      setScheduleRows(prev =>
-        prev.map(row =>
-          row.tempId === tempId
-            ? {
-              ...row,
-              inv_no: invNo,
-              etd,
-              eta,
-              status,
-              bracket_LH: LH,
-              bracket_RH: RH,
-            }
-            : row
-        )
-      );
-    } catch (err) {
-      console.error("🔥 BRACKET 자동로드 오류:", err);
-    }
-  }
   const getStatus = (actual, target) => {
     if (actual >= target * 1.13) return "초과";
     if (actual >= target && actual > target * 0.96) return "양호";
@@ -538,18 +524,18 @@ export default function BracketPage() {
 
 
   const addRow = () => {
-    setScheduleRows((prev) => [
+    setScheduleRows(prev => [
       ...prev,
       {
         tempId: uuidv4(),
         inv_no: "",
         etd: "",
         eta: "",
-        bracket_LH: 0,
-        bracket_RH: 0,
+        quantities: {},   // ⭐ 핵심 변경
       },
     ]);
   };
+
 
   const deleteRow = () => {
     if (scheduleRows.length === 0) return;
@@ -827,14 +813,13 @@ export default function BracketPage() {
                 const actual = Number(row.actual_stock || 0);
                 const target = Number(row.target_stock || 0);
 
-                // ⭐ 운항중 qty 계산
                 const inTransit = scheduleRows
                   .filter(r => getScheduleStatus(r.etd, r.eta) === "운항중")
-                  .reduce((sum, r) => {
-                    if (row.item_code === "55228-T00800") return sum + (r.bracket_LH || 0);
-                    if (row.item_code === "55228-T00830") return sum + (r.bracket_RH || 0);
-                    return sum;
-                  }, 0);
+                  .reduce(
+                    (sum, r) => sum + (r.quantities?.[row.item_code] || 0),
+                    0
+                  );
+
 
                 // ⭐ 운항중 + 실사자료
                 const total = actual + inTransit;
@@ -1091,13 +1076,38 @@ export default function BracketPage() {
                     <TextField
                       size="small"
                       value={row.inv_no}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        updateScheduleCell(row.tempId, "inv_no", value);
-                        handleAutoLoad(row.tempId, value);   // ★ 자동 불러오기 실행
+                      onChange={async (e) => {
+                        const inv = e.target.value.trim();
+
+                        // 1️⃣ inv_no 반영
+                        updateScheduleCell(row.tempId, "inv_no", inv);
+
+                        if (!inv) {
+                          updateScheduleCell(row.tempId, "quantities", {});
+                          return;
+                        }
+
+                        // 2️⃣ 🔥 qty 즉시 로딩 (AxleSub와 동일)
+                        const quantities = await loadBracketRowQuantities(inv);
+                        updateScheduleCell(row.tempId, "quantities", quantities);
+
+
+                        // 3️⃣ ETD / ETA 로딩
+                        try {
+                          const res = await apiFetch(`${API_BASE}/api/invoice/${inv}`);
+                          const ship = await res.json();
+
+                          if (!ship?.error) {
+                            updateScheduleCell(row.tempId, "etd", ship.etd || "");
+                            updateScheduleCell(row.tempId, "eta", ship.eta || "");
+                          }
+                        } catch (err) {
+                          console.error("ETD/ETA load error:", err);
+                        }
                       }}
                       sx={{ width: 90 }}
                     />
+
                   ) : (
                     row.inv_no
                   )}
@@ -1127,11 +1137,8 @@ export default function BracketPage() {
                       sx={{ fontWeight: "bold", fontSize: "15px" }}
                     >
                       {formatNumber(
-                        it.item_code === "55228-T00800"
-                          ? row.bracket_LH
-                          : it.item_code === "55228-T00830"
-                            ? row.bracket_RH
-                            : 0
+                        row.quantities?.[it.item_code] || 0
+
                       )}
                     </TableCell>
                   ))
