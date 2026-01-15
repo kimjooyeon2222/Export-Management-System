@@ -313,10 +313,8 @@ export default function EvSubPage() {
       const newQuantities = {};
 
       inventoryRows.forEach(item => {
-        newQuantities[item.item_code] =
-          status === "운항중"
-            ? (qty_map[item.item_code] || 0)
-            : 0;
+        newQuantities[item.item_code] = qty_map[item.item_code] || 0;
+
       });
 
       // ✅ quantities 반드시 저장
@@ -443,10 +441,8 @@ export default function EvSubPage() {
       const newQuantities = {};
 
       inventoryRows.forEach(item => {
-        newQuantities[item.item_code] =
-          status === "운항중"
-            ? (qty_map[item.item_code] || 0)
-            : 0;
+        newQuantities[item.item_code] = qty_map[item.item_code] || 0;
+
       });
 
 
