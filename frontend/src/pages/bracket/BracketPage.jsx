@@ -494,7 +494,7 @@ export default function BracketPage() {
       const hydrated = await applyBrAuditToRowsPure(bracketRows);
       setBracketRows(hydrated);
     })();
-  }, [usDate,, bracketRows.length]);
+  }, [usDate, bracketRows.length]);
 
   // 🔥 BRACKET 업체별 그룹 (AxleSub 로직 그대로)
   const bracketCompanyGroups = React.useMemo(() => {
