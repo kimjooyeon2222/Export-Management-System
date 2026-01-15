@@ -205,7 +205,11 @@ export default function BracketPage() {
         const invRes = await apiFetch(`${API_BASE}/api/br-inventory`);
         const inv = await invRes.json();
         if (Array.isArray(inv)) {
-          setBracketRows(inv.map(row => ({ ...row })));
+          setBracketRows(inv.map(row => ({
+            ...row,
+            tempId: row.tempId ?? uuidv4(),  // ⭐ 핵심
+          })));
+
 
 
         }
