@@ -2037,6 +2037,38 @@ def save_ev_inventory_bulk():
     db.session.commit()
     return jsonify({"message": "saved"})
 
+# ============================================
+# 🔩 BRACKET 전용 실사 집계 API
+# ============================================
+@app.route("/api/stock-audit/bracket/by-date/<audit_date>", methods=["GET"])
+@jwt_required()
+def get_stock_audit_for_bracket(audit_date):
+    try:
+        audit_date_obj = datetime.strptime(audit_date, "%Y-%m-%d").date()
+
+        audit = StockAudit.query.filter_by(
+            audit_date=audit_date_obj
+        ).first()
+
+        if not audit:
+            return jsonify([])
+
+        result = []
+
+        for i in audit.items:
+            result.append({
+                "item_no": i.item_no,
+                "item_name": i.item_name,
+                "audit_qty": i.audit_qty,
+                "optimal_qty": i.optimal_qty,
+                "box_qty": i.box_qty,
+            })
+
+        return jsonify(result)
+
+    except Exception as e:
+        print("🔥 bracket stock audit error:", e)
+        return jsonify([]), 500
 
 # ============================================
 # 서버 실행

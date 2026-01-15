@@ -20,6 +20,32 @@ import { useRef } from "react";
 
 export default function BracketPage() {
   const API_BASE = import.meta.env.VITE_API_URL;
+  const applyBrAuditToRowsPure = async (rows) => {
+    if (!usDate || !rows.length) return rows;
+
+    const res = await apiFetch(
+      `${API_BASE}/api/stock-audit/bracket/by-date/${usDate}`
+    );
+    const audits = await res.json();
+
+    const auditMap = {};
+    audits.forEach(a => {
+      auditMap[a.item_no] = a;
+    });
+
+    return rows.map(r => {
+      const audit = auditMap[r.item_code];
+      if (!audit) return r;
+
+      return {
+        ...r,
+        actual_stock: Number(audit.audit_qty || 0),
+        target_stock: Number(audit.optimal_qty || 0),
+        box_qty: Number(audit.box_qty || r.box_qty || 0),
+      };
+    });
+  };
+
   async function loadBracketRowQuantities(inv_no) {
     if (!inv_no) return {};
     if (!bracketRows.length) return null;
@@ -126,26 +152,25 @@ export default function BracketPage() {
     setItemDialogOpen(true);
   };
 
-  const handleSelectBracketItem = (item) => {
+  const handleSelectBracketItem = async (item) => {
     if (!targetBrRowId) return;
 
-
-
-    setBracketRows(prev =>
-      prev.map(r =>
-        r.id === targetBrRowId
-          ? {
-            ...r,
-            company: item.company_name || "",
-            item_code: item.item_no,
-            item_name: item.item_name,
-          }
-          : r
-      )
+    let updated = bracketRows.map(r =>
+      r.tempId === targetBrRowId
+        ? {
+          ...r,
+          company: item.company_name || "",
+          item_code: item.item_no,
+          item_name: item.item_name,
+        }
+        : r
     );
 
 
+    // ⭐ 실사 즉시 반영 (핵심)
+    updated = await applyBrAuditToRowsPure(updated);
 
+    setBracketRows(updated);
     setItemDialogOpen(false);
     setTargetBrRowId(null);
   };
@@ -180,12 +205,9 @@ export default function BracketPage() {
         const invRes = await apiFetch(`${API_BASE}/api/br-inventory`);
         const inv = await invRes.json();
         if (Array.isArray(inv)) {
-          setBracketRows(
-            inv.map(row => ({
-              ...row,
-              target_stock: setting.target_stock || 0   // ⭐ 중요!
-            }))
-          );
+          setBracketRows(inv.map(row => ({ ...row })));
+
+
         }
 
 
@@ -465,6 +487,14 @@ export default function BracketPage() {
   const [targetStock, setTargetStock] = useState(0);
 
 
+  useEffect(() => {
+    if (!usDate || bracketRows.length === 0) return;
+
+    (async () => {
+      const hydrated = await applyBrAuditToRowsPure(bracketRows);
+      setBracketRows(hydrated);
+    })();
+  }, [usDate,, bracketRows.length]);
 
   // 🔥 BRACKET 업체별 그룹 (AxleSub 로직 그대로)
   const bracketCompanyGroups = React.useMemo(() => {
@@ -484,15 +514,6 @@ export default function BracketPage() {
   }, [bracketRows]);
 
 
-  // 적정재고 수정 시 전체 행 반영
-  useEffect(() => {
-    setBracketRows((prev) =>
-      prev.map((row) => ({
-        ...row,
-        target_stock: targetStock,
-      }))
-    );
-  }, [targetStock]);
 
 
   const getStatus = (actual, target) => {
@@ -693,7 +714,8 @@ export default function BracketPage() {
                   size="small"
                   onClick={() => {
                     const newRow = {
-                      id: uuidv4(),          // ⭐ 임시 ID
+                      id: null,              // ⭐ DB id는 null
+                      tempId: uuidv4(),      // ⭐ 프론트 식별자
                       company: "",
                       item_code: "",
                       item_name: "",
@@ -727,7 +749,7 @@ export default function BracketPage() {
 
                     // 3️⃣ 실제 삭제
                     setBracketRows(prev =>
-                      prev.filter(r => !selectedBrRowIds.includes(r.id))
+                      prev.filter(r => !selectedBrRowIds.includes(r.tempId))
                     );
 
                     // 4️⃣ 초기화
@@ -829,7 +851,7 @@ export default function BracketPage() {
 
                 return (
                   <TableRow
-                    key={row.id}
+                    key={row.id ?? row.tempId}
                     sx={{
                       backgroundColor: status === "적정재고미달" ? "#fbeaea" : "inherit"
                     }}
@@ -837,7 +859,7 @@ export default function BracketPage() {
 
                     <TableCell
                       align="center"
-                      onClick={(e) => openBracketItemDialog(e, row.id)}
+                      onClick={(e) => openBracketItemDialog(e, row.tempId)}
                     >
                       {editMode ? (
                         <TextField
@@ -881,7 +903,7 @@ export default function BracketPage() {
                       onClick={(e) => {
                         e.stopPropagation();
                         if (!editMode) return;
-                        setTargetBrRowId(row.id);
+                        setTargetBrRowId(row.tempId);
                         setItemDialogOpen(true);
                       }}
                     >
