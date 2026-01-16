@@ -836,7 +836,7 @@ export default function EvSubPage() {
           과부족 상태 패널
       ===================================== */}
       {showStockPanel && (
-        <Paper sx={{ p: 2, mb: 4, border: "2px solid #777" }}>
+        <Paper sx={{ p: 2, mb: 4, border: "2px solid #777", }}>
           {/* 과부족 상태 제목 + 적정재고 입력 */}
           <Box
             sx={{
@@ -949,7 +949,9 @@ export default function EvSubPage() {
 
 
 
-          <Table size="small">
+          <Table size="small" sx={{
+            borderTop: "2px solid #000",   // ⭐ 헤더 위 굵은 선
+          }}>
             <TableHead
               sx={{
                 bgcolor: "#ffe599",          // 🔥 운송 스케줄과 동일한 헤더 배경색
@@ -1261,7 +1263,7 @@ export default function EvSubPage() {
               position: "relative",  // ← 추가!!!
               borderCollapse: "collapse !important",
               borderSpacing: "0px !important",
-
+              borderTop: "2px solid #000",
               "& td, & th": {
                 borderCollapse: "separate !important",
                 borderSpacing: "0 !important",
@@ -1317,7 +1319,7 @@ export default function EvSubPage() {
 
 
               {/* 🔥 품명 헤더 */}
-              <TableRow sx={{ bgcolor: "#ffe599" }}>
+              <TableRow sx={{ bgcolor: "#ffe599", borderTop: "2px solid #000", }}>
                 <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>INV#</TableCell>
                 <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>ETD</TableCell>
                 <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>ETA</TableCell>
@@ -1329,6 +1331,7 @@ export default function EvSubPage() {
                       key={item.item_code}
                       align="center"
                       sx={{
+                        
                         backgroundColor: "#ffe599",
                         padding: 0,
                         "&:hover": {
