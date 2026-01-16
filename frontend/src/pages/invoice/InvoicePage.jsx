@@ -1081,7 +1081,7 @@ const arrived = delayedDate2 <= todayUS;
                       >
                         <Box sx={{ width: 14, height: 14, bgcolor: '#ffcccc', border: '1px solid #bbb' }} />
                         <Typography sx={{ fontSize: '0.8rem', color: '#333' }}>
-                          : 금일 이후 도착{' '}
+                          : 금일 이후 도착<br />{' '}
                           <span style={{ color: 'red', fontWeight: 'bold' }}> (5일전)</span>
                         </Typography>
                       </Box>
