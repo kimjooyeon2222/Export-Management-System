@@ -58,6 +58,12 @@ const itemToExporters = {
 
 
 export default function InvoicePage() {
+  function displayShortDate(dateStr) {
+    if (!dateStr) return "";
+    // YYYY-MM-DD → YY-MM-DD
+    return dateStr.length >= 10 ? dateStr.slice(2) : dateStr;
+  }
+
   const [userRole, setUserRole] = useState(null);
 
   useEffect(() => {
@@ -711,9 +717,10 @@ export default function InvoicePage() {
                       {/* 하단 표 데이터 그대로 연동 */}
                       <TableCell align="center">{merged.cont_no || '-'}</TableCell>
                       <TableCell align="center">{merged.bl_no || '-'}</TableCell>
-                      <TableCell align="center">{etd}</TableCell>
-                      <TableCell align="center">{eta}</TableCell>
-                      <TableCell align="center">{delayed}</TableCell>
+                      <TableCell align="center">{displayShortDate(etd)}</TableCell>
+                      <TableCell align="center">{displayShortDate(eta)}</TableCell>
+                      <TableCell align="center">{displayShortDate(delayed)}</TableCell>
+
 
                       {/* 도착 여부 컬럼 */}
                       <TableCell
@@ -988,7 +995,7 @@ export default function InvoicePage() {
             setIsEditMode((prev) => {
               const newMode = !prev;
               if (newMode) {
-                alert('🔧 수정 모드가 활성화되었습니다.\n셀을 클릭하면 데이터를 편집할 수 있습니다.');
+                alert('🔧 수정 모드가 활성화되었습니다.\n셀을 클릭하면 데이터를 편집할 수 있습니다.\n\n ETD,ETA,DELAYED DATE는\n 반드시 YYYY-MM-DD 형식으로 입력바랍니다.');
               } else {
                 alert('✅ 수정 모드가 종료되었습니다.\n이제 표는 읽기 전용 상태입니다.');
               }
@@ -1174,9 +1181,9 @@ export default function InvoicePage() {
                             row.item_type,
                             row.cont_no,
                             row.bl_no,
-                            row.etd,
-                            row.eta,
-                            row.delayed_date,
+                            displayShortDate(row.etd),
+                            displayShortDate(row.eta),
+                            displayShortDate(row.delayed_date),
                             countText,
                             row.needs_help,
                             row.remark
@@ -1310,9 +1317,9 @@ export default function InvoicePage() {
                         row.item_type,
                         row.cont_no,
                         row.bl_no,
-                        row.etd,
-                        row.eta,
-                        row.delayed_date,
+                        displayShortDate(row.etd),
+                        displayShortDate(row.eta),
+                        displayShortDate(row.delayed_date),
                         countText,
                         row.needs_help,
                         row.remark
