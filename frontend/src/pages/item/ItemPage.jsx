@@ -44,6 +44,9 @@ export const UNIT_OPTIONS = [
 ];
 
 export default function ItemPage() {
+  const makeTempId = () =>
+  `${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+
 
   // 검색용
   const [searchKindPickerOpen, setSearchKindPickerOpen] = useState(false);
@@ -170,7 +173,7 @@ export default function ItemPage() {
     setRows(prev => [
       ...prev,
       {
-        tempId: crypto.randomUUID(),
+        tempId: makeTempId(),
         item_no: "",
         item_name: "",
         company_name: "",

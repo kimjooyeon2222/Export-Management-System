@@ -19,6 +19,13 @@ import UploadFileIcon from "@mui/icons-material/UploadFile";
 import { apiFetch } from "api/apiFetch";
 
 export default function StockAuditDetailPage() {
+    const makeTempId = () =>
+        `${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+
+    const [editSelectMode, setEditSelectMode] = useState(false); // 행 선택 단계
+    const [editingRowId, setEditingRowId] = useState(null);
+
+
     // 숫자 포맷 (1,000 단위 콤마)
     const fmt = (num) =>
         typeof num === "number"
@@ -62,7 +69,7 @@ export default function StockAuditDetailPage() {
 
                 const converted = json.map(row => ({
                     id: null,
-                    tempId: crypto.randomUUID(),
+                    tempId: makeTempId(),
                     itemNo: row["품번"] || "",
                     itemName: row["품명"] || "",
                     vendorName: row["업체명"] || "",
@@ -132,7 +139,7 @@ export default function StockAuditDetailPage() {
             ...prev,
             {
                 id: null,
-                tempId: crypto.randomUUID(),
+                tempId: makeTempId(),
                 itemNo: "",
                 itemName: "",
                 vendorName: "",
@@ -229,7 +236,7 @@ export default function StockAuditDetailPage() {
                         sx={{ fontWeight: "bold" }}
                         onClick={() => setEditMode(true)}
                     >
-                        수정
+                        수정모드
                     </Button>
                 )}
 
@@ -261,6 +268,30 @@ export default function StockAuditDetailPage() {
                                     setDirty(true);
                                 }}
                             />
+                        </Button>
+
+                        {/* ⭐ 수정 버튼 (ItemPage 동일 역할) */}
+                        <Button
+                            variant="contained"
+                            color={editSelectMode ? "info" : "secondary"}
+                            onClick={() => {
+                                if (!editMode) return;
+
+                                // 수정 취소
+                                if (editSelectMode) {
+                                    setEditSelectMode(false);
+                                    setEditingRowId(null);
+                                    return;
+                                }
+
+                                // 수정 시작
+                                setEditSelectMode(true);
+                                setEditingRowId(null);
+                                alert("✏ 수정할 행을 클릭하세요.");
+                            }}
+
+                        >
+                            {editSelectMode ? "수정 취소" : "수정"}
                         </Button>
 
                         <Button
@@ -349,17 +380,33 @@ export default function StockAuditDetailPage() {
                             </TableRow>
                         ) : (
                             rows.map(row => (
-                                <TableRow key={row.id ?? row.tempId}>
+                                <TableRow
+                                    key={row.id ?? row.tempId}
+                                    hover
+                                    sx={{
+                                        cursor: editSelectMode ? "pointer" : "default",
+                                        bgcolor:
+                                            editSelectMode && editingRowId === (row.id ?? row.tempId)
+                                                ? "#e3f2fd"
+                                                : "inherit"
+                                    }}
+                                    onClick={() => {
+                                        if (!editMode || !editSelectMode) return;
+                                        setEditingRowId(row.id ?? row.tempId);
+                                    }}
+                                >
+
                                     {/* 품번 */}
                                     <TableCell
                                         align="center"
                                         onClick={() => {
-                                            if (!editMode) return;
+                                            if (!editMode || !editSelectMode) return;
+                                            if (editingRowId !== (row.id ?? row.tempId)) return;
                                             setTargetRowId(row.id ?? row.tempId);
                                             setDialogOpen(true);
                                         }}
                                     >
-                                        {editMode ? (
+                                        {editMode && editSelectMode && editingRowId === (row.id ?? row.tempId) ? (
                                             <TextField
                                                 size="small"
                                                 value={row.itemNo}
@@ -377,12 +424,13 @@ export default function StockAuditDetailPage() {
                                     <TableCell
                                         align="center"
                                         onClick={() => {
-                                            if (!editMode) return;
+                                            if (!editMode || !editSelectMode) return;
+                                            if (editingRowId !== (row.id ?? row.tempId)) return;
                                             setTargetRowId(row.id ?? row.tempId);
                                             setDialogOpen(true);
                                         }}
                                     >
-                                        {editMode ? (
+                                        {editMode && editSelectMode && editingRowId === (row.id ?? row.tempId) ? (
                                             <TextField
                                                 size="small"
                                                 value={row.itemName}
@@ -403,12 +451,13 @@ export default function StockAuditDetailPage() {
                                     <TableCell
                                         align="center"
                                         onClick={() => {
-                                            if (!editMode) return;
+                                            if (!editMode || !editSelectMode) return;
+                                            if (editingRowId !== (row.id ?? row.tempId)) return;
                                             setTargetRowId(row.id ?? row.tempId);
                                             setDialogOpen(true);
                                         }}
                                     >
-                                        {editMode ? (
+                                        {editMode && editSelectMode && editingRowId === (row.id ?? row.tempId) ? (
                                             <TextField
                                                 size="small"
                                                 value={row.vendorName}
@@ -427,7 +476,7 @@ export default function StockAuditDetailPage() {
 
                                     {/* 실사수량 */}
                                     <TableCell align="center">
-                                        {editMode ? (
+                                        {editMode && editSelectMode && editingRowId === (row.id ?? row.tempId) ? (
                                             <TextField
                                                 size="small"
                                                 type="number"
@@ -448,7 +497,7 @@ export default function StockAuditDetailPage() {
 
                                     {/* 불량 */}
                                     <TableCell align="center">
-                                        {editMode ? (
+                                        {editMode && editSelectMode && editingRowId === (row.id ?? row.tempId) ? (
                                             <TextField
                                                 size="small"
                                                 type="number"
@@ -469,7 +518,7 @@ export default function StockAuditDetailPage() {
 
                                     {/* 발청소재 */}
                                     <TableCell align="center">
-                                        {editMode ? (
+                                        {editMode && editSelectMode && editingRowId === (row.id ?? row.tempId) ? (
                                             <TextField
                                                 size="small"
                                                 type="number"
@@ -490,7 +539,7 @@ export default function StockAuditDetailPage() {
 
                                     {/* 적정재고 */}
                                     <TableCell align="center">
-                                        {editMode ? (
+                                        {editMode && editSelectMode && editingRowId === (row.id ?? row.tempId) ? (
                                             <TextField
                                                 size="small"
                                                 type="number"
@@ -513,7 +562,7 @@ export default function StockAuditDetailPage() {
 
                                     {/* 박스 입수량 */}
                                     <TableCell align="center">
-                                        {editMode ? (
+                                        {editMode && editSelectMode && editingRowId === (row.id ?? row.tempId) ? (
                                             <TextField
                                                 size="small"
                                                 type="number"
@@ -536,11 +585,12 @@ export default function StockAuditDetailPage() {
 
                                     {/* 삭제 */}
                                     <TableCell align="center">
-                                        {editMode && (
+                                        {editMode && editSelectMode && editingRowId === (row.id ?? row.tempId) && (
                                             <IconButton onClick={() => handleDelete(row.id ?? row.tempId)}>
                                                 <DeleteIcon />
                                             </IconButton>
                                         )}
+
                                     </TableCell>
 
                                 </TableRow>
