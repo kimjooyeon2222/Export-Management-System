@@ -2079,6 +2079,32 @@ def delete_br_inventory(id):
     db.session.commit()
     return jsonify({"message": "deleted"})
 
+@app.route("/api/stock-audits/<int:id>", methods=["PUT"])
+@jwt_required()
+@admin_required
+def update_stock_audit(id):
+    audit = StockAudit.query.get_or_404(id)
+    data = request.json
+
+    audit_date_str = data.get("audit_date")
+    if audit_date_str:
+        audit_date = datetime.strptime(audit_date_str, "%Y-%m-%d").date()
+
+        # 중복 방지
+        exists = StockAudit.query.filter(
+            StockAudit.audit_date == audit_date,
+            StockAudit.id != id
+        ).first()
+        if exists:
+            return jsonify({"error": "이미 존재하는 실사 날짜입니다."}), 400
+
+        audit.audit_date = audit_date
+        audit.audit_year = audit_date.year
+        audit.audit_month = audit_date.month
+
+    db.session.commit()
+    return jsonify(audit.to_dict())
+
 # ============================================
 # 서버 실행
 # ============================================

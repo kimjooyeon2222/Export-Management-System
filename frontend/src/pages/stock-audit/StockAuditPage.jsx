@@ -10,7 +10,8 @@ import {
   TableCell,
   TableBody,
   Select,
-  MenuItem
+  MenuItem,
+  TextField
 } from "@mui/material";
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -18,6 +19,37 @@ import dayjs from "dayjs";
 import { apiFetch } from "api/apiFetch";
 
 export default function StockAuditListPage() {
+  const handleSave = async () => {
+    try {
+      for (const r of rows) {
+        await apiFetch(
+          `${import.meta.env.VITE_API_URL}/api/stock-audits/${r.id}`,
+          {
+            method: "PUT",
+            body: JSON.stringify({
+              audit_date: r.auditDate
+            })
+          }
+        );
+      }
+
+
+      alert("저장되었습니다.");
+      setEditMode(false);
+    } catch (e) {
+      console.error(e);
+      alert("저장 중 오류 발생");
+    }
+  };
+
+  const handleAuditDateChange = (id, newDate) => {
+    setRows(prev =>
+      prev.map(r =>
+        r.id === id ? { ...r, auditDate: newDate } : r
+      )
+    );
+  };
+
   const navigate = useNavigate();
   const [editMode, setEditMode] = useState(false);
 
@@ -234,10 +266,8 @@ export default function StockAuditListPage() {
               variant="contained"
               color="success"
               sx={{ fontWeight: "bold", fontSize: "14px" }}
-              onClick={() => {
-                // TODO: 저장 API
-                setEditMode(false);
-              }}
+
+              onClick={handleSave}
             >
               저장
             </Button>
@@ -282,7 +312,30 @@ export default function StockAuditListPage() {
             ) : (
               filteredRows.map(row => (
                 <TableRow key={row.id}>
-                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "14px" }}>{row.auditDate}</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "14px" }}>
+                    {!editMode ? (
+                      row.auditDate
+                    ) : (
+                      <TextField
+                        type="date"
+                        size="small"
+                        value={row.auditDate}
+                        onChange={(e) =>
+                          handleAuditDateChange(row.id, e.target.value)
+                        }
+                        sx={{
+                          "& input": {
+                            fontSize: "14px",
+                            fontWeight: "bold",
+                            textAlign: "center",
+                          },
+                          width: 150
+                        }}
+                        InputLabelProps={{ shrink: true }}
+                      />
+                    )}
+                  </TableCell>
+
                   <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "14px" }}>{row.itemCount}</TableCell>
                   <TableCell
                     align="center"
