@@ -1053,7 +1053,7 @@ const arrived = delayedDate2 <= todayUS;
                   'INV#',
                   'INV 금액',
                   <TableCell sx={{ width: '140px', textAlign: 'center', fontWeight: 'bold' }}>
-  <div>품목구분</div>
+  <div>품목<br />구분</div>
 </TableCell>
 ,
                   'CONT#',
@@ -1093,8 +1093,8 @@ const arrived = delayedDate2 <= todayUS;
                         <Typography sx={{ fontSize: '0.7rem', fontWeight: 'bold' }}>
                           <Box component="span" sx={{ color: '#333' }}>:</Box>{' '}
                           <Box component="span" sx={{ color: 'red' }}>
-                            지연<br />경고<br /> (10일 <br />이상)
-                          </Box>
+                            지연 경고<br /> (10일)
+                          </Box> 
                         </Typography>
                       </Box>
                     </Box>,
