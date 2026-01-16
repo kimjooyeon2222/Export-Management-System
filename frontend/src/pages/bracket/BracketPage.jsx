@@ -20,6 +20,16 @@ import { useRef } from "react";
 
 export default function BracketPage() {
   const API_BASE = import.meta.env.VITE_API_URL;
+  const getKoreanMonthLabel = (dateStr) => {
+    if (!dateStr) return "실사재고";
+
+    const d = new Date(dateStr);
+    const year = d.getFullYear() % 100;
+    const month = d.getMonth() + 1;
+
+    return `${year}년 ${month}월 실사재고`;
+  };
+
   const applyBrAuditToRowsPure = async (rows) => {
     if (!usDate || !rows.length) return rows;
 
@@ -817,7 +827,9 @@ export default function BracketPage() {
                 <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>업체명</TableCell>
                 <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>품번</TableCell>
                 <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>품명</TableCell>
-                <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>실사재고</TableCell>
+                <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
+                  {getKoreanMonthLabel(usDate)}
+                </TableCell>
                 <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>
                   <Box sx={{ lineHeight: 1.2 }}>
                     적정재고
