@@ -496,7 +496,7 @@ export default function InvoicePage() {
   return (
     <Box sx={{ bgcolor: '#fff', height: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* 타이틀 */}
-      <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'black', fontSize: '1.3rem', pl: 3, pt: 2, mb: 1 }}>
+      <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'black', fontSize: '1.1rem', pl: 3, pt: 2, mb: 1 }}>
         수출일정 통합관리부
       </Typography>
 
@@ -521,7 +521,7 @@ export default function InvoicePage() {
             color: 'white !important',        // 🔥 글씨 절대 안 변함
             borderColor: 'white',
             fontWeight: 'bold',
-            fontSize: '0.9rem',
+            fontSize: '0.8rem',
             textTransform: 'none',
             textDecoration: 'none !important',  // 🔥 링크 기본 파란 hover 제거
 
@@ -564,7 +564,7 @@ export default function InvoicePage() {
               sx={{
                 fontWeight: "bold",
                 color: "white",
-                fontSize: "1.1rem"
+                fontSize: "1rem"
               }}
             >
               SHINHWA |
@@ -581,7 +581,7 @@ export default function InvoicePage() {
                 fontWeight: "bold",
                 '& .MuiSelect-select': {
                   padding: "4px 10px",
-                  fontSize: "0.95rem",
+                  fontSize: "0.9rem",
                   fontWeight: "bold",
                   color: "#333"
                 }
@@ -620,7 +620,7 @@ export default function InvoicePage() {
               bgcolor: '#ffcc00',
               color: 'black',
               fontWeight: 'bold',
-              fontSize: '1.1rem',
+              fontSize: '0.9rem',
               px: 2,
               '&:hover': { bgcolor: '#ffb300' }
             }}
@@ -1047,7 +1047,7 @@ export default function InvoicePage() {
       <Box ref={bottomScrollRef} sx={{ flexGrow: 1, overflowY: 'auto', px: 2, pb: 2 }}>
         <Paper elevation={2}>
           <Table size="small" stickyHeader>
-            <TableHead sx={{ bgcolor: '#ffda66', '& th': { fontSize: '0.9rem', fontWeight: 700 } }}>
+            <TableHead sx={{ bgcolor: '#ffda66', '& th': { fontSize: '0.8rem', fontWeight: 700 } }}>
               <TableRow>
                 {[
                   'ID',
