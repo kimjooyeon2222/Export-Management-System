@@ -113,8 +113,8 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
           {(drawerOpen || (!drawerOpen && level !== 1)) && (
             <ListItemText
               primary={
-                <Typography variant="body2" sx={{
-                  fontSize: '13px',          // ⭐ 글씨 크기 여기
+                <Typography variant="h2" sx={{
+                  fontSize: '14px',       
                   fontWeight: 500, color: isSelected ? iconSelectedColor : textColor
                 }}>
                   {item.title}

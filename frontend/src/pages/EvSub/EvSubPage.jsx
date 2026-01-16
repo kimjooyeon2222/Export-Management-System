@@ -823,7 +823,10 @@ export default function EvSubPage() {
           size="small"
           variant="outlined"
           onClick={() => setShowStockPanel(!showStockPanel)}
-          sx={{ fontSize: 14, fontWeight: "bold" }}
+          sx={{
+            fontSize: 14, fontWeight: "bold", mt: 2,
+            mb: -1,
+          }}
         >
           {showStockPanel ? "− 접기" : "+ 과부족 상태표 보기"}
         </Button>

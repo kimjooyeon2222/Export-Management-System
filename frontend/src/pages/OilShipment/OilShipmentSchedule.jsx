@@ -583,7 +583,7 @@ export default function OilShipmentSchedule() {
 
       <Box sx={{ mt: 3 }}>
         {/* 제목 */}
-        <Typography variant="h5" fontWeight="bold" fontSize="18px">
+        <Typography variant="h5" fontWeight="bold" fontSize="17px">
           오일 운송일정 관리 (Oil Shipment Schedule)
         </Typography>
         {/* 오일 관리 리스트 (1~42) */}
@@ -593,7 +593,7 @@ export default function OilShipmentSchedule() {
           <Button
             variant="outlined"
             onClick={() => setShowOilList(!showOilList)}
-            sx={{ fontWeight: "bold" }}
+            sx={{ fontWeight: "bold", fontSize: "13px" }}
           >
             {showOilList ? "- 접기" : "+ 오일 관리 리스트 보기"}
           </Button>
@@ -607,8 +607,8 @@ export default function OilShipmentSchedule() {
             {/* 버튼 그룹 */}
             {!oilEditMode && (
               <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
-                <Button variant="outlined" onClick={() => setOilEditMode(true)}>
-                  수정 모드 활성화
+                <Button variant="outlined" onClick={() => setOilEditMode(true)} sx={{fontWeight:"bold"}}>
+                  수정
                 </Button>
               </Box>
             )}
@@ -765,8 +765,10 @@ export default function OilShipmentSchedule() {
         {/* === 수정/입력 영역 === */}
         {!editMode && (
           <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
-            <Button variant="outlined" onClick={() => setEditMode(true)}>
-              수정 모드 활성화
+            <Button variant="outlined" onClick={() => setEditMode(true)} sx={{
+              fontSize: "13px", fontWeight: "bold"
+            }}>
+              수정
             </Button>
           </Box>
         )}
@@ -814,8 +816,8 @@ export default function OilShipmentSchedule() {
             sx={{
               "& td, & th": {
                 fontSize: "15px",
-                padding: "10px 6px",
-                fontWeigt: "bold",   // ← 세로 여백 늘림
+                padding: "10px 3px",  //원래는 10px 6px
+
               },
               "& tr": {
                 height: "40px"        // ← 행 높이 증가

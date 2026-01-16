@@ -709,7 +709,7 @@ export default function AxleSubPage() {
       <Box sx={{ mb: -4 }}>
         <Button
           variant="outlined"
-          onClick={() => navigate(-1)}
+          onClick={() => navigate("/")}
           sx={{
             borderColor: "#0069a6ff",
             color: "#0056a6ff",
@@ -722,7 +722,7 @@ export default function AxleSubPage() {
             },
           }}
         >
-          ← 뒤로가기
+          ← 메인으로
         </Button>
       </Box>
 
@@ -809,7 +809,10 @@ export default function AxleSubPage() {
           size="small"
           variant="outlined"
           onClick={() => setShowStockPanel(!showStockPanel)}
-          sx={{ fontSize: 14, fontWeight: "bold" }}
+          sx={{
+            fontSize: 14, fontWeight: "bold", mb: -1,
+            mt: 2,
+          }}
         >
           {showStockPanel ? "− 접기" : "+ 과부족 상태표 보기"}
         </Button>
