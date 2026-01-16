@@ -65,371 +65,238 @@ const actionSX = {
 
 
 // ==============================|| DASHBOARD - DEFAULT ||============================== //
-
 export default function DashboardDefault() {
-  
+  const API_BASE = import.meta.env.VITE_API_URL;
 
-const API_BASE = import.meta.env.VITE_API_URL;
+  const [userDate, setUserDate] = useState("");
+  const [editMode, setEditMode] = useState(false);
+  const [note, setNote] = useState("");
+  const [redPen, setRedPen] = useState(false);
 
-const [userDate, setUserDate] = useState("");
-const [editMode, setEditMode] = useState(false);
-const [note, setNote] = useState("");
-const [redPen, setRedPen] = useState(false);
+  // TipTap Editor
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({ hardBreak: false }),
+      TextStyle,
+      Color.configure({ types: ["textStyle"] }),
+      HardBreak.extend({
+        addKeyboardShortcuts() {
+          return { Enter: () => this.editor.commands.setHardBreak() };
+        },
+      }),
+    ],
+    content: note,
+    editable: editMode,
+    onUpdate({ editor }) {
+      setNote(editor.getHTML());
+    },
+  });
 
-// TipTap Editor 초기화
-const editor = useEditor({
-  extensions: [
-    StarterKit.configure({
-      // paragraph 절대 끄지 말 것!
-      hardBreak: false
-    }),
-    TextStyle,
-    Color.configure({ types: ['textStyle'] }),
-
-    HardBreak.extend({
-      addKeyboardShortcuts() {
-        return {
-          Enter: () => this.editor.commands.setHardBreak(),
-        };
-      },
-    }),
-  ],
-  content: note,
-  editable: editMode,
-  onUpdate({ editor }) {
-    setNote(editor.getHTML());
-  }
-});
-
-
-useEffect(() => {
-
-  apiFetch(`${API_BASE}/memo`)
-    .then(res => res.json())
-    .then(data => {
-      if (data.text) setNote(data.text);
-      if (data.user_date) setUserDate(data.user_date);   // ⭐ 날짜도 저장
-    })
-    .catch(err => console.error("메모 로딩 실패:", err));
-}, []);
-
-useEffect(() => {
-  if (editor && !editMode) {
-    editor.commands.setContent(note);
-  }
-}, [note, editor, editMode]);
-
-useEffect(() => {
-  if (editor) {
-    editor.setEditable(editMode);
-  }
-}, [editMode, editor]);
-
-
-
-// ⭐ 저장 함수
-const saveMemo = async () => {
-  try {
-    await apiFetch(`${API_BASE}/memo`, {
-      method: "POST",
-      body: JSON.stringify({ 
-        text: note,
-        user_date: userDate       // ⭐ 날짜 추가
+  useEffect(() => {
+    apiFetch(`${API_BASE}/memo`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.text) setNote(data.text);
+        if (data.user_date) setUserDate(data.user_date);
       })
-    });
-  } catch (error) {
-    console.error("메모 저장 실패:", error);
-  }
-};
+      .catch((err) => console.error("메모 로딩 실패:", err));
+  }, []);
 
+  useEffect(() => {
+    if (editor && !editMode) editor.commands.setContent(note);
+  }, [note, editor, editMode]);
 
-  const today = new Intl.DateTimeFormat("ko-KR", {
-  timeZone: "Asia/Seoul",
-  year: "numeric",
-  month: "2-digit",
-  day: "2-digit"
-}).format(new Date());
+  useEffect(() => {
+    if (editor) editor.setEditable(editMode);
+  }, [editMode, editor]);
 
-  
-
+  const saveMemo = async () => {
+    try {
+      await apiFetch(`${API_BASE}/memo`, {
+        method: "POST",
+        body: JSON.stringify({
+          text: note,
+          user_date: userDate,
+        }),
+      });
+    } catch (error) {
+      console.error("메모 저장 실패:", error);
+    }
+  };
 
   return (
-
-    
-    <Grid container rowSpacing={4.5} columnSpacing={2.75}>
-      {/* row 1 */}
-      <Grid sx={{ mb: -2.25 }} size={12}>
-        <Typography variant="h5">수출통합관리 시스템</Typography>
-      </Grid>
-      
-    {/* ✅ EMS 버튼 섹션 (비율 유지형, 축소 시도에도 일정한 간격 유지) */}
-    <Grid item xs={12}>
-
-   
-      <MainCard
-  sx={{
-    mt: 5.5,
-    p: 3,
-    width: "100%",        // 가로 전체
-    maxWidth: "1500px",   // ✨ 넓히기 (원하는 값으로 늘려도 됨: 1300px, 1500px 가능)
-    mx: "auto",           // 가운데 정렬
-    textAlign: 'center',
-    position: 'relative'
-  }}
->
-
- {/* 🔥 작은 수정 버튼 / 저장 버튼 */}
-  {!editMode ? (
-    <Button
-      variant="outlined"
-      onClick={() => {
- 
-  setEditMode(true);
-}}
-      sx={{
-        position: 'absolute',
-        top: '10px',
-        right: '15px',
-        minWidth: '35px',
-        padding: '3px',
-        borderColor: '#1976D2',
-        color: '#1976D2',
-        borderRadius: '6px',
-      }}
-    >
-      <EditIcon fontSize="small" />
-    </Button>
-  ) : (
-    <Button
-      variant="contained"
-      onClick={() => {
-  saveMemo();   // ⭐ DB 저장
-  setEditMode(false);
-}}
-      sx={{
-        position: 'absolute',
-        top: '10px',
-        right: '15px',
-        minWidth: '35px',
-        padding: '3px',
-        backgroundColor: '#1976D2',
-        borderRadius: '6px',
-      }}
-    >
-      <SaveIcon fontSize="small" />
-    </Button>
-  )}
- {/* ✨ 메모장 영역 (수정모드 지원) */}
-<Box
-  sx={{
-    mt: 2.5,
-    p: 4,
-    width: '650px',
-    height: "350px",
-    mx:"auto",
-    backgroundColor: '#FFF8C6',
-    border: '1px solid #E5D884',
-    borderRadius: '8px',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-    position: 'relative',
-    textAlign: 'left',
-    
-    
-  }}
->
-  {/* 날짜 */}
- {/* 날짜 영역 */}
-{
-  !editMode ? (
-    // 보기 모드 → 저장된 날짜 표시
-    <Typography
-      variant="subtitle2"
-      sx={{
-        position: 'absolute',
-        right: '20px',
-        top: '15px',
-        fontWeight: 'bold',
-        fontSize: '0.9rem',
-        color: '#5C5C5C'
-      }}
-    >
-      {userDate || "날짜 없음"}
-    </Typography>
-  ) : (
-    // 수정 모드 → 사용자가 날짜 입력 가능
-    <Box sx={{ position: 'absolute', right: '20px', top: '15px' }}>
-      <input
-        type="text"
-        placeholder="YYYY-MM-DD"
-        value={userDate}
-        onChange={(e) => setUserDate(e.target.value)}
-        style={{
-          padding: "4px 8px",
-          border: "1px solid #aaa",
-          borderRadius: "4px",
-          fontSize: "0.9rem"
-        }}
-      />
-    </Box>
-  )
-}
-
-
-  {/* 제목 */}
-  <Typography
-    variant="h6"
-    sx={{
-      fontWeight: 'bold',
-      mb: 2,
-      mt: -1.5,
-      textAlign: 'center',
-      fontSize: "18px"
-    }}
-  >
-    # 업데이트 내용 #
-  </Typography>
-
-  {/* 보기모드 */}
-  {/* 보기 모드 */}
-{!editMode && (
-  <Box
-    sx={{
-      display: "flex",
-      justifyContent: "center",   // 가로 가운데
-      alignItems: "flex-start",
-      
-      mt: 1,
-    }}
-  >
-    <div
-      dangerouslySetInnerHTML={{ __html: note }}
-      style={{
-        display: "inline-block",     // 내용 박스를 가운데에 고정
-        textAlign: "left",
-        fontSize: "1.3rem",
-        lineHeight: "1.75rem",
-        fontWeight: 600,             // 굵게
-        whiteSpace: "pre-line",
-        
-      }}
-    />
-  </Box>
-)}
-
-
-  {/* 수정모드 */}
-  {editMode && (
-    <>
-      {/* 🔥 빨간펜 토글 버튼 */}
-<Box sx={{ display: "flex", width: "100%" }}>
-  <Button
-    variant={redPen ? "contained" : "outlined"}
-    sx={{
-      ml: "auto",      // 🔥 flex에서만 작동
-      mb: 1,
-      borderColor: "#d32f2f",
-      color: redPen ? "#fff" : "#d32f2f",
-      backgroundColor: redPen ? "#d32f2f" : "transparent",
-    }}
-    onClick={() => {
-      setRedPen(!redPen);
-      if (!redPen) editor.chain().setColor("#d32f2f").run();
-      else editor.chain().setColor("black").run();
-    }}
-  >
-    빨간펜
-  </Button>
-</Box>
-
-
-      {/* 에디터 */}
-      <Box
+    <Grid container>
+      {/* =================== ROW 1 : 메인 대시보드 =================== */}
+      <Grid item xs={12}>
+        <Box
           sx={{
-    border: "1px solid #ccc",
-    borderRadius: "6px",
-    padding: "12px",
-    backgroundColor: "#fff",
-    height: "180px",
-    overflowY: "auto",
-
-    // 🔥 줄 간격 문제 해결 핵심
-    "& p": {
-      margin: 0,     // 기본 마진 제거
-    },
-
-    "& p + p": {
-      marginTop: "4px", // Enter 시 줄바꿈 간격 최소화 (원하면 2px~6px 조절 가능)
-    }
-  }}
-      >
-        <EditorContent editor={editor} />
-      </Box>
-
-      <Button
-        variant="contained"
-        fullWidth
-        sx={{ mt: 2, backgroundColor: '#1976D2', fontWeight: 'bold' }}
-        onClick={() => {
-          saveMemo();
-          setEditMode(false);
-        }}
-      >
-        저장하기
-      </Button>
-    </>
-  )}
-</Box>
-
-
-
-  </MainCard>
-</Grid>
-
-     
-     
-<Grid container rowSpacing={4.5} columnSpacing={2.75}>
-
-      {/* row 2 */}
-      <Grid size={{ xs: 12, md: 7, lg: 8 }}>
-        <UniqueVisitorCard />
-      </Grid>
-      <Grid size={{ xs: 12, md: 5, lg: 4 }}>
-        <Grid container alignItems="center" justifyContent="space-between">
-          <Grid>
-            <Typography variant="h5">Income Overview</Typography>
-          </Grid>
-        </Grid>
-        <MainCard sx={{ mt: 2 }} content={false}>
-          <Box sx={{ p: 3, pb: 0 }}>
-            <Stack sx={{ gap: 2 }}>
-              <Typography variant="h6" color="text.secondary">
-                This Week Statistics
+            minHeight: "calc(100vh - 120px)", // 상단 AppBar 고려
+            display: "flex",
+            alignItems: "center",   // Y축 중앙
+          }}
+        >
+          {/* ⭐ row 자체를 X축 중앙 + 시각 보정 */}
+          <Grid
+            container
+            spacing={3}
+            sx={{
+              maxWidth: 1200,
+              mx: "auto",   // X축 중앙
+              pl: 4,        // ⭐ 사이드바 고려한 시각 중심 보정
+            }}
+          >
+            {/* 🔹 LEFT : 메모 */}
+            <Grid item xs={12} md={7}>
+              <Typography
+                variant="h5"
+                sx={{ fontWeight: "bold", mb: 2 }}
+              >
+                수출통합관리 시스템
               </Typography>
-              <Typography variant="h3">$7,650</Typography>
-            </Stack>
-          </Box>
-          <MonthlyBarChart />
-        </MainCard>
-      </Grid>
 
-      {/* row 3 */}
-      <Grid size={{ xs: 12, md: 7, lg: 8 }}>
-        <Grid container alignItems="center" justifyContent="space-between">
-      
-        </Grid>
-    
-      </Grid>
+              <MainCard
+                sx={{
+                  minHeight: 450,
+                  p: 3,
+                  position: "relative",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {!editMode ? (
+                  <Button
+                    variant="outlined"
+                    onClick={() => setEditMode(true)}
+                    sx={{
+                      position: "absolute",
+                      top: 10,
+                      right: 15,
+                      minWidth: 35,
+                      p: "3px",
+                    }}
+                  >
+                    <EditIcon fontSize="small" />
+                  </Button>
+                ) : (
+                  <Button
+                    variant="contained"
+                    onClick={() => {
+                      saveMemo();
+                      setEditMode(false);
+                    }}
+                    sx={{
+                      position: "absolute",
+                      top: 10,
+                      right: 15,
+                      minWidth: 35,
+                      p: "3px",
+                    }}
+                  >
+                    <SaveIcon fontSize="small" />
+                  </Button>
+                )}
 
-      <Grid size={{ xs: 12, md: 5, lg: 4 }}>
-        <Grid container alignItems="center" justifyContent="space-between">
-          
+                {/* 📝 메모 박스 */}
+                <Box
+                  sx={{
+                    p: 4,
+                    width: 500,
+                    height: 350,
+                    backgroundColor: "#FFF8C6",
+                    border: "1px solid #E5D884",
+                    borderRadius: "8px",
+                    position: "relative",
+                  }}
+                >
+                  {!editMode ? (
+                    <Typography
+                      variant="subtitle2"
+                      sx={{
+                        position: "absolute",
+                        right: 20,
+                        top: 15,
+                        fontWeight: "bold",
+                        fontSize: "0.8rem",
+                      }}
+                    >
+                      {userDate || "날짜 없음"}
+                    </Typography>
+                  ) : (
+                    <Box sx={{ position: "absolute", right: 20, top: 15 }}>
+                      <input
+                        value={userDate}
+                        onChange={(e) => setUserDate(e.target.value)}
+                      />
+                    </Box>
+                  )}
+
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      textAlign: "center",
+                      fontWeight: "bold",
+                      mb: 2,
+                      mt: 1,
+                    }}
+                  >
+                    # 업데이트 내용 #
+                  </Typography>
+
+                  {!editMode ? (
+                    <div
+                      dangerouslySetInnerHTML={{ __html: note }}
+                      style={{ fontSize: "1.1rem", fontWeight: 600 }}
+                    />
+                  ) : (
+                    <>
+                      <Button
+                        variant={redPen ? "contained" : "outlined"}
+                        sx={{
+                          mb: 1,
+                          borderColor: "#d32f2f",
+                          color: redPen ? "#fff" : "#d32f2f",
+                          backgroundColor: redPen ? "#d32f2f" : "transparent",
+                        }}
+                        onClick={() => {
+                          setRedPen(!redPen);
+                          editor
+                            .chain()
+                            .setColor(redPen ? "black" : "#d32f2f")
+                            .run();
+                        }}
+                      >
+                        빨간펜
+                      </Button>
+
+                      <EditorContent editor={editor} />
+                    </>
+                  )}
+                </Box>
+              </MainCard>
+            </Grid>
+
+            {/* 🔹 RIGHT : Income Overview */}
+            <Grid item xs={12} md={5}>
+              <Typography
+                variant="h5"
+                sx={{ fontWeight: "bold", mb: 2 }}
+              >
+                Income Overview
+              </Typography>
+
+              <MainCard
+                sx={{
+                  minHeight: 450,
+                  p: 3,
+                }}
+              >
+                <MonthlyBarChart />
+              </MainCard>
+            </Grid>
           </Grid>
-        </Grid>
-        
+        </Box>
       </Grid>
-
-     
-      
     </Grid>
   );
 }
