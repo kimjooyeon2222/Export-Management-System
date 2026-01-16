@@ -173,7 +173,7 @@ export default function StockAuditListPage() {
             setYear(e.target.value);
             setMonth("");   // 년도 바뀌면 월은 전체
           }}
-          sx={{ minWidth: 120, fontWeight: "bold", fontSize: "15px" }}
+          sx={{ minWidth: 120, fontWeight: "bold", fontSize: "14px" }}
         >
           <MenuItem value="">
             전체
@@ -193,7 +193,7 @@ export default function StockAuditListPage() {
           value={month}
           displayEmpty
           onChange={e => setMonth(e.target.value)}
-          sx={{ minWidth: 100, fontWeight: "bold", fontSize: "15px" }}
+          sx={{ minWidth: 100, fontWeight: "bold", fontSize: "14px" }}
           disabled={editMode}
         >
           <MenuItem value="">전체</MenuItem>
@@ -212,7 +212,7 @@ export default function StockAuditListPage() {
         {!editMode && (
           <Button
             variant="outlined"
-            sx={{ fontWeight: "bold", fontSize: "15px" }}
+            sx={{ fontWeight: "bold", fontSize: "14px" }}
             onClick={() => setEditMode(true)}
           >
             수정
@@ -224,7 +224,7 @@ export default function StockAuditListPage() {
           <>
             <Button
               variant="contained"
-              sx={{ fontWeight: "bold", fontSize: "15px" }}
+              sx={{ fontWeight: "bold", fontSize: "14px" }}
               onClick={handleCreateAudit}
             >
               + 신규 재고실사
@@ -233,7 +233,7 @@ export default function StockAuditListPage() {
             <Button
               variant="contained"
               color="success"
-              sx={{ fontWeight: "bold", fontSize: "15px" }}
+              sx={{ fontWeight: "bold", fontSize: "14px" }}
               onClick={() => {
                 // TODO: 저장 API
                 setEditMode(false);
@@ -245,7 +245,7 @@ export default function StockAuditListPage() {
             <Button
               variant="outlined"
               color="error"
-              sx={{ fontWeight: "bold", fontSize: "15px" }}
+              sx={{ fontWeight: "bold", fontSize: "14px" }}
               onClick={() => {
                 if (
                   window.confirm("저장하지 않고 수정모드를 종료하시겠습니까?")
@@ -267,9 +267,9 @@ export default function StockAuditListPage() {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>실사일자</TableCell>
-              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>품목 수</TableCell>
-              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>관리</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "14px" }}>실사일자</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "14px" }}>품목 수</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "14px" }}>관리</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -282,15 +282,15 @@ export default function StockAuditListPage() {
             ) : (
               filteredRows.map(row => (
                 <TableRow key={row.id}>
-                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>{row.auditDate}</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>{row.itemCount}</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "14px" }}>{row.auditDate}</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "14px" }}>{row.itemCount}</TableCell>
                   <TableCell
                     align="center"
-                    sx={{ fontWeight: "bold", fontSize: "15px" }}
+                    sx={{ fontWeight: "bold", fontSize: "14px" }}
                   >
                     {!editMode && (
                       <Button
-                        sx={{ fontWeight: "bold", fontSize: "15px" }}
+                        sx={{ fontWeight: "bold", fontSize: "14px" }}
                         size="small"
                         onClick={() => navigate(`/stock-audit/${row.id}`)}
                       >
@@ -300,7 +300,7 @@ export default function StockAuditListPage() {
 
                     {editMode && (
                       <Button
-                        sx={{ fontWeight: "bold", fontSize: "15px" }}
+                        sx={{ fontWeight: "bold", fontSize: "14px" }}
                         size="small"
                         color="error"
                         onClick={() => handleDeleteAudit(row.id)}

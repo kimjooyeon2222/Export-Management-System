@@ -300,7 +300,7 @@ export default function ItemPage() {
       </Box>
 
       {/* ================= 검색 영역 ================= */}
-      <Paper component="form" sx={{ p: 2, mb: 2 }} onSubmit={(e) => { e.preventDefault(); handleSearch(); }}>
+      <Paper component="form" sx={{ p: 1, mb: 2 }} onSubmit={(e) => { e.preventDefault(); handleSearch(); }}>
         <Grid container spacing={2} justifyContent="center">
           <Grid item xs={3}>
             <TextField label="품목번호" name="itemNo" fullWidth value={search.itemNo} onChange={handleSearchChange} />
@@ -405,16 +405,16 @@ export default function ItemPage() {
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>품목번호</TableCell>
-              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>품목명</TableCell>
-              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>업체명</TableCell>
-              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>규격</TableCell>
-              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>재질</TableCell>
-              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>품목<br />형태</TableCell>
-              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>품목<br/>유형</TableCell>
-              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>단위</TableCell>
-              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>등록일시</TableCell>
-              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>수정일시</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "14px" }}>품목번호</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "14px" }}>품목명</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "14px" }}>업체명</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "14px" }}>규격</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "14px" }}>재질</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "14px" }}>품목<br />형태</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "14px" }}>품목<br/>유형</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "14px" }}>단위</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "14px" }}>등록일시</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "14px" }}>수정일시</TableCell>
             </TableRow>
           </TableHead>
 
@@ -460,7 +460,7 @@ export default function ItemPage() {
                   }}
                 >
 
-                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
+                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "14px" }}>
                     {editMode && editingRowId === row.tempId ? (
                       <TextField
                         size="small"
@@ -475,7 +475,7 @@ export default function ItemPage() {
 
                   </TableCell>
 
-                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
+                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "14px" }}>
                     {editMode && editingRowId === row.tempId ? (
                       <TextField
                         size="small"
@@ -489,7 +489,7 @@ export default function ItemPage() {
                     )}
 
                   </TableCell>
-                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
+                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "14px" }}>
                     {editMode && editingRowId === row.tempId ? (
                       <TextField
                         size="small"
@@ -504,7 +504,7 @@ export default function ItemPage() {
                   </TableCell>
 
 
-                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
+                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "14px" }}>
                     {editMode && editingRowId === row.tempId ? (
                       <TextField
                         size="small"
@@ -519,7 +519,7 @@ export default function ItemPage() {
                   </TableCell>
 
 
-                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
+                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "14px" }}>
                     {editMode && editingRowId === row.tempId ? (
                       <TextField
                         size="small"
@@ -534,7 +534,7 @@ export default function ItemPage() {
                   </TableCell>
 
 
-                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
+                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "14px" }}>
                     {editMode && editingRowId === row.tempId ? (
                       <Select
                         size="small"
@@ -559,7 +559,7 @@ export default function ItemPage() {
                       ITEM_FORM_MAP[row.item_form] || row.item_form
                     )}
                   </TableCell>
-                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
+                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "14px" }}>
                     {editMode && editingRowId === row.tempId ? (
                       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                         <TextField
@@ -583,7 +583,7 @@ export default function ItemPage() {
 
 
 
-                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
+                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "14px" }}>
                     {editMode && editingRowId === row.tempId ? (
                       row.unit === "__custom__" ? (
                         <TextField
@@ -616,8 +616,8 @@ export default function ItemPage() {
                   </TableCell>
 
 
-                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>{row.created_at}</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>{row.updated_at}</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "14px" }}>{row.created_at}</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "14px" }}>{row.updated_at}</TableCell>
                 </TableRow>
               ))}
           </TableBody>
