@@ -101,10 +101,10 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
                 }),
                 ...(!drawerOpen &&
                   isSelected && {
-                    bgcolor: 'primary.lighter',
-                    ...theme.applyStyles('dark', { bgcolor: 'primary.900' }),
-                    '&:hover': { bgcolor: 'primary.lighter', ...theme.applyStyles('dark', { bgcolor: 'primary.darker' }) }
-                  })
+                  bgcolor: 'primary.lighter',
+                  ...theme.applyStyles('dark', { bgcolor: 'primary.900' }),
+                  '&:hover': { bgcolor: 'primary.lighter', ...theme.applyStyles('dark', { bgcolor: 'primary.darker' }) }
+                })
               })}
             >
               {itemIcon}
@@ -113,7 +113,10 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
           {(drawerOpen || (!drawerOpen && level !== 1)) && (
             <ListItemText
               primary={
-                <Typography variant="h6" sx={{ color: isSelected ? iconSelectedColor : textColor }}>
+                <Typography variant="body2" sx={{
+                  fontSize: '13px',          // ⭐ 글씨 크기 여기
+                  fontWeight: 500, color: isSelected ? iconSelectedColor : textColor
+                }}>
                   {item.title}
                 </Typography>
               }
