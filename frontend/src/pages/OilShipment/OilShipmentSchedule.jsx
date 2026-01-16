@@ -815,7 +815,7 @@ export default function OilShipmentSchedule() {
               "& td, & th": {
                 fontSize: "15px",
                 padding: "10px 6px",
-                fontWeigt:"bold",   // ← 세로 여백 늘림
+                fontWeigt: "bold",   // ← 세로 여백 늘림
               },
               "& tr": {
                 height: "40px"        // ← 행 높이 증가
@@ -848,19 +848,31 @@ export default function OilShipmentSchedule() {
                     >
                       <Tooltip
                         title={
-                          <span
-                            style={{
-                              fontSize: "18px",
-                              fontWeight: "bold",
-                              lineHeight: 1.4,
-                            }}
-                          >
-                            {oilName}
-                          </span>
+                          <Box sx={{ textAlign: "center", lineHeight: 1.4 }}>
+                            <Typography
+                              sx={{
+                                fontSize: "16px",
+                                fontWeight: "bold",
+                              }}
+                            >
+                              {oil?.name || "미지정 품목"}
+                            </Typography>
+
+                            <Typography
+                              sx={{
+                                fontSize: "14px",
+                                color: "inherit",
+                                fontWeight: "bold",
+                              }}
+                            >
+                              ({oil?.code || "품번 없음"})
+                            </Typography>
+                          </Box>
                         }
                         arrow
                         placement="top"
                       >
+
                         {/* 🔥 셀 전체를 덮는 영역 */}
                         <div
                           style={{
@@ -869,6 +881,7 @@ export default function OilShipmentSchedule() {
                             padding: "10px 0",
                             cursor: "help",
                             fontWeight: "bold",
+
                           }}
                         >
                           {day}

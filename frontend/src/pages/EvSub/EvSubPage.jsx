@@ -1335,13 +1335,31 @@ export default function EvSubPage() {
                     >
                       <Tooltip
                         title={
-                          <span style={{ fontSize: "18px", fontWeight: "bold" }}>
-                            {item.item_name}
-                          </span>
+                          <Box sx={{ textAlign: "center", lineHeight: 1.4 }}>
+                            <Typography
+                              sx={{
+                                fontSize: "16px",
+                                fontWeight: "bold",
+                              }}
+                            >
+                              {item.item_name || "미지정 품목"}
+                            </Typography>
+
+                            <Typography
+                              sx={{
+                                fontSize: "14px",
+                                fontWeight: "bold",
+                                color: "inherit",   // ⭐ 품명과 동일 색상
+                              }}
+                            >
+                              ({item.item_code || "품번 없음"})
+                            </Typography>
+                          </Box>
                         }
                         arrow
                         placement="top"
                       >
+
                         <div
                           style={{
                             width: "100%",
