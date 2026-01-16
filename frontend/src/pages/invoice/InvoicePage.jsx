@@ -58,6 +58,10 @@ const itemToExporters = {
 
 
 export default function InvoicePage() {
+  function renderMultiline(val) {
+    return (val || "").replace(/@/g, "\n");
+  }
+
   function displayShortDate(dateStr) {
     if (!dateStr) return "";
     // YYYY-MM-DD → YY-MM-DD
@@ -715,8 +719,20 @@ export default function InvoicePage() {
                       </TableCell>
 
                       {/* 하단 표 데이터 그대로 연동 */}
-                      <TableCell align="center">{merged.cont_no || '-'}</TableCell>
-                      <TableCell align="center">{merged.bl_no || '-'}</TableCell>
+                      <TableCell
+                        align="center"
+                        sx={{ whiteSpace: "pre-line" }}
+                      >
+                        {renderMultiline(merged.cont_no)}
+                      </TableCell>
+
+                      <TableCell
+                        align="center"
+                        sx={{ whiteSpace: "pre-line" }}
+                      >
+                        {renderMultiline(merged.bl_no)}
+                      </TableCell>
+
                       <TableCell align="center">{displayShortDate(etd)}</TableCell>
                       <TableCell align="center">{displayShortDate(eta)}</TableCell>
                       <TableCell align="center">{displayShortDate(delayed)}</TableCell>
@@ -1062,7 +1078,7 @@ export default function InvoicePage() {
                   'INV#',
                   'INV 금액',
                   <TableCell sx={{ width: '140px', textAlign: 'center', fontWeight: 'bold' }}>
-                    <div>품목<br />구분</div>
+                    <div>품목구분</div>
                   </TableCell>
                   ,
                   'CONT#',
