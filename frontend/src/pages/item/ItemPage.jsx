@@ -410,8 +410,8 @@ export default function ItemPage() {
               <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>업체명</TableCell>
               <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>규격</TableCell>
               <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>재질</TableCell>
-              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>품목형태</TableCell>
-              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>품목유형</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>품목<br />형태</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>품목<br/>유형</TableCell>
               <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>단위</TableCell>
               <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>등록일시</TableCell>
               <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>수정일시</TableCell>

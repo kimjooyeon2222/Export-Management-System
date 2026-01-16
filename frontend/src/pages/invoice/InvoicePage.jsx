@@ -1061,10 +1061,10 @@ export default function InvoicePage() {
                   'CONT#',
                   'BL#',
                   <Box key="etdHeader" sx={{ textAlign: 'center', whiteSpace: 'pre-line' }}>
-                    ETD<br />(출발<br /> 예정일)
+                    ETD<br />(공장 출발 예정일)
                   </Box>,
                   <Box key="etaHeader" sx={{ textAlign: 'center', whiteSpace: 'pre-line' }}>
-                    ETA<br />(공장 도착 <br />예정일)
+                    ETA<br />(공장 도착 예정일)
                   </Box>,
                   <Box key="delayed" sx={{ textAlign: 'center', lineHeight: 1.2 }}>
                     <Typography sx={{ fontWeight: 'bold' }}>DELAYED DATE</Typography>
@@ -1193,6 +1193,7 @@ export default function InvoicePage() {
                                   fontWeight: "bold",
                                 }),
                                 ...(idx === 2 && { color: "blue", cursor: "pointer", textDecoration: "underline" }),
+
                                 ...(idx === 9 ? delayedStyle : {}),
                                 ...(idx === 10 ? countStyle : {}),
                                 ...(idx === 5 || idx === 6 || idx === 12 ? { whiteSpace: "pre-line" } : {}),
