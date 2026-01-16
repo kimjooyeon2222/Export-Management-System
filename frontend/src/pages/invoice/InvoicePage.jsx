@@ -1106,7 +1106,7 @@ export default function InvoicePage() {
                     >
                       <Box sx={{ width: 14, height: 14, bgcolor: '#ffcccc', border: '1px solid #bbb' }} />
                       <Typography sx={{ fontSize: '0.8rem', color: '#333' }}>
-                        : 금일 이후 도착<br />{' '}
+                        : 금일 이후 <br/>도착<br />{' '}
                         <span style={{ color: 'red', fontWeight: 'bold' }}> (5일전)</span>
                       </Typography>
                     </Box>
@@ -1117,8 +1117,8 @@ export default function InvoicePage() {
                       <Box sx={{ width: 14, height: 14, bgcolor: '#ccf2e0', border: '1px solid #bbb' }} />
                       <Typography sx={{ fontSize: '0.7rem', fontWeight: 'bold' }}>
                         <Box component="span" sx={{ color: '#333' }}>:</Box>{' '}
-                        <Box component="span" sx={{ color: 'red' }}>
-                          지연 경고<br /> (10일)
+                        <Box component="span" sx={{ color: 'red', fontSize:"11px" }}>
+                          지연<br /> 경고<br /> (10일)
                         </Box>
                       </Typography>
                     </Box>
