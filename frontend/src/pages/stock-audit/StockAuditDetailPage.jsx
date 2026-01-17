@@ -412,7 +412,7 @@ export default function StockAuditDetailPage() {
                                                 value={row.itemNo}
                                                 placeholder="품번 선택"
                                                 InputProps={{ readOnly: true }}
-                                                inputProps={{ style: { textAlign: "center", cursor: "pointer", fontSize: "14px" } }}
+                                                inputProps={{ style: { textAlign: "center", cursor: "pointer", fontSize: "14px", fontWeight: "bold" } }}
                                             />
                                         ) : (
                                             <Typography sx={{ fontSize: "14px", fontWeight: "bold" }}>{row.itemNo || "-"}</Typography>
@@ -436,7 +436,7 @@ export default function StockAuditDetailPage() {
                                                 value={row.itemName}
                                                 placeholder="품명 선택"
                                                 InputProps={{ readOnly: true }}
-                                                inputProps={{ style: { textAlign: "center", cursor: "pointer" } }}
+                                                inputProps={{ style: { textAlign: "center", cursor: "pointer", fontWeight: "bold" } }}
                                             />
                                         ) : (
                                             <Typography sx={{ fontSize: "14px", fontWeight: "bold" }}>
@@ -463,7 +463,7 @@ export default function StockAuditDetailPage() {
                                                 value={row.vendorName}
                                                 placeholder="업체명 선택"
                                                 InputProps={{ readOnly: true }}
-                                                inputProps={{ style: { textAlign: "center", cursor: "pointer" } }}
+                                                inputProps={{ style: { textAlign: "center", cursor: "pointer", fontWeight: "bold" } }}
                                             />
                                         ) : (
                                             <Typography sx={{ fontSize: "14px", fontWeight: "bold" }}>

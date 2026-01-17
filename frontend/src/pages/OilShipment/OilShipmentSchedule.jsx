@@ -25,6 +25,10 @@ import { apiFetch } from "api/apiFetch";
 
 export default function OilShipmentSchedule() {
 
+  // 🔥 오일 관리 리스트 전용
+  const [oilEditSelectMode, setOilEditSelectMode] = useState(false); // 행 선택 단계
+  const [editingOilNo, setEditingOilNo] = useState(null);            // 현재 수정 중인 oil.no
+
   const [deleteSelectMode, setDeleteSelectMode] = useState(false);
   const [selectedGroups, setSelectedGroups] = useState([]);
 
@@ -607,7 +611,7 @@ export default function OilShipmentSchedule() {
             {/* 버튼 그룹 */}
             {!oilEditMode && (
               <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
-                <Button variant="outlined" onClick={() => setOilEditMode(true)} sx={{fontWeight:"bold"}}>
+                <Button variant="outlined" onClick={() => setOilEditMode(true)} sx={{ fontWeight: "bold" }}>
                   수정
                 </Button>
               </Box>
@@ -624,12 +628,35 @@ export default function OilShipmentSchedule() {
                 <Button variant="contained" onClick={addOilRow}>+ 행 추가</Button>
                 <Button variant="outlined" color="error" onClick={deleteOilRow}>행 삭제</Button>
 
-                <Button variant="outlined" color="error" onClick={() => setOilEditMode(false)}>
-                  수정 종료
+
+
+
+                <Button
+                  variant="contained"
+                  color={oilEditSelectMode ? "info" : "secondary"}
+                  onClick={() => {
+                    // 수정 취소
+                    if (oilEditSelectMode) {
+                      setOilEditSelectMode(false);
+                      setEditingOilNo(null);
+                      return;
+                    }
+
+                    // 수정 시작
+                    setOilEditSelectMode(true);
+                    setEditingOilNo(null);
+                    alert("✏ 수정할 행을 클릭하세요.");
+                  }}
+                >
+                  {oilEditSelectMode ? "선택 수정 취소" : "선택 행 수정"}
                 </Button>
 
                 <Button variant="contained" color="success" onClick={saveOilList}>
                   저장하기
+                </Button>
+
+                <Button variant="outlined" color="error" onClick={() => setOilEditMode(false)}>
+                  수정 종료
                 </Button>
               </Box>
             )}
@@ -664,20 +691,38 @@ export default function OilShipmentSchedule() {
 
               <TableBody>
                 {oilList.map((oil) => (
-                  <TableRow key={oil.no}>
+                  <TableRow
+                    key={oil.no}
+                    hover
+                    sx={{
+                      cursor: oilEditSelectMode ? "pointer" : "default",
+                      backgroundColor:
+                        oilEditSelectMode && editingOilNo === oil.no
+                          ? "#e3f2fd"
+                          : "inherit",
+                    }}
+                    onClick={() => {
+                      if (!oilEditMode || !oilEditSelectMode) return;
+                      setEditingOilNo(oil.no);
+                    }}
+                  >
+
                     <TableCell align="center" sx={{ verticalAlign: "middle" }}>{oil.no}</TableCell>
 
                     <TableCell align="center" sx={{ verticalAlign: "middle" }}
                       onClick={() => {
-                        if (!oilEditMode) return;
+                        if (!oilEditMode || !oilEditSelectMode) return;
+                        if (editingOilNo !== oil.no) return;
+
                         setTargetOilNo(oil.no);
                         setUnitDialogOpen(true);
                       }}
                     >
-                      {oilEditMode ? (
+                      {oilEditMode && oilEditSelectMode && editingOilNo === oil.no ? (
                         <TextField
                           size="small"
                           value={oil.code}
+                          placeholder="품번 선택"
                           InputProps={{ readOnly: true }}
                           sx={{
                             width: "100%",
@@ -691,25 +736,38 @@ export default function OilShipmentSchedule() {
                       ) : (
                         oil.code
                       )}
+
                     </TableCell>
 
 
                     <TableCell align="center" sx={{ verticalAlign: "middle" }}
                       onClick={() => {
-                        if (!oilEditMode) return;
+                        if (!oilEditMode || !oilEditSelectMode) return;
+                        if (editingOilNo !== oil.no) return;
+
                         setTargetOilNo(oil.no);
                         setUnitDialogOpen(true);
                       }}
                     >
-                      {oilEditMode ? (
+                      {oilEditMode && oilEditSelectMode && editingOilNo === oil.no ? (
                         <TextField
                           size="small"
                           value={oil.name}
+                          placeholder="품명 선택"
                           InputProps={{ readOnly: true }}
+                          sx={{
+                            width: "100%",
+                            "& input": {
+                              textAlign: "center",
+                              fontWeight: "bold",
+                              cursor: "pointer",
+                            },
+                          }}
                         />
                       ) : (
                         oil.name
                       )}
+
                     </TableCell>
 
 
@@ -720,39 +778,63 @@ export default function OilShipmentSchedule() {
                         cursor: oilEditMode ? "pointer" : "default",
                       }}
                       onClick={(e) => {
-                        if (!oilEditMode) return;
+                        if (!oilEditMode || !oilEditSelectMode) return;
+                        if (editingOilNo !== oil.no) return;
+
                         setTargetOilNo(oil.no);
                         setUnitDialogOpen(true);
                       }}
                     >
 
-                      {oilEditMode ? (
+                      {oilEditMode && oilEditSelectMode && editingOilNo === oil.no ? (
                         <TextField
                           size="small"
                           value={oil.spec}
+                          placeholder="규격 선택"
                           InputProps={{ readOnly: true }}
+                          sx={{
+                            width: "100%",
+                            "& input": {
+                              textAlign: "center",
+                              fontWeight: "bold",
+                              cursor: "pointer",
+                            },
+                          }}
                         />
                       ) : (
                         oil.spec
                       )}
+
                     </TableCell>
 
                     <TableCell align="center" sx={{ verticalAlign: "middle" }}
                       onClick={() => {
-                        if (!oilEditMode) return;
+                        if (!oilEditMode || !oilEditSelectMode) return;
+                        if (editingOilNo !== oil.no) return;
+
                         setTargetOilNo(oil.no);
                         setUnitDialogOpen(true);
                       }}
                     >
-                      {oilEditMode ? (
+                      {oilEditMode && oilEditSelectMode && editingOilNo === oil.no ? (
                         <TextField
                           size="small"
                           value={oil.unit}
+                          placeholder="단위 선택"
                           InputProps={{ readOnly: true }}
+                          sx={{
+                            width: "100%",
+                            "& input": {
+                              textAlign: "center",
+                              fontWeight: "bold",
+                              cursor: "pointer",
+                            },
+                          }}
                         />
                       ) : (
                         oil.unit
                       )}
+
                     </TableCell>
 
 
