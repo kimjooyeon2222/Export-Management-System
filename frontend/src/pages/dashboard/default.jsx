@@ -44,6 +44,13 @@ import { TextStyle } from "@tiptap/extension-text-style";
 import Color from "@tiptap/extension-color";
 import HardBreak from "@tiptap/extension-hard-break";
 
+//table imports
+import Table from '@mui/material/Table';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import TableCell from '@mui/material/TableCell';
+import TableBody from '@mui/material/TableBody';
+
 
 // avatar style
 const avatarSX = {
@@ -140,13 +147,16 @@ export default function DashboardDefault() {
             container
             spacing={3}
             sx={{
-              maxWidth: 1200,
-              mx: "auto",   // X축 중앙
-              pl: 4,        // ⭐ 사이드바 고려한 시각 중심 보정
+              maxwidth: "100%",   // ✅ 화면 꽉 채움
+              mx: "auto",
+              px: 3,           // ✅ 좌우 패딩만 유지
+              pl:7
             }}
           >
+
+
             {/* 🔹 LEFT : 메모 */}
-            <Grid item xs={12} md={7}>
+            <Grid item xs={12} md={6}>
               <Typography
                 variant="h5"
                 sx={{ fontWeight: "bold", mb: 2 }}
@@ -159,9 +169,7 @@ export default function DashboardDefault() {
                   minHeight: 450,
                   p: 3,
                   position: "relative",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
+
                 }}
               >
                 {!editMode ? (
@@ -201,14 +209,17 @@ export default function DashboardDefault() {
                 <Box
                   sx={{
                     p: 4,
-                    width: 500,
+                    width: "100%",       // ✅ 고정폭 제거
+                    maxWidth: 520,       // ✅ 너무 커지지만 않게 (원하면 560까지)
                     height: 350,
                     backgroundColor: "#FFF8C6",
                     border: "1px solid #E5D884",
                     borderRadius: "8px",
                     position: "relative",
+                    mx: "auto",          // ✅ 가운데 유지
                   }}
                 >
+
                   {!editMode ? (
                     <Typography
                       variant="subtitle2"
@@ -276,24 +287,84 @@ export default function DashboardDefault() {
               </MainCard>
             </Grid>
 
-            {/* 🔹 RIGHT : Income Overview */}
-            <Grid item xs={12} md={5}>
-              <Typography
-                variant="h5"
-                sx={{ fontWeight: "bold", mb: 2 }}
+
+            {/* 🔹 RIGHT : 도착일정 요약 */}
+            <Grid item xs={12} md={6}>
+              {/* ✅ 헤더 + 우측 상단 단위(고정) */}
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "flex-end",
+                  mb: 2
+                }}
               >
-                Income Overview
-              </Typography>
+                <Typography variant="h5" sx={{ fontWeight: "bold" }}>
+                  도착일정 요약
+                </Typography>
+
+                <Typography sx={{ fontSize: "0.9rem", fontWeight: 700, color: "#555" }}>
+                  단위 : 건
+                </Typography>
+              </Box>
 
               <MainCard
                 sx={{
                   minHeight: 450,
-                  p: 3,
+                  p: 1,
+                  width: "900px"
                 }}
               >
-                <MonthlyBarChart />
+                <Table size="small">
+                  {/* ✅ 표 헤더(고정) */}
+                  <TableHead>
+                    <TableRow sx={{ bgcolor: "#FFF2CC" }}>
+                      {[
+                        "도착일정(공장도)",
+                        "건수",
+                        "TOOL",
+                        "EV-SUB",
+                        "단조소재",
+                        "오일",
+                        "설비",
+                        "건설자재"
+                      ].map((h) => (
+                        <TableCell
+                          key={h}
+                          align="center"
+                          sx={{ fontWeight: 800, fontSize: "0.85rem" }}
+                        >
+                          {h}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  </TableHead>
+
+                  {/* ✅ 표 내용(지금은 더미, 나중에 연동하면 여기만 바뀜) */}
+                  <TableBody>
+                    {[
+                      { date: "2025-10-23", total: "2건", tool: "", ev: "", forge: 1, oil: 1, equip: "", build: "" },
+                      { date: "2025-10-30", total: "0건", tool: "", ev: "", forge: "", oil: "", equip: "", build: "" },
+                      { date: "2025-11-04", total: "3건", tool: 2, ev: 1, forge: "", oil: "", equip: "", build: "" },
+                      { date: "2025-11-06", total: "3건", tool: "", ev: 1, forge: 1, oil: 1, equip: "", build: "" },
+                      { date: "2025-11-10", total: "2건", tool: 1, ev: "", forge: 1, oil: "", equip: "", build: "" },
+                    ].map((r, idx) => (
+                      <TableRow key={idx} sx={{ "& td": { fontSize: "0.85rem" } }}>
+                        <TableCell align="center" sx={{ fontWeight: 700 }}>{r.date}</TableCell>
+                        <TableCell align="center" sx={{ fontWeight: 700 }}>{r.total}</TableCell>
+                        <TableCell align="center">{r.tool}</TableCell>
+                        <TableCell align="center">{r.ev}</TableCell>
+                        <TableCell align="center">{r.forge}</TableCell>
+                        <TableCell align="center">{r.oil}</TableCell>
+                        <TableCell align="center">{r.equip}</TableCell>
+                        <TableCell align="center">{r.build}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </MainCard>
             </Grid>
+
           </Grid>
         </Box>
       </Grid>
