@@ -50,6 +50,7 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
 import TableBody from '@mui/material/TableBody';
+import TableContainer from '@mui/material/TableContainer';
 
 
 // avatar style
@@ -137,9 +138,9 @@ export default function DashboardDefault() {
       <Grid item xs={12}>
         <Box
           sx={{
-            minHeight: "calc(100vh - 120px)", // 상단 AppBar 고려
             display: "flex",
-            alignItems: "center",   // Y축 중앙
+            alignItems: "flex-start",   // Y축 중앙
+           
           }}
         >
           {/* ⭐ row 자체를 X축 중앙 + 시각 보정 */}
@@ -147,10 +148,11 @@ export default function DashboardDefault() {
             container
             spacing={3}
             sx={{
-              maxwidth: "100%",   // ✅ 화면 꽉 채움
+              maxWidth: "100%",   // ✅ 화면 꽉 채움
               mx: "auto",
               px: 3,           // ✅ 좌우 패딩만 유지
-              pl:7
+              pl: 7,
+              mt: 15,
             }}
           >
 
@@ -161,7 +163,7 @@ export default function DashboardDefault() {
                 variant="h5"
                 sx={{ fontWeight: "bold", mb: 2 }}
               >
-                수출통합관리 시스템
+                업데이트
               </Typography>
 
               <MainCard
@@ -315,53 +317,56 @@ export default function DashboardDefault() {
                   width: "900px"
                 }}
               >
-                <Table size="small">
-                  {/* ✅ 표 헤더(고정) */}
-                  <TableHead>
-                    <TableRow sx={{ bgcolor: "#FFF2CC" }}>
-                      {[
-                        "도착일정(공장도)",
-                        "건수",
-                        "TOOL",
-                        "EV-SUB",
-                        "단조소재",
-                        "오일",
-                        "설비",
-                        "건설자재"
-                      ].map((h) => (
-                        <TableCell
-                          key={h}
-                          align="center"
-                          sx={{ fontWeight: 800, fontSize: "0.85rem" }}
-                        >
-                          {h}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  </TableHead>
+                <TableContainer sx={{ width: "100%" }}>
 
-                  {/* ✅ 표 내용(지금은 더미, 나중에 연동하면 여기만 바뀜) */}
-                  <TableBody>
-                    {[
-                      { date: "2025-10-23", total: "2건", tool: "", ev: "", forge: 1, oil: 1, equip: "", build: "" },
-                      { date: "2025-10-30", total: "0건", tool: "", ev: "", forge: "", oil: "", equip: "", build: "" },
-                      { date: "2025-11-04", total: "3건", tool: 2, ev: 1, forge: "", oil: "", equip: "", build: "" },
-                      { date: "2025-11-06", total: "3건", tool: "", ev: 1, forge: 1, oil: 1, equip: "", build: "" },
-                      { date: "2025-11-10", total: "2건", tool: 1, ev: "", forge: 1, oil: "", equip: "", build: "" },
-                    ].map((r, idx) => (
-                      <TableRow key={idx} sx={{ "& td": { fontSize: "0.85rem" } }}>
-                        <TableCell align="center" sx={{ fontWeight: 700 }}>{r.date}</TableCell>
-                        <TableCell align="center" sx={{ fontWeight: 700 }}>{r.total}</TableCell>
-                        <TableCell align="center">{r.tool}</TableCell>
-                        <TableCell align="center">{r.ev}</TableCell>
-                        <TableCell align="center">{r.forge}</TableCell>
-                        <TableCell align="center">{r.oil}</TableCell>
-                        <TableCell align="center">{r.equip}</TableCell>
-                        <TableCell align="center">{r.build}</TableCell>
+                  <Table size="small">
+                    {/* ✅ 표 헤더(고정) */}
+                    <TableHead>
+                      <TableRow sx={{ bgcolor: "#FFF2CC" }}>
+                        {[
+                          "도착일정(공장도)",
+                          "건수",
+                          "TOOL",
+                          "EV-SUB",
+                          "단조소재",
+                          "오일",
+                          "설비",
+                          "건설자재"
+                        ].map((h) => (
+                          <TableCell
+                            key={h}
+                            align="center"
+                            sx={{ fontWeight: 800, fontSize: "0.85rem" }}
+                          >
+                            {h}
+                          </TableCell>
+                        ))}
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHead>
+
+                    {/* ✅ 표 내용(지금은 더미, 나중에 연동하면 여기만 바뀜) */}
+                    <TableBody>
+                      {[
+                        { date: "2025-10-23", total: "2건", tool: "", ev: "", forge: 1, oil: 1, equip: "", build: "" },
+                        { date: "2025-10-30", total: "0건", tool: "", ev: "", forge: "", oil: "", equip: "", build: "" },
+                        { date: "2025-11-04", total: "3건", tool: 2, ev: 1, forge: "", oil: "", equip: "", build: "" },
+                        { date: "2025-11-06", total: "3건", tool: "", ev: 1, forge: 1, oil: 1, equip: "", build: "" },
+                        { date: "2025-11-10", total: "2건", tool: 1, ev: "", forge: 1, oil: "", equip: "", build: "" },
+                      ].map((r, idx) => (
+                        <TableRow key={idx} sx={{ "& td": { fontSize: "0.85rem" } }}>
+                          <TableCell align="center" sx={{ fontWeight: 700 }}>{r.date}</TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 700 }}>{r.total}</TableCell>
+                          <TableCell align="center">{r.tool}</TableCell>
+                          <TableCell align="center">{r.ev}</TableCell>
+                          <TableCell align="center">{r.forge}</TableCell>
+                          <TableCell align="center">{r.oil}</TableCell>
+                          <TableCell align="center">{r.equip}</TableCell>
+                          <TableCell align="center">{r.build}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
               </MainCard>
             </Grid>
 
