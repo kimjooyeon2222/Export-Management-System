@@ -513,24 +513,26 @@ export default function InvoicePage() {
       {/* 헤더 */}
       <Box
         sx={{
-          bgcolor: '#b34b00',
-          color: 'white',
+          background: 'linear-gradient(180deg, #243447 0%, #1F2A37 100%)',
+          color: '#E5E7EB',
           position: 'relative',
-          py: 1.5,
+          py: 1.4,
           px: 2,
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between'
+          justifyContent: 'space-between',
+          boxShadow: '0 2px 6px rgba(0,0,0,0.25)'
         }}
       >
+
         <Button
           variant="outlined"
           onClick={() => navigate('/')}
           disableRipple
           sx={{
-            color: 'white !important',        // 🔥 글씨 절대 안 변함
-            borderColor: 'white',
-            fontWeight: 'bold',
+            color: '#E5E7EB',
+            borderColor: 'rgba(255,255,255,0.4)',
+            fontWeight: 600,
             fontSize: '0.8rem',
             textTransform: 'none',
             textDecoration: 'none !important',  // 🔥 링크 기본 파란 hover 제거
@@ -572,13 +574,15 @@ export default function InvoicePage() {
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Typography
               sx={{
-                fontWeight: "bold",
-                color: "white",
-                fontSize: "1rem"
+                fontWeight: 600,
+                color: '#E5E7EB',
+                fontSize: '0.95rem',
+                letterSpacing: '0.6px'
               }}
             >
               SHINHWA |
             </Typography>
+
 
             <Select
               value={searchType}
@@ -625,19 +629,37 @@ export default function InvoicePage() {
             }}
           />
           <Button
-            variant="contained"
-            sx={{
-              bgcolor: '#ffcc00',
-              color: 'black',
-              fontWeight: 'bold',
-              fontSize: '0.9rem',
-              px: 2,
-              '&:hover': { bgcolor: '#ffb300' }
-            }}
+            variant="outlined"
             onClick={handleSearch}
+            disableRipple
+            disableFocusRipple
+            sx={{
+              color: '#E5E7EB',
+              borderColor: 'rgba(255,255,255,0.4)', // ✅ 메인으로와 동일
+              backgroundColor: 'rgba(255,255,255,0.18)', // 시인성만 보강
+              fontWeight: 600,
+              minWidth: 44,
+              height: 36,
+
+              '&:hover': {
+                backgroundColor: 'rgba(255,255,255,0.18)', // 변화 없음
+                borderColor: 'rgba(255,255,255,0.4)',     // ✅ 그대로
+                color: '#E5E7EB',
+              },
+
+              '&:active': {
+                backgroundColor: 'rgba(255,255,255,0.18)',
+              },
+              '&:focus': {
+                backgroundColor: 'rgba(255,255,255,0.18)',
+              }
+            }}
           >
             🔍
           </Button>
+
+
+
         </Box>
 
       </Box>
@@ -1020,6 +1042,37 @@ export default function InvoicePage() {
               return newMode;
             });
           }}
+           sx={{
+    fontWeight: 700,
+    minWidth: 90,
+    height: 36,
+
+    backgroundColor: '#364759',   // ✅ 차콜 (돋보기 기준)
+    color: '#E5E7EB',
+
+    border: '1px solid #465A72',
+
+    '&:hover': {
+      backgroundColor: '#3F5368', // ✅ 살짝만 밝게
+      borderColor: '#5A6F87',
+    },
+
+    '&:active': {
+      backgroundColor: '#2E3D4D',
+    },
+
+    '&:focus-visible': {
+      outline: 'none',
+      boxShadow: 'none',
+    },
+
+    // 🔥 수정모드 ON일 때만 살짝 강조
+    ...(isEditMode && {
+      backgroundColor: '#42586F',
+      borderColor: '#6B829C',
+      color: 'white',
+    })
+  }}
         >
           {isEditMode ? '수정 종료' : '수정 모드'}
         </Button>
@@ -1106,7 +1159,7 @@ export default function InvoicePage() {
                     >
                       <Box sx={{ width: 14, height: 14, bgcolor: '#ffcccc', border: '1px solid #bbb' }} />
                       <Typography sx={{ fontSize: '0.8rem', color: '#333' }}>
-                        : 금일 이후 <br/>도착<br />{' '}
+                        : 금일 이후 <br />도착<br />{' '}
                         <span style={{ color: 'red', fontWeight: 'bold' }}> (5일전)</span>
                       </Typography>
                     </Box>
@@ -1117,8 +1170,8 @@ export default function InvoicePage() {
                       <Box sx={{ width: 14, height: 14, bgcolor: '#ccf2e0', border: '1px solid #bbb' }} />
                       <Typography sx={{ fontSize: '0.7rem', fontWeight: 'bold' }}>
                         <Box component="span" sx={{ color: '#333' }}>:</Box>{' '}
-                        <Box component="span" sx={{ color: 'red', fontSize:"11px" }}>
-                          지연<br /> 경고<br /> (10일)
+                        <Box component="span" sx={{ color: 'red', fontSize: "11px" }}>
+                          지연<br />경고 <br />(10일)
                         </Box>
                       </Typography>
                     </Box>

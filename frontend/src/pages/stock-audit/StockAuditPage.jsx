@@ -183,7 +183,7 @@ export default function StockAuditListPage() {
 
   return (
     <Box>
-      <Typography variant="h4" gutterBottom>
+      <Typography variant="h5" gutterBottom>
         재고실사 관리
       </Typography>
 

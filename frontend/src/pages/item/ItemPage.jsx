@@ -240,7 +240,7 @@ export default function ItemPage() {
   return (
 
     <Box>
-      <Typography variant="h4" gutterBottom>
+      <Typography variant="h5" gutterBottom>
         품목관리
       </Typography>
 
