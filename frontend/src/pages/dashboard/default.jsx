@@ -334,7 +334,7 @@ export default function DashboardDefault() {
                 }}
               >
                 <TableContainer sx={{
-                  width: "100%", maxHeight: 330,        // ⭐ 헤더 + 5행 기준
+                  width: "100%", maxHeight: 360,        // ⭐ 헤더 + 5행 기준
                   overflowY: "auto",
 
                 }}>
