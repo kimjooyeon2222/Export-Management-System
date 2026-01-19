@@ -325,6 +325,7 @@ export default function DashboardDefault() {
               <MainCard
                 sx={{
                   minHeight: 450,
+                  maxHeight: 450,
                   p: 1,
                   width: "900px",
                   display: "flex",
@@ -332,9 +333,13 @@ export default function DashboardDefault() {
                   justifyContent: "center",  //  X축 중앙
                 }}
               >
-                <TableContainer sx={{ width: "100%" }}>
+                <TableContainer sx={{
+                  width: "100%", maxHeight: 330,        // ⭐ 헤더 + 5행 기준
+                  overflowY: "auto",
 
-                  <Table size="medium">
+                }}>
+
+                  <Table size="medium" stickyHeader>
                     {/* ✅ 표 헤더(고정) */}
                     <TableHead>
                       <TableRow sx={{ bgcolor: "#FFF2CC" }}>
@@ -351,7 +356,12 @@ export default function DashboardDefault() {
                           <TableCell
                             key={h}
                             align="center"
-                            sx={{ fontWeight: 800, fontSize: "1rem", py: 2.3, px: 3, }}
+                            sx={{
+                              fontWeight: 800, fontSize: "1rem", py: 2.3, px: 3, bgcolor: "#FFF2CC",   // ⭐ 헤더 배경 유지
+                              position: "sticky",   // ⭐ 핵심
+                              top: 0,               // ⭐ 핵심
+                              zIndex: 2
+                            }}
                           >
                             {h}
                           </TableCell>

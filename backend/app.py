@@ -50,12 +50,41 @@ from sqlalchemy import text
 print("🔥 Flask 실제 연결 DB:", Config.get_db_uri())
 
 
+
+
 app = Flask(__name__)
 app.config.from_object(Config)
 app.config["SQLALCHEMY_DATABASE_URI"] = Config.get_db_uri()
 
 
 jwt = JWTManager(app)   # ⭐ 이 줄 필수
+
+from flask_jwt_extended import (
+    verify_jwt_in_request,
+    get_jwt_identity,
+    get_jwt
+)
+
+@app.before_request
+def debug_auth():
+    # 🔕 OPTIONS 요청은 로그 안 찍음
+    if request.method == "OPTIONS":
+        return
+
+    try:
+        verify_jwt_in_request(optional=True)
+
+        user_id = get_jwt_identity()
+        claims = get_jwt()
+        role = claims.get("role") if claims else None
+
+        if user_id:
+            print(f"👤 user_id={user_id} role={role} | {request.method} {request.path}")
+        else:
+            print(f"👤 Anonymous | {request.method} {request.path}")
+
+    except Exception as e:
+        print("❌ before_request error:", e)
 
 
 CORS(
@@ -318,9 +347,7 @@ def debug_invoices():
 
 
 
-@app.before_request
-def debug_auth():
-    print("🔥 Authorization:", request.headers.get("Authorization"))
+
 def test_db():
     try:
         db.session.execute(text("SELECT 1"))
@@ -2173,5 +2200,5 @@ if __name__ == "__main__":
     app.run(
         host="0.0.0.0",   # ⭐ 핵심
         port=5001,
-        debug=True
+        debug=False
     )
