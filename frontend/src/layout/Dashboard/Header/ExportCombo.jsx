@@ -9,11 +9,6 @@ export default function ExportCombo() {
   const [anchor, setAnchor] = useState(null);
   const open = Boolean(anchor);
 
-  const [selectedLabel, setSelectedLabel] = useState("수출품목");
-  const isOilPage = location.pathname === "/oil-schedule";
-
-
-
   // 전체 메뉴
   const menuList = [
     { label: "INVOICE TRK", path: "/invoice" },
@@ -25,7 +20,17 @@ export default function ExportCombo() {
     { label: "수출품 사진", path: "/photo" }
   ];
 
+
+  const [selectedLabel, setSelectedLabel] = useState("수출품목");
+  const isOilPage = location.pathname === "/oil-schedule";
   const dropdownMenus = menuList.filter(m => m.label !== "INVOICE TRK");
+
+
+  const isActive = (path) => location.pathname === path;
+  const isDropdownActive = dropdownMenus.some(
+    m => m.path === location.pathname
+  );
+
 
 
   // ✔ 페이지 이동 시 자동 텍스트 업데이트
@@ -48,13 +53,17 @@ export default function ExportCombo() {
         sx={{
           fontSize: 14,
           fontWeight: 700,
-          color: "#333",
-          textTransform: "none",
           minWidth: 140,
-          whiteSpace: "nowrap",
-          border: "1px solid #cfcfcf",
           borderRadius: "6px",
-          backgroundColor: "#fafafa",
+          textTransform: "none",
+
+          /* ✅ ACTIVE 스타일 */
+          backgroundColor: isActive("/invoice") ? "#e3f2fd" : "#fafafa",
+          border: isActive("/invoice")
+            ? "1.5px solid #1976d2"
+            : "1px solid #cfcfcf",
+          color: isActive("/invoice") ? "#1976d2" : "#333",
+
           "&:hover": {
             backgroundColor: "#e9f3ff",
             borderColor: "#90caf9"
@@ -63,6 +72,7 @@ export default function ExportCombo() {
       >
         INVOICE TRK
       </Button>
+
 
       <Box sx={{ width: 8 }}></Box>
 
@@ -79,6 +89,11 @@ export default function ExportCombo() {
           fontSize: 14,
           border: "1px solid #cfcfcf",
           borderRadius: "6px",
+          backgroundColor: isDropdownActive ? "#e3f2fd" : "#fafafa",
+          border: isDropdownActive
+            ? "1.5px solid #1976d2"
+            : "1px solid #cfcfcf",
+          color: isDropdownActive ? "#1976d2" : "#333",
           textTransform: "none",
           "& .MuiButton-endIcon": {
             position: "absolute",
@@ -101,13 +116,16 @@ export default function ExportCombo() {
         sx={{
           fontSize: 14,
           fontWeight: 700,
-          color: "#333",
-          textTransform: "none",
           minWidth: 130,
-          whiteSpace: "nowrap",
-          border: "1px solid #cfcfcf",
+          textTransform: "none",
           borderRadius: "6px",
-          backgroundColor: "#fafafa",
+
+          backgroundColor: isActive("/po-management") ? "#e3f2fd" : "#fafafa",
+          border: isActive("/po-management")
+            ? "1.5px solid #1976d2"
+            : "1px solid #cfcfcf",
+          color: isActive("/po-management") ? "#1976d2" : "#333",
+
           "&:hover": {
             backgroundColor: "#e9f3ff",
             borderColor: "#90caf9"
@@ -116,6 +134,7 @@ export default function ExportCombo() {
       >
         PO# 관리
       </Button>
+
 
       <Box sx={{ width: 8 }}></Box>
 
