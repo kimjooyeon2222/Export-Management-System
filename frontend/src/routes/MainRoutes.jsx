@@ -3,6 +3,7 @@ import { lazy } from 'react';
 // project imports
 import Loadable from 'components/Loadable';
 import DashboardLayout from 'layout/Dashboard';
+import { Navigate } from 'react-router-dom';
 
 
 // render- Dashboard
@@ -52,8 +53,8 @@ const MainRoutes = {
   ),
   children: [
     {
-      path: '/',
-      element: <DashboardDefault />
+      index: true,
+      element: <Navigate to="/dashboard/default" replace />
     },
     {
       path: 'dashboard',

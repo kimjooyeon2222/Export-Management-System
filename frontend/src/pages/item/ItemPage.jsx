@@ -303,7 +303,7 @@ export default function ItemPage() {
       <Paper component="form" sx={{ p: 1, mb: 2 }} onSubmit={(e) => { e.preventDefault(); handleSearch(); }}>
         <Grid container spacing={2} justifyContent="center">
           <Grid item xs={3}>
-            <TextField label="품목번호" name="itemNo" fullWidth value={search.itemNo} onChange={handleSearchChange} />
+            <TextField label="품목번호" name="itemNo" fullWidth value={search.itemNo} onChange={handleSearchChange}  />
           </Grid>
           <Grid item xs={3}>
             <TextField label="품목명" name="itemName" fullWidth value={search.itemName} onChange={handleSearchChange} />
