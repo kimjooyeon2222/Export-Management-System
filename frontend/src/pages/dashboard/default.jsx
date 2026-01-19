@@ -329,17 +329,19 @@ export default function DashboardDefault() {
                   p: 1,
                   width: "900px",
                   display: "flex",
-                  alignItems: "center",      //  Y축 중앙
-                  justifyContent: "center",  //  X축 중앙
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
               >
-                <TableContainer sx={{
-                  width: "100%", maxHeight: 360,        // ⭐ 헤더 + 5행 기준
-                  overflowY: "auto",
-                  scrollbarGutter: "stable"   // 🔥 이게 핵심
-
-
-                }}>
+                {/* ✅ (구조 변경 핵심) TableContainer 1개 + Table 1개로 통합 */}
+                <TableContainer
+                  sx={{
+                    width: "100%",
+                    maxHeight: 360,        // ⭐ 기존 유지
+                    overflowY: "auto",     // ⭐ 기존 유지
+                    scrollbarGutter: "stable" // ⭐ 기존 유지
+                  }}
+                >
                   <Table size="medium" stickyHeader>
                     {/* ✅ 표 헤더(고정) */}
                     <TableHead>
@@ -358,9 +360,13 @@ export default function DashboardDefault() {
                             key={h}
                             align="center"
                             sx={{
-                              fontWeight: 800, fontSize: "1rem", py: 2.3, px: 3, bgcolor: "#FFF2CC",   // ⭐ 헤더 배경 유지
-                              position: "sticky",   // ⭐ 핵심
-                              top: 0,               // ⭐ 핵심
+                              fontWeight: 800,
+                              fontSize: "1rem",
+                              py: 2.3,
+                              px: 3,
+                              bgcolor: "#FFF2CC",
+                              position: "sticky",
+                              top: 0,
                               zIndex: 2
                             }}
                           >
@@ -369,18 +375,8 @@ export default function DashboardDefault() {
                         ))}
                       </TableRow>
                     </TableHead>
-                  </Table>
-                </TableContainer>
-                <TableContainer
-                  sx={{
-                    width: "100%",
-                    maxHeight: 320,   // 🔥 헤더 제외한 높이
-                    overflowY: "auto"
-                  }}
-                >
-                  <Table size="medium">
 
-                    {/* ✅ 표 내용(지금은 더미, 나중에 연동하면 여기만 바뀜) */}
+                    {/* ✅ 표 내용(기존 그대로) */}
                     <TableBody>
                       {arrivalSummary.length === 0 ? (
                         <TableRow>
@@ -401,12 +397,12 @@ export default function DashboardDefault() {
                         arrivalSummary.map((r, idx) => (
                           <TableRow
                             key={idx}
-                            sx={{ "& td": { fontSize: "1rem", py: 2.3, px: 4.5 } }}
+                            sx={{ "& td": { fontSize: "1rem", py: 2.3, px: 4.5 } }} // ⭐ 기존 유지
                           >
                             <TableCell align="center" sx={{ fontWeight: 700 }}>
                               {r.date}
                             </TableCell>
-                            <TableCell align="center" sx={{ fontWeight: 700}}>
+                            <TableCell align="center" sx={{ fontWeight: 700 }}>
                               {r.total}
                             </TableCell>
                             <TableCell align="center" sx={{ fontWeight: 700 }}>
@@ -431,10 +427,10 @@ export default function DashboardDefault() {
                         ))
                       )}
                     </TableBody>
-
                   </Table>
                 </TableContainer>
               </MainCard>
+
             </Grid>
 
           </Grid>
