@@ -58,6 +58,12 @@ const itemToExporters = {
 
 
 export default function InvoicePage() {
+  const [editingItemValue, setEditingItemValue] = useState("");
+  const [editingItemRowId, setEditingItemRowId] = useState(null);
+  const [customItemValue, setCustomItemValue] = useState("");
+
+  const ITEM_TYPES = ["EV-SUB", "TOOL", "건설자재", "단조소재", "설비", "오일"];
+
   function renderMultiline(val) {
     return (val || "").replace(/@/g, "\n");
   }
@@ -1042,37 +1048,37 @@ export default function InvoicePage() {
               return newMode;
             });
           }}
-           sx={{
-    fontWeight: 700,
-    minWidth: 90,
-    height: 36,
+          sx={{
+            fontWeight: 700,
+            minWidth: 90,
+            height: 36,
 
-    backgroundColor: '#364759',   // ✅ 차콜 (돋보기 기준)
-    color: '#E5E7EB',
+            backgroundColor: '#364759',   // ✅ 차콜 (돋보기 기준)
+            color: '#E5E7EB',
 
-    border: '1px solid #465A72',
+            border: '1px solid #465A72',
 
-    '&:hover': {
-      backgroundColor: '#3F5368', // ✅ 살짝만 밝게
-      borderColor: '#5A6F87',
-    },
+            '&:hover': {
+              backgroundColor: '#3F5368', // ✅ 살짝만 밝게
+              borderColor: '#5A6F87',
+            },
 
-    '&:active': {
-      backgroundColor: '#2E3D4D',
-    },
+            '&:active': {
+              backgroundColor: '#2E3D4D',
+            },
 
-    '&:focus-visible': {
-      outline: 'none',
-      boxShadow: 'none',
-    },
+            '&:focus-visible': {
+              outline: 'none',
+              boxShadow: 'none',
+            },
 
-    // 🔥 수정모드 ON일 때만 살짝 강조
-    ...(isEditMode && {
-      backgroundColor: '#42586F',
-      borderColor: '#6B829C',
-      color: 'white',
-    })
-  }}
+            // 🔥 수정모드 ON일 때만 살짝 강조
+            ...(isEditMode && {
+              backgroundColor: '#42586F',
+              borderColor: '#6B829C',
+              color: 'white',
+            })
+          }}
         >
           {isEditMode ? '수정 종료' : '수정 모드'}
         </Button>
@@ -1261,7 +1267,6 @@ export default function InvoicePage() {
                               key={idx}
                               align="center"
                               sx={{
-
                                 fontSize: "0.9rem",
                                 ...(deleteMode && selectedInvs.includes(row.inv_no) && {
                                   bgcolor: "#ffcccc !important",
@@ -1269,24 +1274,22 @@ export default function InvoicePage() {
                                   fontWeight: "bold",
                                 }),
                                 ...(idx === 2 && { color: "blue", cursor: "pointer", textDecoration: "underline" }),
-
                                 ...(idx === 9 ? delayedStyle : {}),
                                 ...(idx === 10 ? countStyle : {}),
                                 ...(idx === 5 || idx === 6 || idx === 12 ? { whiteSpace: "pre-line" } : {}),
                                 ...(userRole === "admin" && { cursor: "pointer" })
                               }}
                               onClick={() => {
-                                if (deleteMode) {
-                                  if (selectedInvs.includes(row.inv_no)) {
-                                    setSelectedInvs(prev => prev.filter(v => v !== row.inv_no));
-                                  } else {
-                                    setSelectedInvs(prev => [...prev, row.inv_no]);
-                                  }
-                                  return;
-                                }
+                                if (deleteMode) return;
 
                                 if (idx === 2 && !isEditMode) {
                                   return navigate(`/packing-list/${row.inv_no}`);
+                                }
+
+                                // 🔥 품목구분(idx === 4)는 prompt 막음
+                                if (idx === 4 && isEditMode) {
+                                  setEditingItemRowId(row.id);
+                                  return;
                                 }
 
                                 if (userRole === "admin" && isEditMode) {
@@ -1312,10 +1315,87 @@ export default function InvoicePage() {
                                 }
                               }}
                             >
-                              {(idx === 5 || idx === 6 || idx === 12)
-                                ? (val || "").replace(/@/g, "\n")
-                                : val}
+                              {/* 🔥 여기서부터 품목구분 전용 렌더링 */}
+                              {idx === 4 && isEditMode ? (
+                                editingItemRowId === row.id ? (
+                                  <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
+                                    <Select
+                                      size="small"
+                                      value={row.item_type}
+                                      onChange={(e) => {
+                                        const v = e.target.value;
+
+                                        if (v === "__custom__") {
+                                          const custom = prompt("품목구분 직접 입력", row.item_type || "");
+                                          if (custom && custom.trim()) {
+                                            handleEdit(row.id, "item_type", custom.trim());
+                                          }
+                                        } else {
+                                          handleEdit(row.id, "item_type", v);
+                                        }
+
+                                        setEditingItemRowId(null);
+                                      }}
+                                      sx={{
+                                        minWidth: 120,
+                                        "& .MuiSelect-select": {
+                                          fontWeight: 700,
+                                          fontSize: "0.85rem",
+                                          color: "#222",
+                                        }
+                                      }}
+                                    >
+                                      {/* 🔥 현재 값이 기본 목록에 없으면 임시로 보여주기 */}
+                                      {!ITEM_TYPES.includes(row.item_type) && (
+                                        <MenuItem value={row.item_type}>
+                                          {row.item_type}
+                                        </MenuItem>
+                                      )}
+
+                                      {ITEM_TYPES.map(t => (
+                                        <MenuItem key={t} value={t}>{t}</MenuItem>
+                                      ))}
+
+                                      <MenuItem value="__custom__">직접입력</MenuItem>
+                                    </Select>
+
+
+
+
+                                    {editingItemRowId === row.id && editingItemValue === "__custom__" && (
+
+
+                                      <TextField
+                                        size="small"
+                                        value={customItemValue}
+                                        placeholder="직접 입력"
+                                        onChange={(e) => setCustomItemValue(e.target.value)}
+                                        onBlur={() => {
+                                          if (customItemValue.trim()) {
+                                            handleEdit(row.id, "item_type", customItemValue.trim());
+                                          }
+                                          setEditingItemRowId(null);
+                                          setCustomItemValue("");
+                                        }}
+                                        sx={{ width: 120 }}
+                                      />
+                                    )}
+                                  </Box>
+                                ) : (
+                                  <Box
+                                    sx={{ cursor: "pointer", fontWeight: 600 }}
+                                    onClick={() => setEditingItemRowId(row.id)}
+                                  >
+                                    {row.item_type}
+                                  </Box>
+                                )
+                              ) : (
+                                (idx === 5 || idx === 6 || idx === 12)
+                                  ? (val || "").replace(/@/g, "\n")
+                                  : val
+                              )}
                             </TableCell>
+
                           ))}
                         </SortableRow>
                       );
@@ -1410,17 +1490,16 @@ export default function InvoicePage() {
                             ...(userRole === "admin" && { cursor: "pointer" })
                           }}
                           onClick={() => {
-                            if (deleteMode) {
-                              if (selectedInvs.includes(row.inv_no)) {
-                                setSelectedInvs(prev => prev.filter(v => v !== row.inv_no));
-                              } else {
-                                setSelectedInvs(prev => [...prev, row.inv_no]);
-                              }
-                              return;
-                            }
+                            if (deleteMode) return;
 
                             if (idx === 2 && !isEditMode) {
                               return navigate(`/packing-list/${row.inv_no}`);
+                            }
+
+                            // 🔥 품목구분(idx === 4)는 prompt 막음
+                            if (idx === 4 && isEditMode) {
+                              setEditingItemRowId(row.id);
+                              return;
                             }
 
                             if (userRole === "admin" && isEditMode) {
@@ -1446,9 +1525,83 @@ export default function InvoicePage() {
                             }
                           }}
                         >
-                          {(idx === 5 || idx === 6 || idx === 12)
-                            ? (val || "").replace(/@/g, "\n")
-                            : val}
+                          {/* 🔥 여기서부터 품목구분 전용 렌더링 */}
+                          {idx === 4 && isEditMode ? (
+                            editingItemRowId === row.id ? (
+                              <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
+                                <Select
+                                  size="small"
+                                  value={row.item_type}
+                                  onChange={(e) => {
+                                    const v = e.target.value;
+
+                                    if (v === "__custom__") {
+                                      const custom = prompt("품목구분 직접 입력", row.item_type || "");
+                                      if (custom && custom.trim()) {
+                                        handleEdit(row.id, "item_type", custom.trim());
+                                      }
+                                    } else {
+                                      handleEdit(row.id, "item_type", v);
+                                    }
+
+                                    setEditingItemRowId(null);
+                                  }}
+                                  sx={{
+                                    minWidth: 120,
+                                    "& .MuiSelect-select": {
+                                      fontWeight: 700,
+                                      fontSize: "0.85rem",
+                                      color: "#222",
+                                    }
+                                  }}
+                                >
+                                  {/* 🔥 현재 값이 기본 목록에 없으면 임시로 보여주기 */}
+                                  {!ITEM_TYPES.includes(row.item_type) && (
+                                    <MenuItem value={row.item_type}>
+                                      {row.item_type}
+                                    </MenuItem>
+                                  )}
+
+                                  {ITEM_TYPES.map(t => (
+                                    <MenuItem key={t} value={t}>{t}</MenuItem>
+                                  ))}
+
+                                  <MenuItem value="__custom__">직접입력</MenuItem>
+                                </Select>
+
+
+                                {editingItemRowId === row.id && editingItemValue === "__custom__" && (
+
+
+                                  <TextField
+                                    size="small"
+                                    value={customItemValue}
+                                    placeholder="직접 입력"
+                                    onChange={(e) => setCustomItemValue(e.target.value)}
+                                    onBlur={() => {
+                                      if (customItemValue.trim()) {
+                                        handleEdit(row.id, "item_type", customItemValue.trim());
+                                      }
+                                      setEditingItemRowId(null);
+                                      setCustomItemValue("");
+                                    }}
+                                    sx={{ width: 120 }}
+                                  />
+                                )}
+                              </Box>
+                            ) : (
+                              <Box
+                                sx={{ cursor: "pointer", fontWeight: 600 }}
+                                onClick={() => setEditingItemRowId(row.id)}
+                              >
+                                {row.item_type}
+                              </Box>
+                            )
+                          ) : (
+                            (idx === 5 || idx === 6 || idx === 12)
+                              ? (val || "").replace(/@/g, "\n")
+                              : val
+                          )}
                         </TableCell>
                       ))}
                     </SortableRow>
