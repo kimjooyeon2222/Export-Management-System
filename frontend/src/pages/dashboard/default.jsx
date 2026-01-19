@@ -140,7 +140,7 @@ export default function DashboardDefault() {
           sx={{
             display: "flex",
             alignItems: "flex-start",   // Y축 중앙
-           
+
           }}
         >
           {/* ⭐ row 자체를 X축 중앙 + 시각 보정 */}
@@ -151,7 +151,7 @@ export default function DashboardDefault() {
               maxWidth: "100%",   // ✅ 화면 꽉 채움
               mx: "auto",
               px: 3,           // ✅ 좌우 패딩만 유지
-              pl: 7,
+              pl: 9,
               mt: 15,
             }}
           >
@@ -245,12 +245,12 @@ export default function DashboardDefault() {
                   )}
 
                   <Typography
-                    variant="h6"
+                    variant="h5"
                     sx={{
                       textAlign: "center",
                       fontWeight: "bold",
                       mb: 2,
-                      mt: 1,
+                      mt: 3.5,
                     }}
                   >
                     # 업데이트 내용 #
@@ -314,17 +314,20 @@ export default function DashboardDefault() {
                 sx={{
                   minHeight: 450,
                   p: 1,
-                  width: "900px"
+                  width: "900px",
+                    display: "flex",
+                  alignItems: "center",      //  Y축 중앙
+                  justifyContent: "center",  //  X축 중앙
                 }}
               >
                 <TableContainer sx={{ width: "100%" }}>
 
-                  <Table size="small">
+                  <Table size="medium">
                     {/* ✅ 표 헤더(고정) */}
                     <TableHead>
                       <TableRow sx={{ bgcolor: "#FFF2CC" }}>
                         {[
-                          "도착일정(공장도)",
+                          "도착일정 (공장)",
                           "건수",
                           "TOOL",
                           "EV-SUB",
@@ -336,7 +339,7 @@ export default function DashboardDefault() {
                           <TableCell
                             key={h}
                             align="center"
-                            sx={{ fontWeight: 800, fontSize: "0.85rem" }}
+                            sx={{ fontWeight: 800, fontSize: "1rem",py: 2.3, px: 3, }}
                           >
                             {h}
                           </TableCell>
@@ -353,15 +356,15 @@ export default function DashboardDefault() {
                         { date: "2025-11-06", total: "3건", tool: "", ev: 1, forge: 1, oil: 1, equip: "", build: "" },
                         { date: "2025-11-10", total: "2건", tool: 1, ev: "", forge: 1, oil: "", equip: "", build: "" },
                       ].map((r, idx) => (
-                        <TableRow key={idx} sx={{ "& td": { fontSize: "0.85rem" } }}>
+                        <TableRow key={idx} sx={{ "& td": { fontSize: "1rem",py: 2, px: 4.5, } }}>
                           <TableCell align="center" sx={{ fontWeight: 700 }}>{r.date}</TableCell>
                           <TableCell align="center" sx={{ fontWeight: 700 }}>{r.total}</TableCell>
-                          <TableCell align="center">{r.tool}</TableCell>
-                          <TableCell align="center">{r.ev}</TableCell>
-                          <TableCell align="center">{r.forge}</TableCell>
-                          <TableCell align="center">{r.oil}</TableCell>
-                          <TableCell align="center">{r.equip}</TableCell>
-                          <TableCell align="center">{r.build}</TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 700 }}>{r.tool}</TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 700 }}>{r.ev}</TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 700 }}>{r.forge}</TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 700 }}>{r.oil}</TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 700 }}>{r.equip}</TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 700 }}>{r.build}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
