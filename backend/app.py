@@ -2106,6 +2106,67 @@ def update_stock_audit(id):
     return jsonify(audit.to_dict())
 
 # ============================================
+# 🔥 DASHBOARD 도착일정 요약 API
+# ============================================
+@app.route("/api/dashboard/arrival-summary", methods=["GET"])
+@jwt_required()
+def get_arrival_summary():
+    today = datetime.today().date()
+    invoices = Invoice.query.all()
+    summary = {}
+
+    for inv in invoices:
+        base_date_str = inv.delayed_date or inv.eta
+        if not base_date_str:
+            continue
+
+        try:
+            base_date = datetime.strptime(base_date_str, "%Y-%m-%d").date()
+        except:
+            continue
+
+        if base_date < today:
+            continue
+
+        if base_date_str not in summary:
+            summary[base_date_str] = {
+                "date": base_date_str,
+                "total": 0,
+                "TOOL": 0,
+                "EV-SUB": 0,
+                "단조소재": 0,
+                "오일": 0,
+                "설비": 0,
+                "건설자재": 0,
+            }
+
+        # ⭐ 여기만 핵심 수정
+        TYPE_MAP = {
+            "TOOL": "TOOL",
+            "EV": "EV-SUB",
+            "EV-SUB": "EV-SUB",
+            "EV_SUB": "EV-SUB",
+            "FORGING": "단조소재",
+            "단조": "단조소재",
+            "단조소재": "단조소재",
+            "OIL": "오일",
+            "오일": "오일",
+            "EQUIP": "설비",
+            "설비": "설비",
+            "BUILD": "건설자재",
+            "건설자재": "건설자재",
+        }
+
+        raw_type = (inv.item_type or "").strip()
+        mapped_type = TYPE_MAP.get(raw_type)
+
+        if mapped_type:
+            summary[base_date_str][mapped_type] += 1
+            summary[base_date_str]["total"] += 1
+
+    return jsonify(sorted(summary.values(), key=lambda x: x["date"]))
+
+# ============================================
 # 서버 실행
 # ============================================
 if __name__ == "__main__":

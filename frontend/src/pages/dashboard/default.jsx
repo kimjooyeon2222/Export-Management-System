@@ -80,6 +80,18 @@ export default function DashboardDefault() {
   const [editMode, setEditMode] = useState(false);
   const [note, setNote] = useState("");
   const [redPen, setRedPen] = useState(false);
+  // 🔥 도착일정 요약 데이터
+  const [arrivalSummary, setArrivalSummary] = useState([]);
+  useEffect(() => {
+    apiFetch(`${API_BASE}/api/dashboard/arrival-summary`)
+      .then(res => res.json())
+      .then(data => {
+        setArrivalSummary(data);
+      })
+      .catch(err => {
+        console.error("도착일정 요약 로딩 실패:", err);
+      });
+  }, []);
 
   // TipTap Editor
   const editor = useEditor({
@@ -315,7 +327,7 @@ export default function DashboardDefault() {
                   minHeight: 450,
                   p: 1,
                   width: "900px",
-                    display: "flex",
+                  display: "flex",
                   alignItems: "center",      //  Y축 중앙
                   justifyContent: "center",  //  X축 중앙
                 }}
@@ -339,7 +351,7 @@ export default function DashboardDefault() {
                           <TableCell
                             key={h}
                             align="center"
-                            sx={{ fontWeight: 800, fontSize: "1rem",py: 2.3, px: 3, }}
+                            sx={{ fontWeight: 800, fontSize: "1rem", py: 2.3, px: 3, }}
                           >
                             {h}
                           </TableCell>
@@ -349,25 +361,57 @@ export default function DashboardDefault() {
 
                     {/* ✅ 표 내용(지금은 더미, 나중에 연동하면 여기만 바뀜) */}
                     <TableBody>
-                      {[
-                        { date: "2025-10-23", total: "2건", tool: "", ev: "", forge: 1, oil: 1, equip: "", build: "" },
-                        { date: "2025-10-30", total: "0건", tool: "", ev: "", forge: "", oil: "", equip: "", build: "" },
-                        { date: "2025-11-04", total: "3건", tool: 2, ev: 1, forge: "", oil: "", equip: "", build: "" },
-                        { date: "2025-11-06", total: "3건", tool: "", ev: 1, forge: 1, oil: 1, equip: "", build: "" },
-                        { date: "2025-11-10", total: "2건", tool: 1, ev: "", forge: 1, oil: "", equip: "", build: "" },
-                      ].map((r, idx) => (
-                        <TableRow key={idx} sx={{ "& td": { fontSize: "1rem",py: 2, px: 4.5, } }}>
-                          <TableCell align="center" sx={{ fontWeight: 700 }}>{r.date}</TableCell>
-                          <TableCell align="center" sx={{ fontWeight: 700 }}>{r.total}</TableCell>
-                          <TableCell align="center" sx={{ fontWeight: 700 }}>{r.tool}</TableCell>
-                          <TableCell align="center" sx={{ fontWeight: 700 }}>{r.ev}</TableCell>
-                          <TableCell align="center" sx={{ fontWeight: 700 }}>{r.forge}</TableCell>
-                          <TableCell align="center" sx={{ fontWeight: 700 }}>{r.oil}</TableCell>
-                          <TableCell align="center" sx={{ fontWeight: 700 }}>{r.equip}</TableCell>
-                          <TableCell align="center" sx={{ fontWeight: 700 }}>{r.build}</TableCell>
+                      {arrivalSummary.length === 0 ? (
+                        <TableRow>
+                          <TableCell
+                            colSpan={8}
+                            align="center"
+                            sx={{
+                              py: 8,
+                              fontSize: "1.05rem",
+                              fontWeight: 700,
+                              color: "#888",
+                            }}
+                          >
+                            현재 공항 도착 일정 없음
+                          </TableCell>
                         </TableRow>
-                      ))}
+                      ) : (
+                        arrivalSummary.map((r, idx) => (
+                          <TableRow
+                            key={idx}
+                            sx={{ "& td": { fontSize: "1rem", py: 2, px: 4.5 } }}
+                          >
+                            <TableCell align="center" sx={{ fontWeight: 700 }}>
+                              {r.date}
+                            </TableCell>
+                            <TableCell align="center" sx={{ fontWeight: 700 }}>
+                              {r.total}
+                            </TableCell>
+                            <TableCell align="center" sx={{ fontWeight: 700 }}>
+                              {r["TOOL"] || ""}
+                            </TableCell>
+                            <TableCell align="center" sx={{ fontWeight: 700 }}>
+                              {r["EV-SUB"] || ""}
+                            </TableCell>
+                            <TableCell align="center" sx={{ fontWeight: 700 }}>
+                              {r["단조소재"] || ""}
+                            </TableCell>
+                            <TableCell align="center" sx={{ fontWeight: 700 }}>
+                              {r["오일"] || ""}
+                            </TableCell>
+                            <TableCell align="center" sx={{ fontWeight: 700 }}>
+                              {r["설비"] || ""}
+                            </TableCell>
+                            <TableCell align="center" sx={{ fontWeight: 700 }}>
+                              {r["건설자재"] || ""}
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
                     </TableBody>
+
+
                   </Table>
                 </TableContainer>
               </MainCard>
