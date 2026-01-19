@@ -1290,7 +1290,7 @@ export default function InvoicePage() {
                                 }
 
                                 if (userRole === "admin" && isEditMode) {
-                                  const value = prompt("값 수정", String(val || ""));
+                                  const value = prompt("값 수정\n날짜는 반드시 YYYY-MM-DD", String(val || ""));
                                   if (value !== null) {
                                     const keys = [
                                       "id",
@@ -1424,7 +1424,7 @@ export default function InvoicePage() {
                             }
 
                             if (userRole === "admin" && isEditMode) {
-                              const value = prompt("값 수정", String(val || ""));
+                              const value = prompt("값 수정\n날짜는 반드시 YYYY-MM-DD", String(val || ""));
                               if (value !== null) {
                                 const keys = [
                                   "id",

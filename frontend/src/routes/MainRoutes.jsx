@@ -46,7 +46,6 @@ const MainRoutes = {
   path: '/',
   element: (
     <RequireAuth>
-
       <DashboardLayout />
     </RequireAuth>
 

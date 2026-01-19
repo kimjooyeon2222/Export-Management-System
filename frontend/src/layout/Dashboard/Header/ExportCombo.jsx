@@ -82,12 +82,12 @@ export default function ExportCombo() {
         endIcon={<ArrowDropDownIcon />}
         sx={{
           fontWeight: 600,
-          bgcolor: "#fafafa",
+        
           width: 130,
           justifyContent: "center",
-          color: "#333",
+         
           fontSize: 14,
-          border: "1px solid #cfcfcf",
+          
           borderRadius: "6px",
           backgroundColor: isDropdownActive ? "#e3f2fd" : "#fafafa",
           border: isDropdownActive

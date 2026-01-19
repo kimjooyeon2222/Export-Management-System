@@ -403,15 +403,15 @@ export default function ItemPage() {
       {/* ================= 리스트 ================= */}
       <Paper sx={{ p: 2 }}>
         <Table size="small">
-          <TableHead>
+          <TableHead >
             <TableRow>
               <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "14px" }}>품목번호</TableCell>
               <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "14px" }}>품목명</TableCell>
               <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "14px" }}>업체명</TableCell>
               <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "14px" }}>규격</TableCell>
               <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "14px" }}>재질</TableCell>
-              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "14px" }}>품목<br />형태</TableCell>
-              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "14px" }}>품목<br/>유형</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "14px" }}>형태</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "14px" }}>유형</TableCell>
               <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "14px" }}>단위</TableCell>
               <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "14px" }}>등록일시</TableCell>
               <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "14px" }}>수정일시</TableCell>
