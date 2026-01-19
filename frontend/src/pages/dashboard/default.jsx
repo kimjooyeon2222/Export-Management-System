@@ -336,102 +336,104 @@ export default function DashboardDefault() {
                 <TableContainer sx={{
                   width: "100%", maxHeight: 360,        // ⭐ 헤더 + 5행 기준
                   overflowY: "auto",
+                  scrollbarGutter: "stable"   // 🔥 이게 핵심
+
 
                 }}>
-                    <Table size="medium" stickyHeader>
-                      {/* ✅ 표 헤더(고정) */}
-                      <TableHead>
-                        <TableRow sx={{ bgcolor: "#FFF2CC" }}>
-                          {[
-                            "도착일정 (공장)",
-                            "건수",
-                            "TOOL",
-                            "EV-SUB",
-                            "단조소재",
-                            "오일",
-                            "설비",
-                            "건설자재"
-                          ].map((h) => (
-                            <TableCell
-                              key={h}
-                              align="center"
-                              sx={{
-                                fontWeight: 800, fontSize: "1rem", py: 2.3, px: 3, bgcolor: "#FFF2CC",   // ⭐ 헤더 배경 유지
-                                position: "sticky",   // ⭐ 핵심
-                                top: 0,               // ⭐ 핵심
-                                zIndex: 2
-                              }}
-                            >
-                              {h}
-                            </TableCell>
-                          ))}
-                        </TableRow>
-                      </TableHead>
-                    </Table>
-                  </TableContainer>
-                  <TableContainer
-                    sx={{
-                      width: "100%",
-                      maxHeight: 320,   // 🔥 헤더 제외한 높이
-                      overflowY: "auto"
-                    }}
-                  >
-                    <Table size="medium">
+                  <Table size="medium" stickyHeader>
+                    {/* ✅ 표 헤더(고정) */}
+                    <TableHead>
+                      <TableRow sx={{ bgcolor: "#FFF2CC" }}>
+                        {[
+                          "도착일정 (공장)",
+                          "건수",
+                          "TOOL",
+                          "EV-SUB",
+                          "단조소재",
+                          "오일",
+                          "설비",
+                          "건설자재"
+                        ].map((h) => (
+                          <TableCell
+                            key={h}
+                            align="center"
+                            sx={{
+                              fontWeight: 800, fontSize: "1rem", py: 2.3, px: 3, bgcolor: "#FFF2CC",   // ⭐ 헤더 배경 유지
+                              position: "sticky",   // ⭐ 핵심
+                              top: 0,               // ⭐ 핵심
+                              zIndex: 2
+                            }}
+                          >
+                            {h}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    </TableHead>
+                  </Table>
+                </TableContainer>
+                <TableContainer
+                  sx={{
+                    width: "100%",
+                    maxHeight: 320,   // 🔥 헤더 제외한 높이
+                    overflowY: "auto"
+                  }}
+                >
+                  <Table size="medium">
 
-                      {/* ✅ 표 내용(지금은 더미, 나중에 연동하면 여기만 바뀜) */}
-                      <TableBody>
-                        {arrivalSummary.length === 0 ? (
-                          <TableRow>
-                            <TableCell
-                              colSpan={8}
-                              align="center"
-                              sx={{
-                                py: 8,
-                                fontSize: "1.05rem",
-                                fontWeight: 700,
-                                color: "#888",
-                              }}
-                            >
-                              현재 공항 도착 일정 없음
+                    {/* ✅ 표 내용(지금은 더미, 나중에 연동하면 여기만 바뀜) */}
+                    <TableBody>
+                      {arrivalSummary.length === 0 ? (
+                        <TableRow>
+                          <TableCell
+                            colSpan={8}
+                            align="center"
+                            sx={{
+                              py: 8,
+                              fontSize: "1.05rem",
+                              fontWeight: 700,
+                              color: "#888",
+                            }}
+                          >
+                            현재 공항 도착 일정 없음
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        arrivalSummary.map((r, idx) => (
+                          <TableRow
+                            key={idx}
+                            sx={{ "& td": { fontSize: "1rem", py: 2.3, px: 4.5 } }}
+                          >
+                            <TableCell align="center" sx={{ fontWeight: 700 }}>
+                              {r.date}
+                            </TableCell>
+                            <TableCell align="center" sx={{ fontWeight: 700}}>
+                              {r.total}
+                            </TableCell>
+                            <TableCell align="center" sx={{ fontWeight: 700 }}>
+                              {r["TOOL"] || ""}
+                            </TableCell>
+                            <TableCell align="center" sx={{ fontWeight: 700 }}>
+                              {r["EV-SUB"] || ""}
+                            </TableCell>
+                            <TableCell align="center" sx={{ fontWeight: 700 }}>
+                              {r["단조소재"] || ""}
+                            </TableCell>
+                            <TableCell align="center" sx={{ fontWeight: 700 }}>
+                              {r["오일"] || ""}
+                            </TableCell>
+                            <TableCell align="center" sx={{ fontWeight: 700 }}>
+                              {r["설비"] || ""}
+                            </TableCell>
+                            <TableCell align="center" sx={{ fontWeight: 700 }}>
+                              {r["건설자재"] || ""}
                             </TableCell>
                           </TableRow>
-                        ) : (
-                          arrivalSummary.map((r, idx) => (
-                            <TableRow
-                              key={idx}
-                              sx={{ "& td": { fontSize: "1rem", py: 2, px: 4.5 } }}
-                            >
-                              <TableCell align="center" sx={{ fontWeight: 700 }}>
-                                {r.date}
-                              </TableCell>
-                              <TableCell align="center" sx={{ fontWeight: 700 }}>
-                                {r.total}
-                              </TableCell>
-                              <TableCell align="center" sx={{ fontWeight: 700 }}>
-                                {r["TOOL"] || ""}
-                              </TableCell>
-                              <TableCell align="center" sx={{ fontWeight: 700 }}>
-                                {r["EV-SUB"] || ""}
-                              </TableCell>
-                              <TableCell align="center" sx={{ fontWeight: 700 }}>
-                                {r["단조소재"] || ""}
-                              </TableCell>
-                              <TableCell align="center" sx={{ fontWeight: 700 }}>
-                                {r["오일"] || ""}
-                              </TableCell>
-                              <TableCell align="center" sx={{ fontWeight: 700 }}>
-                                {r["설비"] || ""}
-                              </TableCell>
-                              <TableCell align="center" sx={{ fontWeight: 700 }}>
-                                {r["건설자재"] || ""}
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        )}
-                      </TableBody>
+                        ))
+                      )}
+                    </TableBody>
 
-                    </Table>
-                  </TableContainer>
+                  </Table>
+                </TableContainer>
               </MainCard>
             </Grid>
 
