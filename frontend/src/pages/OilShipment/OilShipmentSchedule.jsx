@@ -389,10 +389,6 @@ export default function OilShipmentSchedule() {
 
 
 
-  const [inv, setInv] = useState("");
-  const [po, setPo] = useState("");
-  const [etd, setEtd] = useState("");
-  const [eta, setEta] = useState("");
   // 새 행 추가
   const addRow = () => {
     const groupKey = uuidv4();
@@ -565,7 +561,7 @@ export default function OilShipmentSchedule() {
     <Box p={3}>
       <Button
         variant="outlined"
-        onClick={() => navigate("/")}
+        onClick={() => navigate("/dashboard/default")}
         sx={{
           mt: 1,
           mb: 5,
