@@ -405,7 +405,7 @@ export default function POManagementPage() {
               {/* 결재목차 + 운송방법 숨김 */}
               {!showIncomingOnly && (
                 <>
-                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>발주진행명</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>발주진행명 (수정자)</TableCell>
                 </>
               )}
 
@@ -420,31 +420,25 @@ export default function POManagementPage() {
               <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>업체</TableCell>
 
 
-              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>(A)-(금일) 남은 일수</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>작업일수</TableCell>
 
-              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>오토텍 발주일자</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>발주일자</TableCell>
 
               {!showIncomingOnly && (
-                <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>북미 발주일자</TableCell>
+                <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>입고일자</TableCell>
               )}
               <TableCell
                 align="center"
                 sx={{ fontWeight: "bold", fontSize: "15px", position: "relative" }}
               >
-                북미도착 요청일자(A)
-
-
-
+                발주품목 수
               </TableCell>
-
-
-
 
 
               {/* 결재목차 + 운송방법 숨김 */}
               {!showIncomingOnly && (
                 <>
-                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>운송 방법</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>입고품목 수</TableCell>
                 </>
               )}
             </TableRow>
@@ -600,13 +594,6 @@ export default function POManagementPage() {
                       </Box>
                     </TableCell>
 
-
-
-
-
-
-
-
                     {/* 운송방법 */}
                     {!showIncomingOnly && (
                       <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
@@ -707,11 +694,6 @@ export default function POManagementPage() {
                             }}
                           />
 
-
-
-
-
-
                           {/* 9) 운송방법 */}
                           {!showIncomingOnly && (
                             <TableCell
@@ -746,8 +728,10 @@ export default function POManagementPage() {
                           </>
                         )}
 
-                        {/* 담당자 (필터 조건에 입력) */}
+                        {/* 담당자 */}
                         {!showIncomingOnly && <TableCell />}
+
+
 
                         {/* PO 빈칸 */}
                         <TableCell />

@@ -1166,7 +1166,7 @@ export default function InvoicePage() {
                       <Box sx={{ width: 14, height: 14, bgcolor: '#ffcccc', border: '1px solid #bbb' }} />
                       <Typography sx={{ fontSize: '0.6rem', color: '#333' }}>
                         : 금일 이후 도착<br />{' '}
-                        <span style={{ color: 'red', fontWeight: 'bold',fontSize:'0.7rem' }}> (5일전)</span>
+                        <span style={{ color: 'red', fontWeight: 'bold', fontSize: '0.7rem' }}> (5일전)</span>
                       </Typography>
                     </Box>
                   </Box>,
@@ -1177,7 +1177,7 @@ export default function InvoicePage() {
                       <Typography sx={{ fontSize: '0.7rem', fontWeight: 'bold' }}>
                         <Box component="span" sx={{ color: '#333' }}>:</Box>{' '}
                         <Box component="span" sx={{ color: 'red', fontSize: "10px" }}>
-                        지연<br/> 경고<br/>(10일)
+                          지연<br /> 경고<br />(10일)
                         </Box>
                       </Typography>
                     </Box>
@@ -1280,13 +1280,21 @@ export default function InvoicePage() {
                                 ...(userRole === "admin" && { cursor: "pointer" })
                               }}
                               onClick={() => {
-                                if (deleteMode) return;
+                                // ✅ 삭제 모드: 행 선택만 수행
+                                if (deleteMode) {
+                                  setSelectedInvs(prev =>
+                                    prev.includes(row.inv_no)
+                                      ? prev.filter(v => v !== row.inv_no)
+                                      : [...prev, row.inv_no]
+                                  );
+                                  return;
+                                }
 
+                                // 🔽 아래는 기존 수정 / 이동 로직 그대로
                                 if (idx === 2 && !isEditMode) {
                                   return navigate(`/packing-list/${row.inv_no}`);
                                 }
 
-                                // 🔥 품목구분(idx === 4)는 prompt 막음
                                 if (idx === 4 && isEditMode) {
                                   setEditingItemRowId(row.id);
                                   return;
@@ -1314,6 +1322,7 @@ export default function InvoicePage() {
                                   }
                                 }
                               }}
+
                             >
                               {/* 🔥 여기서부터 품목구분 전용 렌더링 */}
                               {idx === 4 && isEditMode ? (
@@ -1490,13 +1499,21 @@ export default function InvoicePage() {
                             ...(userRole === "admin" && { cursor: "pointer" })
                           }}
                           onClick={() => {
-                            if (deleteMode) return;
+                            // ✅ 삭제 모드: 행 선택만 수행
+                            if (deleteMode) {
+                              setSelectedInvs(prev =>
+                                prev.includes(row.inv_no)
+                                  ? prev.filter(v => v !== row.inv_no)
+                                  : [...prev, row.inv_no]
+                              );
+                              return;
+                            }
 
+                            // 🔽 아래는 기존 수정 / 이동 로직 그대로
                             if (idx === 2 && !isEditMode) {
                               return navigate(`/packing-list/${row.inv_no}`);
                             }
 
-                            // 🔥 품목구분(idx === 4)는 prompt 막음
                             if (idx === 4 && isEditMode) {
                               setEditingItemRowId(row.id);
                               return;
@@ -1524,6 +1541,7 @@ export default function InvoicePage() {
                               }
                             }
                           }}
+
                         >
                           {/* 🔥 여기서부터 품목구분 전용 렌더링 */}
                           {idx === 4 && isEditMode ? (

@@ -437,8 +437,8 @@ class POManagement(db.Model):
             "order_date": self.order_date.strftime("%Y-%m-%d") if self.order_date else None,
             "request_date": self.request_date.strftime("%Y-%m-%d") if self.request_date else None,
             "ototek_date": self.ototek_date.strftime("%Y-%m-%d") if self.ototek_date else None,
-            "manager": self.manager,
             "company": self.company,
+            "manager": self.manager, 
             "subject": self.subject,
             "method": self.method,
 
@@ -492,6 +492,7 @@ class POSubRow(db.Model):
         return {
             "id": self.id,
             "po_id": self.po_id,
+            
             "request_date": self.request_date.strftime("%Y-%m-%d") if self.request_date else None,
             "ototek_date": self.ototek_date.strftime("%Y-%m-%d") if self.ototek_date else None,
 
