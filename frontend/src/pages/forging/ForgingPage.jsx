@@ -33,7 +33,6 @@ export default function ForgingPage() {
     fontSize: "14px",
     lineHeight: 1.2,
     textAlign: "center",
-    border: "1px solid #90caf9" // ⭐ 경계 또렷
   };
 
 
@@ -573,7 +572,7 @@ export default function ForgingPage() {
       <Box sx={{ mb: -4 }}>
         <Button
           variant="outlined"
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/dashboard/default")}
           sx={{
             borderColor: "#0069a6ff",     // 갈색 테두리
             color: "#0056a6ff",           // 텍스트 색

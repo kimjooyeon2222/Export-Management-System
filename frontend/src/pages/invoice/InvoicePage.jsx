@@ -1152,7 +1152,7 @@ export default function InvoicePage() {
                     <Typography sx={{ fontWeight: 'bold' }}>DELAYED DATE</Typography>
                     <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1 }}>
                       <Box sx={{ width: 14, height: 14, bgcolor: '#d6eaff', border: '1px solid #bbb' }} />
-                      <Typography sx={{ fontSize: '0.8rem' }}>: 도착 완료</Typography>
+                      <Typography sx={{ fontSize: '0.7rem' }}>: 도착 완료</Typography>
                     </Box>
                     <Box
                       sx={{
@@ -1164,9 +1164,9 @@ export default function InvoicePage() {
                       }}
                     >
                       <Box sx={{ width: 14, height: 14, bgcolor: '#ffcccc', border: '1px solid #bbb' }} />
-                      <Typography sx={{ fontSize: '0.8rem', color: '#333' }}>
-                        : 금일 이후 <br />도착<br />{' '}
-                        <span style={{ color: 'red', fontWeight: 'bold' }}> (5일전)</span>
+                      <Typography sx={{ fontSize: '0.6rem', color: '#333' }}>
+                        : 금일 이후 도착<br />{' '}
+                        <span style={{ color: 'red', fontWeight: 'bold',fontSize:'0.7rem' }}> (5일전)</span>
                       </Typography>
                     </Box>
                   </Box>,
@@ -1176,8 +1176,8 @@ export default function InvoicePage() {
                       <Box sx={{ width: 14, height: 14, bgcolor: '#ccf2e0', border: '1px solid #bbb' }} />
                       <Typography sx={{ fontSize: '0.7rem', fontWeight: 'bold' }}>
                         <Box component="span" sx={{ color: '#333' }}>:</Box>{' '}
-                        <Box component="span" sx={{ color: 'red', fontSize: "11px" }}>
-                          지연<br />경고 <br />(10일)
+                        <Box component="span" sx={{ color: 'red', fontSize: "10px" }}>
+                        지연<br/> 경고<br/>(10일)
                         </Box>
                       </Typography>
                     </Box>
