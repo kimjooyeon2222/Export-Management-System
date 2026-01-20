@@ -337,7 +337,7 @@ export default function DashboardDefault() {
                 <TableContainer
                   sx={{
                     width: "100%",
-                    maxHeight: 360,        // ⭐ 기존 유지
+                    maxHeight: 400,        // ⭐ 기존 유지
                     overflowY: "auto",     // ⭐ 기존 유지
                     scrollbarGutter: "stable" // ⭐ 기존 유지
                   }}
