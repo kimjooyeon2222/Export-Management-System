@@ -412,10 +412,11 @@ class POManagement(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     po_no = db.Column(db.String(50))
     order_date = db.Column(db.Date)
-    request_date = db.Column(db.Date)
+    request_date = db.Column(db.String(20))
     ototek_date = db.Column(db.Date)
     manager = db.Column(db.String(50))
     company = db.Column(db.String(100))
+    work_days = db.Column(db.String(20))
     subject = db.Column(db.String(255))
     method = db.Column(db.String(50))
 
@@ -429,16 +430,18 @@ class POManagement(db.Model):
         passive_deletes=True
     )
 
+
     # ⭐⭐⭐ 반드시 클래스 안으로 들여쓰기!!
     def to_dict(self):
         return {
             "id": self.id,
             "po_no": self.po_no,
             "order_date": self.order_date.strftime("%Y-%m-%d") if self.order_date else None,
-            "request_date": self.request_date.strftime("%Y-%m-%d") if self.request_date else None,
+            "request_date": self.request_date,
             "ototek_date": self.ototek_date.strftime("%Y-%m-%d") if self.ototek_date else None,
             "company": self.company,
-            "manager": self.manager, 
+            "manager": self.manager,
+            "work_days": self.work_days,
             "subject": self.subject,
             "method": self.method,
 
@@ -481,8 +484,11 @@ class POSubRow(db.Model):
         nullable=False
     )
 
-    request_date = db.Column(db.Date)
+    request_date = db.Column(db.String(20))
     ototek_date = db.Column(db.Date)
+    order_date = db.Column(db.String(20))
+    work_days = db.Column(db.String(20)) 
+    method = db.Column(db.String(50))
     company = db.Column(db.String(100))
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -493,9 +499,11 @@ class POSubRow(db.Model):
             "id": self.id,
             "po_id": self.po_id,
             
-            "request_date": self.request_date.strftime("%Y-%m-%d") if self.request_date else None,
+            "request_date": self.request_date,
             "ototek_date": self.ototek_date.strftime("%Y-%m-%d") if self.ototek_date else None,
-
+            "order_date": self.order_date,
+            "work_days": self.work_days,
+            "method": self.method,
             "company": self.company,
         }
 

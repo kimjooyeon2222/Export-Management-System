@@ -1369,19 +1369,21 @@ def get_po():
 @jwt_required()
 @admin_required
 def save_po_bulk():
-    rows = request.json
 
-    POManagement.query.delete()
+    rows = request.json
     POSubRow.query.delete()
+    POManagement.query.delete()
+    
 
     for r in rows:
         row = POManagement(
             po_no=r.get("po_no"),
             order_date=to_date(r.get("order_date")),
-            request_date=to_date(r.get("request_date")),
+            request_date=r.get("request_date"),
             ototek_date=to_date(r.get("ototek_date")),
             manager=r.get("manager"),
             company=r.get("company"),
+            work_days=r.get("work_days"),
             subject=r.get("subject"),
             method=r.get("method"),
         )
@@ -1392,7 +1394,10 @@ def save_po_bulk():
         for s in r.get("subrows", []):
             sub = POSubRow(
                 po_id=row.id,
-                request_date=to_date(s.get("request_date")),
+                request_date=s.get("request_date"),
+                order_date=s.get("order_date"),
+                work_days=s.get("work_days"),
+                method=s.get("method"),
                 ototek_date=to_date(s.get("ototek_date")),
                 company=s.get("company"),
             )
