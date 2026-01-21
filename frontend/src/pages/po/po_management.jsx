@@ -98,13 +98,11 @@ export default function POManagementPage() {
   const [poRows, setPoRows] = useState([
     {
       id: uuidv4(),
-      po_no: "",
       order_date: "",
       request_date: "",
       ototek_date: "",
       manager: "",
       company: "",   // ⭐ 추가된 업체 컬럼
-      work_days: "",
       subject: "",
       method: "",
       subrows: []   // ⭐ 여기 추가
@@ -179,13 +177,11 @@ export default function POManagementPage() {
       ...prev,
       {
         id: uuidv4(),
-        po_no: "",
         order_date: "",
         request_date: "",
         ototek_date: "",
         manager: "",
         company: "",
-        work_days: "",
         subject: "",
         method: "해운",
         subrows: []
@@ -322,15 +318,14 @@ export default function POManagementPage() {
                 <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>파트구분</TableCell>
               )}
 
-              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>PO#</TableCell>
 
               {/* ⭐ 업체는 항상 표시 */}
-              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>업체</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>발주번호 / 업체</TableCell>
 
 
-              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>작업일수</TableCell>
 
               <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>발주일자</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>작업일수</TableCell>
 
               {!showIncomingOnly && (
                 <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>입고일자</TableCell>
@@ -394,21 +389,7 @@ export default function POManagementPage() {
                       </TableCell>
                     )}
 
-                    {/* PO 번호 */}
-                    <TableCell align="center" sx={{
-                      fontWeight: "bold", fontSize: "15px",
 
-                    }}>
-                      {editMode ? (
-                        <TextField
-                          size="small"
-                          value={row.po_no}
-                          onChange={(e) => updateCell(row.id, "po_no", e.target.value)}
-                        />
-                      ) : (
-                        row.po_no
-                      )}
-                    </TableCell>
 
 
                     {/* 업체 */}
@@ -421,19 +402,6 @@ export default function POManagementPage() {
                         />
                       ) : (
                         row.company
-                      )}
-                    </TableCell>
-
-                    {/* 작업일수 */}
-                    <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
-                      {editMode ? (
-                        <TextField
-                          size="small"
-                          value={row.work_days}
-                          onChange={(e) => updateCell(row.id, "work_days", e.target.value)}
-                        />
-                      ) : (
-                        row.work_days
                       )}
                     </TableCell>
 
@@ -450,6 +418,12 @@ export default function POManagementPage() {
                       ) : (
                         row.ototek_date
                       )}
+                    </TableCell>
+
+
+                    {/* 작업일수 */}
+                    <TableCell align="center">
+
                     </TableCell>
 
                     {/* 북미 발주일자 -> 입고일자*/}
@@ -495,7 +469,7 @@ export default function POManagementPage() {
                             >
                               +
                             </Button>
-                           
+
 
                           </>
                         )}
@@ -554,8 +528,6 @@ export default function POManagementPage() {
                             />
                           )}
 
-                          {/* 3) PO# 칸 → border 없음 */}
-                          <TableCell sx={{ padding: 0, borderBottom: "none", fontWeight: "bold", fontSize: "15px" }} />
 
                           {/* 4) 업체 */}
                           <TableCell
@@ -566,7 +538,8 @@ export default function POManagementPage() {
                             }}
                           />
 
-                          {/* 5) 작업 일수 */}
+
+                          {/* 6) 오토텍->발주일자 */}
                           <TableCell
                             sx={{
                               padding: 0,
@@ -574,7 +547,8 @@ export default function POManagementPage() {
                               fontWeight: "bold", fontSize: "15px"
                             }}
                           />
-                          {/* 6) 오토텍->발주일자 */}
+
+                          {/* 5) 작업 일수 */}
                           <TableCell
                             sx={{
                               padding: 0,
@@ -642,8 +616,6 @@ export default function POManagementPage() {
 
 
 
-                        {/* PO 빈칸 */}
-                        <TableCell />
 
                         {/* 업체 */}
                         <TableCell align="center">
@@ -660,20 +632,7 @@ export default function POManagementPage() {
                           )}
                         </TableCell>
 
-                        {/* 남은 일수-> 작업일수 */}
-                        <TableCell align="center">
-                          {editMode ? (
-                            <TextField
-                              size="small"
-                              value={sub.work_days}
-                              onChange={(e) =>
-                                updateSubCell(row.id, sub.id, "work_days", e.target.value)
-                              }
-                            />
-                          ) : (
-                            sub.work_days
-                          )}
-                        </TableCell>
+
 
 
                         {/* 오토텍 -> 발주일자*/}
@@ -688,6 +647,21 @@ export default function POManagementPage() {
                             />
                           ) : (
                             sub.ototek_date
+                          )}
+                        </TableCell>
+
+                        {/* 남은 일수-> 작업일수 */}
+                        <TableCell align="center">
+                          {editMode ? (
+                            <TextField
+                              size="small"
+                              value={sub.work_days}
+                              onChange={(e) =>
+                                updateSubCell(row.id, sub.id, "work_days", e.target.value)
+                              }
+                            />
+                          ) : (
+                            sub.work_days
                           )}
                         </TableCell>
 

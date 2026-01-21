@@ -1377,13 +1377,11 @@ def save_po_bulk():
 
     for r in rows:
         row = POManagement(
-            po_no=r.get("po_no"),
             order_date=to_date(r.get("order_date")),
             request_date=r.get("request_date"),
             ototek_date=to_date(r.get("ototek_date")),
             manager=r.get("manager"),
             company=r.get("company"),
-            work_days=r.get("work_days"),
             subject=r.get("subject"),
             method=r.get("method"),
         )
