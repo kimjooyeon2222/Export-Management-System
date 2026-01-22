@@ -16,11 +16,11 @@ const HorizontalScroll = forwardRef(
     };
 
     const scrollLeft = () => {
-      scrollRef.current?.scrollBy({ left: -300, behavior: "smooth" });
+      scrollRef.current?.scrollBy({ left: -150, behavior: "smooth" });
     };
 
     const scrollRight = () => {
-      scrollRef.current?.scrollBy({ left: 300, behavior: "smooth" });
+      scrollRef.current?.scrollBy({ left: 150, behavior: "smooth" });
     };
 
     const btnStyle = {

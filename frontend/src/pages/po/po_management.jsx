@@ -21,6 +21,7 @@ const API_BASE = import.meta.env.VITE_API_URL;
 import { apiFetch } from "api/apiFetch";
 
 export default function POManagementPage() {
+
   const isValidDateString = (v) =>
     typeof v === "string" &&
     /^\d{4}-\d{2}-\d{2}$/.test(v);
@@ -69,6 +70,29 @@ export default function POManagementPage() {
 
     return week.end >= start && week.start <= end;
   };
+
+  const getParentDateRangeFromSubrows = (subrows = []) => {
+    const starts = [];
+    const ends = [];
+
+    subrows.forEach(sub => {
+      if (isValidDateString(sub.ototek_date)) {
+        starts.push(new Date(sub.ototek_date));
+      }
+      if (isValidDateString(sub.order_date)) {
+        ends.push(new Date(sub.order_date));
+      }
+    });
+
+    if (!starts.length || !ends.length) return null;
+
+    return {
+      start: new Date(Math.min(...starts)), // ⭐ 가장 빠른 발주일자
+      end: new Date(Math.max(...ends))      // ⭐ 가장 늦은 입고일자
+    };
+  };
+
+
 
   const getDateRangeFromRows = (rows) => {
     const dates = [];
@@ -655,6 +679,15 @@ export default function POManagementPage() {
 
           <TableBody>
             {filteredRows.map((row) => {
+              const parentRange = getParentDateRangeFromSubrows(row.subrows);
+
+              const parentOtotekDate = parentRange
+                ? parentRange.start.toISOString().slice(0, 10)
+                : "";
+
+              const parentOrderDate = parentRange
+                ? parentRange.end.toISOString().slice(0, 10)
+                : "";
 
               return (
                 <React.Fragment key={row.id}>
@@ -715,16 +748,9 @@ export default function POManagementPage() {
 
                     {/* 오토텍->발주일자 */}
                     <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
-                      {editMode ? (
-                        <TextField
-                          size="small"
-                          value={row.ototek_date}
-                          onChange={(e) => updateCell(row.id, "ototek_date", e.target.value)}
-                        />
-                      ) : (
-                        row.ototek_date
-                      )}
+                      {parentOtotekDate}
                     </TableCell>
+
 
 
                     {/* 작업일수 */}
@@ -735,18 +761,9 @@ export default function POManagementPage() {
                     {/* 북미 발주일자 -> 입고일자*/}
                     {!showIncomingOnly && (
                       <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
-                        {editMode ? (
-                          <TextField
-                            size="small"
-                            value={row.order_date}
-                            onChange={(e) => updateCell(row.id, "order_date", e.target.value)}
-                          />
-                        ) : (
-                          <Box>
-                            {row.order_date}
-                          </Box>
-                        )}
+                        {parentOrderDate}
                       </TableCell>
+
                     )}
 
                     {/* 북미도착요청일자 -> 발주 품목 수 */}
@@ -822,10 +839,13 @@ export default function POManagementPage() {
                         }}
                       >
                         <Box sx={{ display: "flex" }}>
-                          {ganttWeeks.map((week, i) => {
-                            const active = row.subrows.some(sub =>
-                              isWeekActive(week, sub)
-                            );
+                          {visibleGanttWeeks.map((week, i) => {
+                            const range = getParentDateRangeFromSubrows(row.subrows);
+
+                            const active =
+                              range &&
+                              week.end >= range.start &&
+                              week.start <= range.end;
 
                             return (
                               <Box
@@ -833,12 +853,14 @@ export default function POManagementPage() {
                                 sx={{
                                   minWidth: 28,
                                   height: 42,
-                                  bgcolor: active ? "#e3f2fd" : "#f5f5f5",
-                                  borderRight: "1px solid #eee"
+                                  bgcolor: active ? "#82b1ff" : "#f5f5f5",
+                                  borderRight: "1px solid #eee",
+                                  borderRadius: active ? "2px" : 0
                                 }}
                               />
                             );
                           })}
+
 
                         </Box>
                       </HorizontalScroll>
@@ -1019,11 +1041,16 @@ export default function POManagementPage() {
                                   sx={{
                                     minWidth: 28,
                                     height: 42,
-                                    bgcolor: isWeekActive(week, sub) ? "#90caf9" : "#f5f5f5",
+                                    bgcolor: isWeekActive(week, sub)
+                                      ? "rgba(130,177,255,0.35)"
+                                      : "#f5f5f5",
+                                    borderRadius: isWeekActive(week, sub) ? "2px" : 0,
+
                                     borderRight: "1px solid #eee"
                                   }}
                                 />
                               ))}
+
 
                             </Box>
                           </Box>
