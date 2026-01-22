@@ -1,5 +1,7 @@
 // src/pages/po/po_management.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import HorizontalScroll from "components/HorizontalScroll";
+
 import {
   Box,
   Typography,
@@ -19,6 +21,170 @@ const API_BASE = import.meta.env.VITE_API_URL;
 import { apiFetch } from "api/apiFetch";
 
 export default function POManagementPage() {
+  const isValidDateString = (v) =>
+    typeof v === "string" &&
+    /^\d{4}-\d{2}-\d{2}$/.test(v);
+
+
+  const ganttScrollRef = useRef(null);
+
+  const subGanttRefs = useRef({});
+
+  const [visibleMonthStart, setVisibleMonthStart] = useState(null);
+  const getThreeMonthRange = (baseMonth) => {
+    const start = new Date(baseMonth.getFullYear(), baseMonth.getMonth(), 1);
+    const end = new Date(baseMonth.getFullYear(), baseMonth.getMonth() + 3, 0);
+    return { start, end };
+  };
+
+  const monthScrollRef = useRef(null);
+  const weekScrollRef = useRef(null);
+  const [usDate, setUsDate] = useState("");
+  useEffect(() => {
+    if (!usDate) return;
+    const d = new Date(usDate);
+    setVisibleMonthStart(new Date(d.getFullYear(), d.getMonth(), 1));
+  }, [usDate]);
+
+  const [poRows, setPoRows] = useState([
+    {
+      id: uuidv4(),
+      order_date: "",
+      request_date: "",
+      ototek_date: "",
+      manager: "",
+      company: "",   // ⭐ 추가된 업체 컬럼
+      subject: "",
+      method: "",
+      subrows: []   // ⭐ 여기 추가
+
+    }
+
+  ]);
+  const isWeekActive = (week, sub) => {
+    if (!sub.ototek_date || !sub.order_date) return false;
+
+    const start = new Date(sub.ototek_date);
+    const end = new Date(sub.order_date);
+
+    return week.end >= start && week.start <= end;
+  };
+
+  const getDateRangeFromRows = (rows) => {
+    const dates = [];
+
+    rows.forEach(row => {
+      row.subrows?.forEach(sub => {
+        if (isValidDateString(sub.ototek_date))
+          dates.push(new Date(sub.ototek_date));
+
+        if (isValidDateString(sub.order_date))
+          dates.push(new Date(sub.order_date));
+      });
+    });
+
+    if (dates.length === 0) return null;
+
+    return {
+      start: new Date(Math.min(...dates)),
+      end: new Date(Math.max(...dates))
+    };
+  };
+
+
+  const getMonthsBetween = (start, end) => {
+    const months = [];
+    const cursor = new Date(start.getFullYear(), start.getMonth(), 1);
+
+    while (cursor <= end) {
+      months.push({
+        year: cursor.getFullYear(),
+        month: cursor.getMonth() // 0-based
+      });
+      cursor.setMonth(cursor.getMonth() + 1);
+    }
+
+    return months;
+  };
+
+
+  const getWeeksOfMonth = (year, month) => {
+    const weeks = [];
+
+    const monthStart = new Date(year, month, 1);
+    const monthEnd = new Date(year, month + 1, 0);
+
+    let weekIndex = 1;
+    let cursor = new Date(monthStart);
+
+    while (cursor <= monthEnd) {
+      const weekStart = new Date(cursor);
+      const weekEnd = new Date(cursor);
+      weekEnd.setDate(weekEnd.getDate() + 6);
+
+      weeks.push({
+        year,
+        month: month + 1,
+        label: `${weekIndex}`,
+        start: weekStart,
+        end: weekEnd
+      });
+
+      cursor.setDate(cursor.getDate() + 7);
+      weekIndex++;
+    }
+
+    return weeks;
+  };
+  const getWeeksByMonthRange = (startDate, endDate) => {
+    const months = getMonthsBetween(startDate, endDate);
+
+    return months.flatMap(m =>
+      getWeeksOfMonth(m.year, m.month)
+    );
+  };
+
+
+  const ganttWeeks = React.useMemo(() => {
+    const range = getDateRangeFromRows(poRows);
+    if (!range) return [];
+    return getWeeksByMonthRange(range.start, range.end);
+  }, [poRows]);
+
+  const visibleGanttWeeks = React.useMemo(() => {
+    if (!visibleMonthStart) return [];
+
+    const { start, end } = getThreeMonthRange(visibleMonthStart);
+
+    return ganttWeeks.filter(
+      (w) => w.end >= start && w.start <= end
+    );
+  }, [ganttWeeks, visibleMonthStart]);
+
+
+  /* ============================
+     📊 Progress 계산
+  ============================ */
+  const calcSubProgress = (sub) => {
+    const ordered = Number(sub.request_qty || sub.request_date || 0);
+    const received = Number(sub.method || 0); // 임시: 입고품목수 위치
+
+    if (!ordered) return 0;
+    return Math.min(100, Math.round((received / ordered) * 100));
+  };
+
+  const calcParentProgress = (subrows = []) => {
+    let ordered = 0;
+    let received = 0;
+
+    subrows.forEach(sub => {
+      ordered += Number(sub.request_qty || sub.request_date || 0);
+      received += Number(sub.method || 0);
+    });
+
+    if (!ordered) return 0;
+    return Math.min(100, Math.round((received / ordered) * 100));
+  };
 
 
 
@@ -92,24 +258,9 @@ export default function POManagementPage() {
         상태
   ---------------------------------- */
   const [editMode, setEditMode] = useState(false);
-  const [usDate, setUsDate] = useState(""); // 북미 기준 날짜(제목용)
   const [showIncomingOnly, setShowIncomingOnly] = useState(false);
 
-  const [poRows, setPoRows] = useState([
-    {
-      id: uuidv4(),
-      order_date: "",
-      request_date: "",
-      ototek_date: "",
-      manager: "",
-      company: "",   // ⭐ 추가된 업체 컬럼
-      subject: "",
-      method: "",
-      subrows: []   // ⭐ 여기 추가
 
-    }
-
-  ]);
   const updateSubCell = (parentId, subId, field, value) => {
     setPoRows(prev =>
       prev.map(row =>
@@ -294,7 +445,48 @@ export default function POManagementPage() {
         elevation={0}
       >
 
-        <Table size="small">
+        <Table
+          size="small"
+          sx={{
+            tableLayout: "fixed",
+            width: "100%"
+          }}
+        >
+          <colgroup>
+            {/* ===== 좌측 발주정보 영역 (70%) ===== */}
+            {!showIncomingOnly && <col style={{ width: "10%" }} />}  {/* 발주진행명 */}
+            {!showIncomingOnly && <col style={{ width: "6%" }} />}   {/* 파트구분 */}
+
+            <col style={{ width: "12%" }} />  {/* 발주번호 / 업체 */}
+            <col style={{ width: "8%" }} />   {/* 발주일자 */}
+            <col style={{ width: "6%" }} />   {/* 작업일수 */}
+
+            {!showIncomingOnly && <col style={{ width: "8%" }} />}   {/* 입고일자 */}
+
+            <col style={{ width: "7%" }} />   {/* 발주품목 수 */}
+            {!showIncomingOnly && <col style={{ width: "7%" }} />}   {/* 입고품목 수 */}
+
+            <col style={{ width: "6%" }} />   {/* 진행률 */}
+
+            {/* ===== 우측 간트 영역 (30%) ===== */}
+            {visibleGanttWeeks.length > 0 &&
+              visibleGanttWeeks.map((_, i) => (
+                <col
+                  key={i}
+                  style={{
+                    minWidth: 28,
+                    width: `${30 / visibleGanttWeeks.length}%`
+                  }}
+                />
+              ))}
+
+
+          </colgroup>
+
+
+
+
+
           <TableHead
             sx={{
               bgcolor: "#e6f3ff",
@@ -304,31 +496,107 @@ export default function POManagementPage() {
               }
             }}
           >
+            {/* 🔹 월 헤더 (추가된 부분) */}
+            <TableRow>
+              {/* 왼쪽 고정 컬럼 영역 비우기 */}
+              <TableCell
+                colSpan={
+                  (!showIncomingOnly ? 2 : 0) + // 발주진행명, 파트구분
+                  1 + // 발주번호 / 업체
+                  1 + // 발주일자
+                  1 + // 작업일수
+                  (!showIncomingOnly ? 1 : 0) + // 입고일자
+                  1 + // 발주품목 수
+                  (!showIncomingOnly ? 1 : 0) + // 입고품목 수
+                  1   // 진행률
+                }
+              />
+
+              <TableCell colSpan={visibleGanttWeeks.length} sx={{ p: 0 }}>
+
+                <HorizontalScroll
+
+                  onScroll={(e) => {
+                    const left = e.target.scrollLeft;
+
+                    if (monthScrollRef.current)
+                      monthScrollRef.current.scrollLeft = left;
+
+                    if (weekScrollRef.current)
+                      weekScrollRef.current.scrollLeft = left;
+
+                    // ⭐ sub Gantt 전부 강제 동기화
+                    Object.values(subGanttRefs.current).forEach(el => {
+                      if (el) el.scrollLeft = left;
+                    });
+                  }}
+
+                >
+
+                  <Box sx={{ display: "flex" }}>
+                    {Object.entries(
+                      ganttWeeks.reduce((acc, w) => {
+                        const key = `${w.year}-${w.month}`;
+                        acc[key] = acc[key] || { year: w.year, month: w.month, count: 0 };
+                        acc[key].count++;
+                        return acc;
+                      }, {})
+                    ).map(([key, v]) => (
+                      <Box
+                        key={key}
+                        sx={{
+                          minWidth: v.count * 28,
+                          textAlign: "center",
+                          fontWeight: "bold",
+                          borderRight: "1px solid #ddd"
+                        }}
+                      >
+                        {v.year}년 {v.month}월
+                      </Box>
+                    ))}
+                  </Box>
+                </HorizontalScroll>
+
+              </TableCell>
+
+
+            </TableRow>
+
+            {/* 🔹 기존 헤더 (❗️아무것도 수정 안 함) */}
             <TableRow>
 
               {/* 결재목차 + 운송방법 숨김 */}
               {!showIncomingOnly && (
                 <>
-                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>발주진행명 (수정자)</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
+                    발주진행명<br /> (수정자)
+                  </TableCell>
                 </>
               )}
 
               {/* 담당자 숨김 */}
               {!showIncomingOnly && (
-                <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>파트구분</TableCell>
+                <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
+                  파트구분
+                </TableCell>
               )}
 
-
               {/* ⭐ 업체는 항상 표시 */}
-              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>발주번호 / 업체</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
+                발주번호 / 업체
+              </TableCell>
 
-
-
-              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>발주일자</TableCell>
-              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>작업일수</TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
+                발주일자
+              </TableCell>
+              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
+                작업일수
+              </TableCell>
 
               {!showIncomingOnly && (
-                <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>입고일자</TableCell>
+                <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
+                  입고일자
+                </TableCell>
               )}
               <TableCell
                 align="center"
@@ -337,15 +605,53 @@ export default function POManagementPage() {
                 발주품목 수
               </TableCell>
 
-
               {/* 결재목차 + 운송방법 숨김 */}
               {!showIncomingOnly && (
                 <>
-                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>입고품목 수</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
+                    입고품목 수
+                  </TableCell>
                 </>
               )}
+
+              <TableCell align="center">진행률</TableCell>
+
+              <TableCell colSpan={ganttWeeks.length} sx={{ p: 0 }}>
+                <HorizontalScroll
+                  ref={weekScrollRef}
+                  showButtons={false}
+                  onScroll={(e) => {
+                    const left = e.target.scrollLeft;
+
+                    if (monthScrollRef.current)
+                      monthScrollRef.current.scrollLeft = left;
+
+                    if (ganttScrollRef.current)
+                      ganttScrollRef.current.scrollLeft = left;
+                  }}
+                >
+
+                  <Box sx={{ display: "flex" }}>
+                    {ganttWeeks.map((week, i) => (
+                      <Box
+                        key={i}
+                        sx={{
+                          minWidth: 28,
+                          textAlign: "center",
+                          fontSize: "12px",
+                          borderRight: "1px solid #ddd"
+                        }}
+                      >
+                        {week.label}
+                      </Box>
+                    ))}
+                  </Box>
+                </HorizontalScroll>
+              </TableCell>
+
             </TableRow>
           </TableHead>
+
 
           <TableBody>
             {filteredRows.map((row) => {
@@ -361,7 +667,7 @@ export default function POManagementPage() {
                   }}>
                     {/* 결재목차 */}
                     {!showIncomingOnly && (
-                      <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px", borderBottom: "5px solid #c2c2c2" }}>
+                      <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "13px", borderBottom: "5px solid #c2c2c2" }}>
                         {editMode ? (
                           <TextField
                             size="small"
@@ -494,6 +800,52 @@ export default function POManagementPage() {
                       </TableCell>
                     )}
 
+                    {/* 📊 부모 진행률 */}
+                    <TableCell align="center">
+                      {calcParentProgress(row.subrows)}%
+                    </TableCell>
+
+                    <TableCell colSpan={ganttWeeks.length} sx={{ p: 0 }}>
+                      <HorizontalScroll
+                        ref={ganttScrollRef}
+                        showButtons={false}
+                        hideScrollbar
+
+                        onScroll={(e) => {
+                          const left = e.target.scrollLeft;
+
+                          if (monthScrollRef.current)
+                            monthScrollRef.current.scrollLeft = left;
+
+                          if (weekScrollRef.current)
+                            weekScrollRef.current.scrollLeft = left;
+                        }}
+                      >
+                        <Box sx={{ display: "flex" }}>
+                          {ganttWeeks.map((week, i) => {
+                            const active = row.subrows.some(sub =>
+                              isWeekActive(week, sub)
+                            );
+
+                            return (
+                              <Box
+                                key={i}
+                                sx={{
+                                  minWidth: 28,
+                                  height: 42,
+                                  bgcolor: active ? "#e3f2fd" : "#f5f5f5",
+                                  borderRight: "1px solid #eee"
+                                }}
+                              />
+                            );
+                          })}
+
+                        </Box>
+                      </HorizontalScroll>
+                    </TableCell>
+
+
+
 
                   </TableRow>
 
@@ -501,94 +853,6 @@ export default function POManagementPage() {
                   {row.subrows.map((sub, index) => (
                     <React.Fragment key={sub.id}>
 
-                      {/* 얇은 줄 */}
-                      {/* ⭐ 첫 번째 subrow는 얇은 줄을 그리지 않는다 */}
-                      {index !== 0 && (
-                        <TableRow sx={{ height: 0 }}>
-
-                          {/* 1) 발주진행명 */}
-                          {!showIncomingOnly && (
-                            <TableCell
-                              sx={{
-                                padding: 0,
-                                borderBottom: "none",
-                                fontWeight: "bold", fontSize: "15px"
-                              }}
-                            />
-                          )}
-
-                          {/* 2) 파트구분 */}
-                          {!showIncomingOnly && (
-                            <TableCell
-                              sx={{
-                                padding: 0,
-                                borderBottom: "none",
-                                fontWeight: "bold", fontSize: "15px"
-                              }}
-                            />
-                          )}
-
-
-                          {/* 4) 업체 */}
-                          <TableCell
-                            sx={{
-                              padding: 0,
-                              borderBottom: "none",
-                              fontWeight: "bold", fontSize: "15px"
-                            }}
-                          />
-
-
-                          {/* 6) 오토텍->발주일자 */}
-                          <TableCell
-                            sx={{
-                              padding: 0,
-                              borderBottom: "none",
-                              fontWeight: "bold", fontSize: "15px"
-                            }}
-                          />
-
-                          {/* 5) 작업 일수 */}
-                          <TableCell
-                            sx={{
-                              padding: 0,
-                              borderBottom: "none",
-                              fontWeight: "bold", fontSize: "15px"
-                            }}
-                          />
-
-                          {/* 7) 북미 발주일자 (필터 OFF일 때만) -> 입고일자*/}
-                          {!showIncomingOnly && (
-                            <TableCell
-                              sx={{
-                                padding: 0,
-                                borderBottom: "none",
-                                fontWeight: "bold", fontSize: "15px"
-                              }}
-                            />
-                          )}
-
-                          {/* 8) 발주품목 수 */}
-                          <TableCell
-                            sx={{
-                              padding: 0,
-                              borderBottom: "none",
-                              fontWeight: "bold", fontSize: "15px"
-                            }}
-                          />
-
-                          {/* 9) 입고품목 수 */}
-                          {!showIncomingOnly && (
-                            <TableCell
-                              sx={{
-                                padding: 0,
-                                borderBottom: "none",
-                                fontWeight: "bold", fontSize: "15px"
-                              }}
-                            />
-                          )}
-                        </TableRow>
-                      )}
 
                       {/* subRow 실제 데이터 */}
                       <TableRow
@@ -733,6 +997,40 @@ export default function POManagementPage() {
                             )}
                           </TableCell>
                         )}
+                        {/* 📊 sub 진행률 */}
+                        <TableCell align="center">
+                          {calcSubProgress(sub)}%
+                        </TableCell>
+
+                        {/* 📅 sub Gantt */}
+                        <TableCell colSpan={visibleGanttWeeks.length} sx={{ p: 0 }}>
+                          <Box
+                            ref={(el) => {
+                              if (el) subGanttRefs.current[sub.id] = el;
+                            }}
+                            sx={{
+                              overflow: "hidden"   // ❗ 스크롤 금지
+                            }}
+                          >
+                            <Box sx={{ display: "flex" }}>
+                              {ganttWeeks.map((week, i) => (
+                                <Box
+                                  key={i}
+                                  sx={{
+                                    minWidth: 28,
+                                    height: 42,
+                                    bgcolor: isWeekActive(week, sub) ? "#90caf9" : "#f5f5f5",
+                                    borderRight: "1px solid #eee"
+                                  }}
+                                />
+                              ))}
+
+                            </Box>
+                          </Box>
+                        </TableCell>
+
+
+
 
                       </TableRow>
 
