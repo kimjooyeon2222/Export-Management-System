@@ -22,6 +22,20 @@ import { apiFetch } from "api/apiFetch";
 
 export default function POManagementPage() {
 
+  const calcParentQty = (subrows = []) => {
+    let ordered = 0;
+    let received = 0;
+
+    subrows.forEach(sub => {
+      ordered += Number(sub.request_date || 0);
+      received += Number(sub.method || 0);
+    });
+
+    return { ordered, received };
+  };
+  const [ganttScrollLeft, setGanttScrollLeft] = useState(0);
+
+
   const isValidDateString = (v) =>
     typeof v === "string" &&
     /^\d{4}-\d{2}-\d{2}$/.test(v);
@@ -542,7 +556,7 @@ export default function POManagementPage() {
 
                   onScroll={(e) => {
                     const left = e.target.scrollLeft;
-
+                    setGanttScrollLeft(left);
                     if (monthScrollRef.current)
                       monthScrollRef.current.scrollLeft = left;
 
@@ -679,6 +693,8 @@ export default function POManagementPage() {
 
           <TableBody>
             {filteredRows.map((row) => {
+              const { ordered, received } = calcParentQty(row.subrows);
+
               const parentRange = getParentDateRangeFromSubrows(row.subrows);
 
               const parentOtotekDate = parentRange
@@ -768,57 +784,44 @@ export default function POManagementPage() {
 
                     {/* 북미도착요청일자 -> 발주 품목 수 */}
                     <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
-                      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 1 }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "center",
+                          alignItems: "center",
+                          gap: 1
+                        }}
+                      >
+                        {/* ⭐ sub 합계만 표시 */}
+                        <Box>{ordered}</Box>
 
-                        {/* 날짜 입력/표시 */}
-                        {editMode ? (
-                          <TextField
-                            size="small"
-                            value={row.request_date}
-                            onChange={(e) => updateCell(row.id, "request_date", e.target.value)}
-                          />
-                        ) : (
-                          row.request_date
-                        )}
-
-                        {/* + / - 버튼 */}
+                        {/* + 버튼만 editMode일 때 */}
                         {editMode && (
-                          <>
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              onClick={() => addSubRow(row.id)}
-                              sx={{ minWidth: 26, padding: "0 6px" }}
-                            >
-                              +
-                            </Button>
-
-
-                          </>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            onClick={() => addSubRow(row.id)}
+                            sx={{ minWidth: 26, padding: "0 6px" }}
+                          >
+                            +
+                          </Button>
                         )}
                       </Box>
                     </TableCell>
 
+
                     {/* 운송방법-> 입고 품목 수 */}
                     {/* 입고품목 수 (부모도 입력 가능) */}
+                    {/* 운송방법 -> 입고 품목 수 */}
                     {!showIncomingOnly && (
                       <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
-                        {editMode ? (
-                          <TextField
-                            size="small"
-                            value={row.method}
-                            onChange={(e) =>
-                              updateCell(row.id, "method", e.target.value)
-                            }
-                          />
-                        ) : (
-                          row.method
-                        )}
+                        {received}
                       </TableCell>
                     )}
 
+
                     {/* 📊 부모 진행률 */}
-                    <TableCell align="center">
+                    <TableCell align="center" sx={{fontWeight:"bold", fontSize:"15px"}}>
                       {calcParentProgress(row.subrows)}%
                     </TableCell>
 
@@ -830,7 +833,6 @@ export default function POManagementPage() {
 
                         onScroll={(e) => {
                           const left = e.target.scrollLeft;
-
                           if (monthScrollRef.current)
                             monthScrollRef.current.scrollLeft = left;
 
@@ -1066,6 +1068,7 @@ export default function POManagementPage() {
                 </React.Fragment>
               );
             })}
+
           </TableBody>
 
         </Table>
