@@ -21,6 +21,58 @@ const API_BASE = import.meta.env.VITE_API_URL;
 import { apiFetch } from "api/apiFetch";
 
 export default function POManagementPage() {
+  const ProgressBar = ({ value, variant = "sub" }) => {
+    const v = Math.max(0, Math.min(100, value));
+    const isParent = variant === "parent";
+
+    return (
+      <Box
+        sx={{
+          position: "relative",
+          width: "100%",
+          height: isParent ? 22 : 14,
+          backgroundColor: isParent ? "#eef6ea" : "#f4f8ef",
+          borderRadius: "4px",
+          overflow: "hidden"
+        }}
+      >
+        {/* 진행 바 */}
+        <Box
+          sx={{
+            height: "100%",
+            width: `${v}%`,
+            background: isParent
+              // 🔥 부모: 확실한 그라데이션
+              ? "linear-gradient(90deg, #8fd48a 0%, #3fae66 100%)"
+              // 🌿 자식: 단색 연두 (명확)
+              : "#b6e58c",
+            boxShadow: isParent
+              ? "inset 0 0 0 1px rgba(0,0,0,0.05)"
+              : "none",
+            transition: "width 0.3s ease"
+          }}
+        />
+
+        {/* 퍼센트 텍스트 */}
+        <Box
+          sx={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: isParent ? "13px" : "11px",
+            fontWeight: isParent ? 700 : 600,
+            color: isParent ? "#163b28" : "#2f4a2f",
+            pointerEvents: "none"
+          }}
+        >
+          {v}%
+        </Box>
+      </Box>
+    );
+  };
+
 
   const calcParentQty = (subrows = []) => {
     let ordered = 0;
@@ -821,8 +873,8 @@ export default function POManagementPage() {
 
 
                     {/* 📊 부모 진행률 */}
-                    <TableCell align="center" sx={{fontWeight:"bold", fontSize:"15px"}}>
-                      {calcParentProgress(row.subrows)}%
+                    <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>
+                      <ProgressBar value={calcParentProgress(row.subrows)} variant="parent" />
                     </TableCell>
 
                     <TableCell colSpan={ganttWeeks.length} sx={{ p: 0 }}>
@@ -1023,8 +1075,9 @@ export default function POManagementPage() {
                         )}
                         {/* 📊 sub 진행률 */}
                         <TableCell align="center">
-                          {calcSubProgress(sub)}%
+                          <ProgressBar value={calcSubProgress(sub)} />
                         </TableCell>
+
 
                         {/* 📅 sub Gantt */}
                         <TableCell colSpan={visibleGanttWeeks.length} sx={{ p: 0 }}>
