@@ -358,7 +358,19 @@ export default function POManagementPage() {
         상태
   ---------------------------------- */
   const [editMode, setEditMode] = useState(false);
-  const [showIncomingOnly, setShowIncomingOnly] = useState(false);
+  const [showParentOnly, setShowParentOnly] = useState(true);
+  const [partFilter, setPartFilter] = useState("전체");
+  const PART_OPTIONS = [
+    "전체",
+    "CPC",
+    "EV서브품",
+    "HPDC",
+    "고주파",
+    "금형",
+    "사상",
+    "오일",
+    "용해보온로"
+  ];
 
 
   const updateSubCell = (parentId, subId, field, value) => {
@@ -408,11 +420,11 @@ export default function POManagementPage() {
         제목 자동 생성
   ---------------------------------- */
   const getHeaderTitle = () => {
-    if (!usDate) return "PO# INFO";
+    if (!usDate) return "Purchase Order";
     const d = new Date(usDate);
     const y = d.getFullYear();
     const m = d.getMonth() + 1;
-    return `PO# INFO (${y}년  ${m}월)`;
+    return `Purchase Order (${y}년  ${m}월)`;
   };
 
 
@@ -453,7 +465,15 @@ export default function POManagementPage() {
     );
   };
 
-  const filteredRows = poRows;
+  const filteredRows = poRows.filter(row => {
+    // 파트구분 필터
+    if (partFilter !== "전체" && row.manager !== partFilter) {
+      return false;
+    }
+
+    return true;
+  });
+
 
 
   /* ----------------------------------
@@ -507,14 +527,39 @@ export default function POManagementPage() {
           mb: 1
         }}
       >
-        {/* 왼쪽: 필터 버튼 */}
-        <Button
-          variant="outlined"
-          sx={{ fontWeight: "bold", fontSize: "15px", mb: 0.5 }}
-          onClick={() => setShowIncomingOnly(prev => !prev)}
-        >
-          도착예정 필터
-        </Button>
+        {/* 왼쪽: 필터 영역 */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Button
+            variant="outlined"
+            sx={{ fontWeight: "bold", fontSize: "15px" }}
+            onClick={() => setShowParentOnly(prev => !prev)}
+          >
+            발주 상세보기
+          </Button>
+
+
+          {/* ⭐ 파트구분 콤보박스 */}
+          <Select
+            size="small"
+            value={partFilter}
+            onChange={(e) => setPartFilter(e.target.value)}
+            sx={{
+              minWidth: 140,
+              fontWeight: "bold",
+              "& .MuiSelect-select": {
+                fontWeight: "bold"
+              }
+            }}
+          >
+            {PART_OPTIONS.map(opt => (
+              <MenuItem key={opt} value={opt}  sx={{ fontWeight: "bold" }}>
+                {opt}
+                
+              </MenuItem>
+            ))}
+          </Select>
+        </Box>
+
 
         {/* 오른쪽: 행추가/행삭제 버튼 */}
         <Box sx={{ display: "flex", gap: 1 }}>
@@ -554,17 +599,17 @@ export default function POManagementPage() {
         >
           <colgroup>
             {/* ===== 좌측 발주정보 영역 (70%) ===== */}
-            {!showIncomingOnly && <col style={{ width: "10%" }} />}  {/* 발주진행명 */}
-            {!showIncomingOnly && <col style={{ width: "6%" }} />}   {/* 파트구분 */}
+            <col style={{ width: "10%" }} />  {/* 발주진행명 */}
+            <col style={{ width: "6%" }} />  {/* 파트구분 */}
 
             <col style={{ width: "12%" }} />  {/* 발주번호 / 업체 */}
             <col style={{ width: "8%" }} />   {/* 발주일자 */}
             <col style={{ width: "6%" }} />   {/* 작업일수 */}
 
-            {!showIncomingOnly && <col style={{ width: "8%" }} />}   {/* 입고일자 */}
+            <col style={{ width: "8%" }} />   {/* 입고일자 */}
 
             <col style={{ width: "7%" }} />   {/* 발주품목 수 */}
-            {!showIncomingOnly && <col style={{ width: "7%" }} />}   {/* 입고품목 수 */}
+            <col style={{ width: "7%" }} />  {/* 입고품목 수 */}
 
             <col style={{ width: "6%" }} />   {/* 진행률 */}
 
@@ -599,18 +644,8 @@ export default function POManagementPage() {
             {/* 🔹 월 헤더 (추가된 부분) */}
             <TableRow>
               {/* 왼쪽 고정 컬럼 영역 비우기 */}
-              <TableCell
-                colSpan={
-                  (!showIncomingOnly ? 2 : 0) + // 발주진행명, 파트구분
-                  1 + // 발주번호 / 업체
-                  1 + // 발주일자
-                  1 + // 작업일수
-                  (!showIncomingOnly ? 1 : 0) + // 입고일자
-                  1 + // 발주품목 수
-                  (!showIncomingOnly ? 1 : 0) + // 입고품목 수
-                  1   // 진행률
-                }
-              />
+              <TableCell colSpan={9} />
+
 
               <TableCell colSpan={visibleGanttWeeks.length} sx={{ p: 0 }}>
 
@@ -665,20 +700,20 @@ export default function POManagementPage() {
             <TableRow>
 
               {/* 결재목차 + 운송방법 숨김 */}
-              {!showIncomingOnly && (
-                <>
-                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
-                    발주진행명<br /> (수정자)
-                  </TableCell>
-                </>
-              )}
+
+
+              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
+                발주진행명<br /> (수정자)
+              </TableCell>
+
+
 
               {/* 담당자 숨김 */}
-              {!showIncomingOnly && (
-                <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
-                  파트구분
-                </TableCell>
-              )}
+
+              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
+                파트구분
+              </TableCell>
+
 
               {/* ⭐ 업체는 항상 표시 */}
               <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
@@ -692,11 +727,11 @@ export default function POManagementPage() {
                 작업일수
               </TableCell>
 
-              {!showIncomingOnly && (
-                <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
-                  입고일자
-                </TableCell>
-              )}
+
+              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
+                입고일자
+              </TableCell>
+
               <TableCell
                 align="center"
                 sx={{ fontWeight: "bold", fontSize: "15px", position: "relative" }}
@@ -705,13 +740,13 @@ export default function POManagementPage() {
               </TableCell>
 
               {/* 결재목차 + 운송방법 숨김 */}
-              {!showIncomingOnly && (
-                <>
-                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
-                    입고품목 수
-                  </TableCell>
-                </>
-              )}
+
+
+              <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
+                입고품목 수
+              </TableCell>
+
+
 
               <TableCell align="center">진행률</TableCell>
 
@@ -776,34 +811,34 @@ export default function POManagementPage() {
 
                   }}>
                     {/* 결재목차 */}
-                    {!showIncomingOnly && (
-                      <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "13px", borderBottom: "5px solid #c2c2c2" }}>
-                        {editMode ? (
-                          <TextField
-                            size="small"
-                            value={row.subject}
-                            onChange={(e) => updateCell(row.id, "subject", e.target.value)}
-                          />
-                        ) : (
-                          row.subject
-                        )}
-                      </TableCell>
-                    )}
+
+                    <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "13px", borderBottom: "5px solid #c2c2c2" }}>
+                      {editMode ? (
+                        <TextField
+                          size="small"
+                          value={row.subject}
+                          onChange={(e) => updateCell(row.id, "subject", e.target.value)}
+                        />
+                      ) : (
+                        row.subject
+                      )}
+                    </TableCell>
+
 
                     {/* 파트구분 */}
-                    {!showIncomingOnly && (
-                      <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
-                        {editMode ? (
-                          <TextField
-                            size="small"
-                            value={row.manager}
-                            onChange={(e) => updateCell(row.id, "manager", e.target.value)}
-                          />
-                        ) : (
-                          row.manager
-                        )}
-                      </TableCell>
-                    )}
+
+                    <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
+                      {editMode ? (
+                        <TextField
+                          size="small"
+                          value={row.manager}
+                          onChange={(e) => updateCell(row.id, "manager", e.target.value)}
+                        />
+                      ) : (
+                        row.manager
+                      )}
+                    </TableCell>
+
 
 
 
@@ -836,12 +871,12 @@ export default function POManagementPage() {
                     </TableCell>
 
                     {/* 북미 발주일자 -> 입고일자*/}
-                    {!showIncomingOnly && (
-                      <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
-                        {parentOrderDate}
-                      </TableCell>
 
-                    )}
+                    <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
+                      {parentOrderDate}
+                    </TableCell>
+
+
 
                     {/* 북미도착요청일자 -> 발주 품목 수 */}
                     <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
@@ -874,11 +909,11 @@ export default function POManagementPage() {
                     {/* 운송방법-> 입고 품목 수 */}
                     {/* 입고품목 수 (부모도 입력 가능) */}
                     {/* 운송방법 -> 입고 품목 수 */}
-                    {!showIncomingOnly && (
-                      <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
-                        {received}
-                      </TableCell>
-                    )}
+
+                    <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
+                      {received}
+                    </TableCell>
+
 
 
                     {/* 📊 부모 진행률 */}
@@ -922,139 +957,140 @@ export default function POManagementPage() {
                   </TableRow>
 
                   {/* ⭐ subrow 렌더링 (부모 바로 아래) */}
-                  {row.subrows.map((sub, index) => (
-                    <React.Fragment key={sub.id}>
+                  {!showParentOnly &&
+                    row.subrows.map((sub, index) => (
+                      <React.Fragment key={sub.id}>
 
 
-                      {/* subRow 실제 데이터 */}
-                      <TableRow
-                        sx={{
-                          bgcolor: "#fff",
-                          height: 42,                // 부모와 동일한 세로 높이
+                        {/* subRow 실제 데이터 */}
+                        <TableRow
+                          sx={{
+                            bgcolor: "#fff",
+                            height: 42,                // 부모와 동일한 세로 높이
 
-                          "& td": {
-                            fontWeight: "bold",
-                            padding: "6px 8px",     // 부모와 비슷한 padding 적용
-                            fontSize: "15px"        // 글자 크기도 동일하게
-                          }
-                        }}
-                      >
+                            "& td": {
+                              fontWeight: "bold",
+                              padding: "6px 8px",     // 부모와 비슷한 padding 적용
+                              fontSize: "15px"        // 글자 크기도 동일하게
+                            }
+                          }}
+                        >
 
-                        {/* 결재목차 ->  발주진행명 */}
-                        {!showIncomingOnly && (
-                          <>
-                            <TableCell />
-                          </>
-                        )}
+                          {/* 결재목차 ->  발주진행명 */}
 
-                        {/* 담당자-> 파트구분 */}
-                        {!showIncomingOnly && <TableCell />}
+
+                          <TableCell />
 
 
 
-
-                        {/* 업체 */}
-                        <TableCell align="center">
-                          {editMode ? (
-                            <TextField
-                              size="small"
-                              value={sub.company}
-                              onChange={(e) =>
-                                updateSubCell(row.id, sub.id, "company", e.target.value)
-                              }
-                            />
-                          ) : (
-                            sub.company
-                          )}
-                        </TableCell>
+                          {/* 담당자-> 파트구분 */}
+                          <TableCell />
 
 
 
 
-                        {/* 오토텍 -> 발주일자*/}
-                        <TableCell align="center">
-                          {editMode ? (
-                            <TextField
-                              size="small"
-                              value={sub.ototek_date}
-                              onChange={(e) =>
-                                updateSubCell(row.id, sub.id, "ototek_date", e.target.value)
-                              }
-                            />
-                          ) : (
-                            sub.ototek_date
-                          )}
-                        </TableCell>
-
-                        {/* 남은 일수-> 작업일수 */}
-                        <TableCell align="center">
-                          {editMode ? (
-                            <TextField
-                              size="small"
-                              value={sub.work_days}
-                              onChange={(e) =>
-                                updateSubCell(row.id, sub.id, "work_days", e.target.value)
-                              }
-                            />
-                          ) : (
-                            sub.work_days
-                          )}
-                        </TableCell>
-
-                        {/* 북미발주 빈칸 -> 입고일자 */}
-                        <TableCell align="center">
-                          {editMode ? (
-                            <TextField
-                              size="small"
-                              value={sub.order_date}
-                              onChange={(e) =>
-                                updateSubCell(row.id, sub.id, "order_date", e.target.value)
-                              }
-                            />
-                          ) : (
-                            sub.order_date
-                          )}
-                        </TableCell>
-
-                        {/* (A) 요청일자 + 삭제 버튼을 같은 셀 안에 넣기 -> 발주품목 수 */}
-                        <TableCell align="center">
-                          <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 1 }}>
+                          {/* 업체 */}
+                          <TableCell align="center">
                             {editMode ? (
                               <TextField
                                 size="small"
-                                value={sub.request_date}
+                                value={sub.company}
                                 onChange={(e) =>
-                                  updateSubCell(row.id, sub.id, "request_date", e.target.value)
+                                  updateSubCell(row.id, sub.id, "company", e.target.value)
                                 }
                               />
                             ) : (
-                              sub.request_date
+                              sub.company
                             )}
+                          </TableCell>
 
-                            {editMode && (
-                              <Button
+
+
+
+                          {/* 오토텍 -> 발주일자*/}
+                          <TableCell align="center">
+                            {editMode ? (
+                              <TextField
                                 size="small"
-                                variant="outlined"
-                                color="error"
-                                onClick={() => removeSubRow(row.id, sub.id)}
-
-
-                                sx={{ minWidth: "26px", padding: "0 6px" }}
-                              >
-                                -
-                              </Button>
+                                value={sub.ototek_date}
+                                onChange={(e) =>
+                                  updateSubCell(row.id, sub.id, "ototek_date", e.target.value)
+                                }
+                              />
+                            ) : (
+                              sub.ototek_date
                             )}
-                          </Box>
-                        </TableCell>
+                          </TableCell>
+
+                          {/* 남은 일수-> 작업일수 */}
+                          <TableCell align="center">
+                            {editMode ? (
+                              <TextField
+                                size="small"
+                                value={sub.work_days}
+                                onChange={(e) =>
+                                  updateSubCell(row.id, sub.id, "work_days", e.target.value)
+                                }
+                              />
+                            ) : (
+                              sub.work_days
+                            )}
+                          </TableCell>
+
+                          {/* 북미발주 빈칸 -> 입고일자 */}
+                          <TableCell align="center">
+                            {editMode ? (
+                              <TextField
+                                size="small"
+                                value={sub.order_date}
+                                onChange={(e) =>
+                                  updateSubCell(row.id, sub.id, "order_date", e.target.value)
+                                }
+                              />
+                            ) : (
+                              sub.order_date
+                            )}
+                          </TableCell>
+
+                          {/* (A) 요청일자 + 삭제 버튼을 같은 셀 안에 넣기 -> 발주품목 수 */}
+                          <TableCell align="center">
+                            <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 1 }}>
+                              {editMode ? (
+                                <TextField
+                                  size="small"
+                                  value={sub.request_date}
+                                  onChange={(e) =>
+                                    updateSubCell(row.id, sub.id, "request_date", e.target.value)
+                                  }
+                                />
+                              ) : (
+                                sub.request_date
+                              )}
+
+                              {editMode && (
+                                <Button
+                                  size="small"
+                                  variant="outlined"
+                                  color="error"
+                                  onClick={() => removeSubRow(row.id, sub.id)}
+
+
+                                  sx={{ minWidth: "26px", padding: "0 6px" }}
+                                >
+                                  -
+                                </Button>
+                              )}
+                            </Box>
+                          </TableCell>
 
 
 
 
 
 
-                        {/* 운송수단 -> 입고 품목 수 */}
-                        {/* 입고품목 수 (기존 method 사용) */}
-                        {!showIncomingOnly && (
+                          {/* 운송수단 -> 입고 품목 수 */}
+                          {/* 입고품목 수 (기존 method 사용) */}
+
                           <TableCell align="center">
                             {editMode ? (
                               <TextField
@@ -1068,52 +1104,52 @@ export default function POManagementPage() {
                               sub.method
                             )}
                           </TableCell>
-                        )}
-                        {/* 📊 sub 진행률 */}
-                        <TableCell align="center">
-                          <ProgressBar value={calcSubProgress(sub)} />
-                        </TableCell>
+
+                          {/* 📊 sub 진행률 */}
+                          <TableCell align="center">
+                            <ProgressBar value={calcSubProgress(sub)} />
+                          </TableCell>
 
 
-                        {/* 📅 sub Gantt */}
-                        <TableCell colSpan={visibleGanttWeeks.length} sx={{ p: 0 }}>
-                          <Box
-                            ref={(el) => {
-                              if (el) subGanttRefs.current[sub.id] = el;
-                            }}
-                            sx={{
-                              overflow: "hidden"   // ❗ 스크롤 금지
-                            }}
-                          >
-                            <Box sx={{ display: "flex" }}>
-                              {ganttWeeks.map((week, i) => (
-                                <Box
-                                  key={i}
-                                  sx={{
-                                    minWidth: 28,
-                                    height: 42,
-                                    bgcolor: isWeekActive(week, sub)
-                                      ? "rgba(130,177,255,0.35)"
-                                      : "#f5f5f5",
-                                    borderRadius: isWeekActive(week, sub) ? "2px" : 0,
+                          {/* 📅 sub Gantt */}
+                          <TableCell colSpan={visibleGanttWeeks.length} sx={{ p: 0 }}>
+                            <Box
+                              ref={(el) => {
+                                if (el) subGanttRefs.current[sub.id] = el;
+                              }}
+                              sx={{
+                                overflow: "hidden"   // ❗ 스크롤 금지
+                              }}
+                            >
+                              <Box sx={{ display: "flex" }}>
+                                {ganttWeeks.map((week, i) => (
+                                  <Box
+                                    key={i}
+                                    sx={{
+                                      minWidth: 28,
+                                      height: 42,
+                                      bgcolor: isWeekActive(week, sub)
+                                        ? "rgba(130,177,255,0.35)"
+                                        : "#f5f5f5",
+                                      borderRadius: isWeekActive(week, sub) ? "2px" : 0,
 
-                                    borderRight: "1px solid #eee"
-                                  }}
-                                />
-                              ))}
+                                      borderRight: "1px solid #eee"
+                                    }}
+                                  />
+                                ))}
 
 
+                              </Box>
                             </Box>
-                          </Box>
-                        </TableCell>
+                          </TableCell>
 
 
 
 
-                      </TableRow>
+                        </TableRow>
 
-                    </React.Fragment>
-                  ))}
+                      </React.Fragment>
+                    ))}
                 </React.Fragment>
               );
             })}

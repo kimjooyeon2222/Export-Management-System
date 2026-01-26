@@ -132,7 +132,7 @@ export default function ExportCombo() {
           }
         }}
       >
-        PO# 관리
+        PO 관리
       </Button>
 
 
