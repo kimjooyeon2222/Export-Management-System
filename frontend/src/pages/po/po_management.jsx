@@ -21,6 +21,8 @@ const API_BASE = import.meta.env.VITE_API_URL;
 import { apiFetch } from "api/apiFetch";
 
 export default function POManagementPage() {
+
+
   const ProgressBar = ({ value, variant = "sub" }) => {
     const v = Math.max(0, Math.min(100, value));
     const isParent = variant === "parent";
@@ -85,7 +87,6 @@ export default function POManagementPage() {
 
     return { ordered, received };
   };
-  const [ganttScrollLeft, setGanttScrollLeft] = useState(0);
 
 
   const isValidDateString = (v) =>
@@ -251,6 +252,15 @@ export default function POManagementPage() {
     );
   }, [ganttWeeks, visibleMonthStart]);
 
+  const visibleStartIndex = React.useMemo(() => {
+    if (!visibleGanttWeeks.length) return 0;
+
+    const firstVisible = visibleGanttWeeks[0];
+
+    return ganttWeeks.findIndex(
+      w => w.start.getTime() === firstVisible.start.getTime()
+    );
+  }, [ganttWeeks, visibleGanttWeeks]);
 
   /* ============================
      📊 Progress 계산
@@ -608,7 +618,6 @@ export default function POManagementPage() {
 
                   onScroll={(e) => {
                     const left = e.target.scrollLeft;
-                    setGanttScrollLeft(left);
                     if (monthScrollRef.current)
                       monthScrollRef.current.scrollLeft = left;
 
@@ -876,26 +885,18 @@ export default function POManagementPage() {
                     <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>
                       <ProgressBar value={calcParentProgress(row.subrows)} variant="parent" />
                     </TableCell>
-
-                    <TableCell colSpan={ganttWeeks.length} sx={{ p: 0 }}>
-                      <HorizontalScroll
-                        ref={ganttScrollRef}
-                        showButtons={false}
-                        hideScrollbar
-
-                        onScroll={(e) => {
-                          const left = e.target.scrollLeft;
-                          if (monthScrollRef.current)
-                            monthScrollRef.current.scrollLeft = left;
-
-                          if (weekScrollRef.current)
-                            weekScrollRef.current.scrollLeft = left;
+                    <TableCell colSpan={visibleGanttWeeks.length} sx={{ p: 0 }}>
+                      <Box
+                        ref={(el) => {
+                          if (el) subGanttRefs.current[`parent-${row.id}`] = el;
+                        }}
+                        sx={{
+                          overflow: "hidden", pl: "7px"   // ⭐ 스크롤 제거
                         }}
                       >
                         <Box sx={{ display: "flex" }}>
-                          {visibleGanttWeeks.map((week, i) => {
+                          {ganttWeeks.map((week, i) => {
                             const range = getParentDateRangeFromSubrows(row.subrows);
-
                             const active =
                               range &&
                               week.end >= range.start &&
@@ -908,19 +909,14 @@ export default function POManagementPage() {
                                   minWidth: 28,
                                   height: 42,
                                   bgcolor: active ? "#82b1ff" : "#f5f5f5",
-                                  borderRight: "1px solid #eee",
-                                  borderRadius: active ? "2px" : 0
+                                  borderRight: "1px solid #eee"
                                 }}
                               />
                             );
                           })}
-
-
                         </Box>
-                      </HorizontalScroll>
+                      </Box>
                     </TableCell>
-
-
 
 
                   </TableRow>
