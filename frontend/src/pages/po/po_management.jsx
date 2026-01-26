@@ -21,6 +21,22 @@ const API_BASE = import.meta.env.VITE_API_URL;
 import { apiFetch } from "api/apiFetch";
 
 export default function POManagementPage() {
+
+  // POManagementPage 맨 위 (import 아래)
+  const token = localStorage.getItem("access_token");
+
+  let loginCompany = "";
+  if (token) {
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      loginCompany = payload.company || "";
+    } catch (e) {
+      loginCompany = "";
+    }
+  }
+
+
+
   const getThreeMonthRange = (baseMonth) => {
     const start = new Date(baseMonth.getFullYear(), baseMonth.getMonth(), 1);
     const end = new Date(baseMonth.getFullYear(), baseMonth.getMonth() + 3, 0);
@@ -836,7 +852,7 @@ export default function POManagementPage() {
                   }}>
                     {/* 결재목차 */}
 
-                    <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "13px", borderBottom: "5px solid #c2c2c2" }}>
+                    <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "13px" }}>
                       {editMode ? (
                         <TextField
                           size="small"
@@ -844,9 +860,17 @@ export default function POManagementPage() {
                           onChange={(e) => updateCell(row.id, "subject", e.target.value)}
                         />
                       ) : (
-                        row.subject
+                        <>
+                          {row.subject}
+                          {loginCompany && (
+                            <span style={{ marginLeft: 4, fontSize: 11, color: "#666" }}>
+                              ({loginCompany})
+                            </span>
+                          )}
+                        </>
                       )}
                     </TableCell>
+
 
 
                     {/* 파트구분 */}
