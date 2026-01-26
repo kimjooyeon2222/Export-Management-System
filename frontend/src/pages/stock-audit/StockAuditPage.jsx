@@ -18,6 +18,12 @@ import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import { apiFetch } from "api/apiFetch";
 
+const sortByDateDesc = (list) =>
+  [...list].sort(
+    (a, b) => dayjs(b.auditDate).valueOf() - dayjs(a.auditDate).valueOf()
+  );
+
+
 export default function StockAuditListPage() {
   const handleSave = async () => {
     try {
@@ -44,11 +50,14 @@ export default function StockAuditListPage() {
 
   const handleAuditDateChange = (id, newDate) => {
     setRows(prev =>
-      prev.map(r =>
-        r.id === id ? { ...r, auditDate: newDate } : r
+      sortByDateDesc(
+        prev.map(r =>
+          r.id === id ? { ...r, auditDate: newDate } : r
+        )
       )
     );
   };
+
 
   const navigate = useNavigate();
   const [editMode, setEditMode] = useState(false);
@@ -71,7 +80,13 @@ export default function StockAuditListPage() {
       }
 
       // ✅ 화면에서 즉시 제거
-      setRows(prev => prev.filter(r => r.id !== id));
+      // ✅ 화면에서 즉시 제거 + 날짜순 정렬 유지
+      setRows(prev =>
+        sortByDateDesc(
+          prev.filter(r => r.id !== id)
+        )
+      );
+
     } catch (e) {
       console.error(e);
       alert("재고실사 삭제 중 오류 발생");
@@ -88,7 +103,7 @@ export default function StockAuditListPage() {
           auditDate: r.audit_date,
           itemCount: r.item_count
         }));
-        setRows(converted);
+        setRows(sortByDateDesc(converted));
       })
       .catch(err => {
         console.error("재고실사 목록 조회 실패", err);
@@ -166,14 +181,17 @@ export default function StockAuditListPage() {
       const created = await res.json();
 
       // ✅ DB에서 내려준 진짜 id 사용
-      setRows(prev => [
-        ...prev,
-        {
-          id: created.id,
-          auditDate: created.audit_date,
-          itemCount: created.item_count || 0
-        }
-      ]);
+      setRows(prev =>
+        sortByDateDesc([
+          ...prev,
+          {
+            id: created.id,
+            auditDate: created.audit_date,
+            itemCount: created.item_count || 0
+          }
+        ])
+      );
+
 
     } catch (e) {
       console.error(e);

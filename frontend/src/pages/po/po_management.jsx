@@ -534,7 +534,7 @@ export default function POManagementPage() {
             sx={{ fontWeight: "bold", fontSize: "15px" }}
             onClick={() => setShowParentOnly(prev => !prev)}
           >
-            PO 상세보기
+            PO 상세
           </Button>
 
 
@@ -552,9 +552,9 @@ export default function POManagementPage() {
             }}
           >
             {PART_OPTIONS.map(opt => (
-              <MenuItem key={opt} value={opt}  sx={{ fontWeight: "bold" }}>
+              <MenuItem key={opt} value={opt} sx={{ fontWeight: "bold" }}>
                 {opt}
-                
+
               </MenuItem>
             ))}
           </Select>
@@ -625,12 +625,7 @@ export default function POManagementPage() {
                 />
               ))}
 
-
           </colgroup>
-
-
-
-
 
           <TableHead
             sx={{

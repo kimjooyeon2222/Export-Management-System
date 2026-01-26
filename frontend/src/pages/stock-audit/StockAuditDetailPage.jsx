@@ -17,6 +17,7 @@ import ItemSearchDialog from "components/dialog/ItemSearchDialog";
 import { useParams, useNavigate } from "react-router-dom";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import { apiFetch } from "api/apiFetch";
+import { TableContainer } from "@mui/material";
 
 export default function StockAuditDetailPage() {
     const makeTempId = () =>
