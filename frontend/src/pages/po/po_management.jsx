@@ -534,7 +534,7 @@ export default function POManagementPage() {
             sx={{ fontWeight: "bold", fontSize: "15px" }}
             onClick={() => setShowParentOnly(prev => !prev)}
           >
-            발주 상세보기
+            PO 상세보기
           </Button>
 
 
