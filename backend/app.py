@@ -67,24 +67,33 @@ from flask_jwt_extended import (
 
 @app.before_request
 def debug_auth():
-    # 🔕 OPTIONS 요청은 로그 안 찍음
+    # 🔕 CORS preflight 요청은 로그 생략
     if request.method == "OPTIONS":
         return
 
     try:
+        # JWT가 없어도 통과 (로그용)
         verify_jwt_in_request(optional=True)
 
         user_id = get_jwt_identity()
-        claims = get_jwt()
-        role = claims.get("role") if claims else None
+        claims = get_jwt() or {}
+
+        role = claims.get("role")
+        company = claims.get("company")   # ⭐ 추가된 부분
 
         if user_id:
-            print(f"👤 user_id={user_id} role={role} | {request.method} {request.path}")
+            print(
+                f"👤 user_id={user_id} "
+                f"role={role} "
+                f"company={company} | "
+                f"{request.method} {request.path}"
+            )
         else:
             print(f"👤 Anonymous | {request.method} {request.path}")
 
     except Exception as e:
         print("❌ before_request error:", e)
+
 
 
 CORS(

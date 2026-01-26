@@ -2,7 +2,6 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token
 from flask_bcrypt import Bcrypt
 import pymysql
-from flask_jwt_extended import create_access_token
 
 auth_bp = Blueprint("auth", __name__)
 bcrypt = Bcrypt()
@@ -36,7 +35,8 @@ def login():
     token = create_access_token(
     identity=str(user["id"]),        # 🔥 문자열로
     additional_claims={
-        "role": user["role"]
+        "role": user["role"],
+        "company": user.get("company")
     }
 )
 
@@ -44,5 +44,6 @@ def login():
 
     return jsonify({
         "access_token": token,
-        "role": user["role"]
+        "role": user["role"],
+        "company": user.get("company")
     })
