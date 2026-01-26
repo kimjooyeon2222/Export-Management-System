@@ -1443,28 +1443,62 @@ def save_po_bulk():
                     sub.editor_company = editor_company
 
             else:
-                # 신규 subrow
-                sub = POSubRow(
-                    po_id=po.id,
-                    request_date=s.get("request_date"),
-                    order_date=s.get("order_date"),
-                    work_days=s.get("work_days"),
-                    method=s.get("method"),
-                    company=s.get("company"),
-                    ototek_date=to_date(s.get("ototek_date")),
-                    editor_company=editor_company,
-                )
-                db.session.add(sub)
+                continue
 
-        # 4️⃣ 삭제된 subrow 제거
-        for sid, sub in existing.items():
-            if sid not in payload_ids:
-                db.session.delete(sub)
 
     db.session.commit()
     return jsonify({"message": "saved"})
 
 
+@app.route("/api/po", methods=["POST"])
+@jwt_required()
+@admin_required
+def create_po():
+    po = POManagement()
+    db.session.add(po)
+    db.session.commit()
+    return jsonify(po.to_dict()), 201
+
+@app.route("/api/po/<int:id>", methods=["DELETE"])
+@jwt_required()
+@admin_required
+def delete_po(id):
+    po = POManagement.query.get_or_404(id)
+
+    # subrow 먼저 삭제
+    POSubRow.query.filter_by(po_id=id).delete()
+
+    db.session.delete(po)
+    db.session.commit()
+    return jsonify({"message": "po deleted"})
+
+@app.route("/api/po/<int:po_id>/subrow", methods=["POST", "OPTIONS"])
+@jwt_required(optional=True)
+def create_po_subrow(po_id):
+    # 🔥 CORS preflight 처리
+    if request.method == "OPTIONS":
+        return "", 200
+
+    editor_company = get_jwt().get("company")
+
+    sub = POSubRow(
+        po_id=po_id,
+        editor_company=editor_company
+    )
+    db.session.add(sub)
+    db.session.commit()
+
+    return jsonify(sub.to_dict()), 201
+
+
+@app.route("/api/po/subrow/<int:id>", methods=["DELETE"])
+@jwt_required()
+@admin_required
+def delete_po_subrow(id):
+    sub = POSubRow.query.get_or_404(id)
+    db.session.delete(sub)
+    db.session.commit()
+    return jsonify({"message": "subrow deleted"})
 
 
 @app.route("/memo", methods=["GET"])

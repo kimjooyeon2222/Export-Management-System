@@ -16,7 +16,6 @@ import {
   TableBody,
   Paper
 } from "@mui/material";
-import { v4 as uuidv4 } from "uuid";
 const API_BASE = import.meta.env.VITE_API_URL;
 import { apiFetch } from "api/apiFetch";
 
@@ -123,21 +122,8 @@ export default function POManagementPage() {
   };
 
 
-  const [poRows, setPoRows] = useState([
-    {
-      id: uuidv4(),
-      order_date: "",
-      request_date: "",
-      ototek_date: "",
-      manager: "",
-      company: "",   // ⭐ 추가된 업체 컬럼
-      subject: "",
-      method: "",
-      subrows: []   // ⭐ 여기 추가
+  const [poRows, setPoRows] = useState([]);
 
-    }
-
-  ]);
 
   const ganttWeeks = React.useMemo(() => {
     const range = getDateRangeFromRows(poRows);
@@ -346,18 +332,6 @@ export default function POManagementPage() {
     }
   };
 
-  const removeSubRow = (parentId, subId) => {
-    setPoRows(prev =>
-      prev.map(r =>
-        r.id === parentId
-          ? {
-            ...r,
-            subrows: r.subrows.filter(sub => sub.id !== subId)
-          }
-          : r
-      )
-    );
-  };
 
 
   const handleSave = async () => {
@@ -416,8 +390,7 @@ export default function POManagementPage() {
               sub.id === subId
                 ? {
                   ...sub,
-                  [field]: value,
-                  editor_company: loginCompany   // ⭐ 여기 핵심
+                  [field]: value
                 }
                 : sub
             )
@@ -428,33 +401,54 @@ export default function POManagementPage() {
   };
 
 
-  const addSubRow = (parentId) => {
-    setShowParentOnly(false);
 
-    setPoRows(prev =>
-      prev.map(r =>
-        r.id === parentId
-          ? {
-            ...r,
-            subrows: [
-              ...r.subrows,
-              {
-                id: uuidv4(),
-                request_date: "",
-                ototek_date: "",
-                order_date: "",
-                work_days: "",
-                company: "",
-                method: ""
-              }
-            ]
-          }
-          : r
-      )
-    );
+  const addSubRow = async (parentId) => {
+    if (!editMode) return;
+
+    try {
+      const res = await apiFetch(
+        `${API_BASE}/api/po/${parentId}/subrow`,
+        { method: "POST" }
+      );
+      const newSub = await res.json();
+
+      setPoRows(prev =>
+        prev.map(r =>
+          r.id === parentId
+            ? { ...r, subrows: [...r.subrows, newSub] }
+            : r
+        )
+      );
+    } catch (e) {
+      alert("subrow 추가 실패");
+    }
   };
 
+  const removeSubRow = async (parentId, subId) => {
+    if (!editMode) return;
 
+    if (!window.confirm("이 subrow를 삭제할까요?")) return;
+
+    try {
+      await apiFetch(
+        `${API_BASE}/api/po/subrow/${subId}`,
+        { method: "DELETE" }
+      );
+
+      setPoRows(prev =>
+        prev.map(r =>
+          r.id === parentId
+            ? {
+              ...r,
+              subrows: r.subrows.filter(s => s.id !== subId)
+            }
+            : r
+        )
+      );
+    } catch (e) {
+      alert("subrow 삭제 실패");
+    }
+  };
 
   /* ----------------------------------
         제목 자동 생성
@@ -474,28 +468,37 @@ export default function POManagementPage() {
   /* ----------------------------------
         함수
   ---------------------------------- */
-  const addRow = () => {
+  const addRow = async () => {
     if (!editMode) return;
-    setPoRows((prev) => [
-      ...prev,
-      {
-        id: uuidv4(),
-        order_date: "",
-        request_date: "",
-        ototek_date: "",
-        manager: "",
-        company: "",
-        subject: "",
-        method: "해운",
-        subrows: []
-      }
-    ]);
+
+    try {
+      const res = await apiFetch(`${API_BASE}/api/po`, {
+        method: "POST"
+      });
+      const newRow = await res.json();
+
+      setPoRows(prev => [...prev, newRow]);
+    } catch {
+      alert("행 추가 실패");
+    }
+  };
+  const deleteRow = async (rowId) => {
+    if (!editMode) return;
+
+    if (!window.confirm("이 PO를 삭제할까요?")) return;
+
+    try {
+      await apiFetch(`${API_BASE}/api/po/${rowId}`, {
+        method: "DELETE"
+      });
+
+      setPoRows(prev => prev.filter(r => r.id !== rowId));
+    } catch {
+      alert("행 삭제 실패");
+    }
   };
 
-  const deleteRow = () => {
-    if (!editMode || poRows.length <= 1) return;
-    setPoRows((prev) => prev.slice(0, -1));
-  };
+
 
   const updateCell = (id, field, value) => {
     setPoRows((prev) =>
@@ -624,11 +627,12 @@ export default function POManagementPage() {
           <Button
             variant="contained"
             color="error"
-            disabled={!editMode}
-            onClick={deleteRow}
+            disabled={!editMode || poRows.length === 0}
+            onClick={() => deleteRow(poRows[poRows.length - 1].id)}
           >
             - 행삭제
           </Button>
+
         </Box>
       </Box>
 
