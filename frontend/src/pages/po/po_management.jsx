@@ -21,7 +21,127 @@ const API_BASE = import.meta.env.VITE_API_URL;
 import { apiFetch } from "api/apiFetch";
 
 export default function POManagementPage() {
+  const getThreeMonthRange = (baseMonth) => {
+    const start = new Date(baseMonth.getFullYear(), baseMonth.getMonth(), 1);
+    const end = new Date(baseMonth.getFullYear(), baseMonth.getMonth() + 3, 0);
+    return { start, end };
+  };
+  const getWeeksOfMonth = (year, month) => {
+    const weeks = [];
 
+    const monthStart = new Date(year, month, 1);
+    const monthEnd = new Date(year, month + 1, 0);
+
+    let weekIndex = 1;
+    let cursor = new Date(monthStart);
+
+    while (cursor <= monthEnd) {
+      const weekStart = new Date(cursor);
+      const weekEnd = new Date(cursor);
+      weekEnd.setDate(weekEnd.getDate() + 6);
+
+      weeks.push({
+        year,
+        month: month + 1,
+        label: `${weekIndex}`,
+        start: weekStart,
+        end: weekEnd
+      });
+
+      cursor.setDate(cursor.getDate() + 7);
+      weekIndex++;
+    }
+
+    return weeks;
+  };
+
+
+  const getMonthsBetween = (start, end) => {
+    const months = [];
+    const cursor = new Date(start.getFullYear(), start.getMonth(), 1);
+
+    while (cursor <= end) {
+      months.push({
+        year: cursor.getFullYear(),
+        month: cursor.getMonth() // 0-based
+      });
+      cursor.setMonth(cursor.getMonth() + 1);
+    }
+
+    return months;
+  };
+
+  const getWeeksByMonthRange = (startDate, endDate) => {
+    const months = getMonthsBetween(startDate, endDate);
+
+    return months.flatMap(m =>
+      getWeeksOfMonth(m.year, m.month)
+    );
+  };
+
+  const isValidDateString = (v) =>
+    typeof v === "string" &&
+    /^\d{4}-\d{2}-\d{2}$/.test(v);
+
+  const [visibleMonthStart, setVisibleMonthStart] = useState(null);
+
+  const getDateRangeFromRows = (rows) => {
+    const dates = [];
+
+    rows.forEach(row => {
+      row.subrows?.forEach(sub => {
+        if (isValidDateString(sub.ototek_date))
+          dates.push(new Date(sub.ototek_date));
+
+        if (isValidDateString(sub.order_date))
+          dates.push(new Date(sub.order_date));
+      });
+    });
+
+    if (dates.length === 0) return null;
+
+    return {
+      start: new Date(Math.min(...dates)),
+      end: new Date(Math.max(...dates))
+    };
+  };
+
+
+  const [poRows, setPoRows] = useState([
+    {
+      id: uuidv4(),
+      order_date: "",
+      request_date: "",
+      ototek_date: "",
+      manager: "",
+      company: "",   // ⭐ 추가된 업체 컬럼
+      subject: "",
+      method: "",
+      subrows: []   // ⭐ 여기 추가
+
+    }
+
+  ]);
+
+  const ganttWeeks = React.useMemo(() => {
+    const range = getDateRangeFromRows(poRows);
+    if (!range) return [];
+    return getWeeksByMonthRange(range.start, range.end);
+  }, [poRows]);
+
+
+
+  const visibleGanttWeeks = React.useMemo(() => {
+    if (!visibleMonthStart) return [];
+
+    const { start, end } = getThreeMonthRange(visibleMonthStart);
+
+    return ganttWeeks.filter(
+      (w) => w.end >= start && w.start <= end
+    );
+  }, [ganttWeeks, visibleMonthStart]);
+
+  const ganttColCount = Math.max(visibleGanttWeeks.length, 1);
 
   const ProgressBar = ({ value, variant = "sub" }) => {
     const v = Math.max(0, Math.min(100, value));
@@ -89,46 +209,29 @@ export default function POManagementPage() {
   };
 
 
-  const isValidDateString = (v) =>
-    typeof v === "string" &&
-    /^\d{4}-\d{2}-\d{2}$/.test(v);
 
 
   const ganttScrollRef = useRef(null);
 
   const subGanttRefs = useRef({});
 
-  const [visibleMonthStart, setVisibleMonthStart] = useState(null);
-  const getThreeMonthRange = (baseMonth) => {
-    const start = new Date(baseMonth.getFullYear(), baseMonth.getMonth(), 1);
-    const end = new Date(baseMonth.getFullYear(), baseMonth.getMonth() + 3, 0);
-    return { start, end };
-  };
+
 
   const monthScrollRef = useRef(null);
   const weekScrollRef = useRef(null);
   const [usDate, setUsDate] = useState("");
+
+
+
+
   useEffect(() => {
-    if (!usDate) return;
-    const d = new Date(usDate);
-    setVisibleMonthStart(new Date(d.getFullYear(), d.getMonth(), 1));
-  }, [usDate]);
+    const range = getDateRangeFromRows(poRows);
+    if (!range) return;
 
-  const [poRows, setPoRows] = useState([
-    {
-      id: uuidv4(),
-      order_date: "",
-      request_date: "",
-      ototek_date: "",
-      manager: "",
-      company: "",   // ⭐ 추가된 업체 컬럼
-      subject: "",
-      method: "",
-      subrows: []   // ⭐ 여기 추가
-
-    }
-
-  ]);
+    setVisibleMonthStart(
+      new Date(range.start.getFullYear(), range.start.getMonth(), 1)
+    );
+  }, [poRows]);
   const isWeekActive = (week, sub) => {
     if (!sub.ototek_date || !sub.order_date) return false;
 
@@ -161,96 +264,10 @@ export default function POManagementPage() {
 
 
 
-  const getDateRangeFromRows = (rows) => {
-    const dates = [];
-
-    rows.forEach(row => {
-      row.subrows?.forEach(sub => {
-        if (isValidDateString(sub.ototek_date))
-          dates.push(new Date(sub.ototek_date));
-
-        if (isValidDateString(sub.order_date))
-          dates.push(new Date(sub.order_date));
-      });
-    });
-
-    if (dates.length === 0) return null;
-
-    return {
-      start: new Date(Math.min(...dates)),
-      end: new Date(Math.max(...dates))
-    };
-  };
 
 
-  const getMonthsBetween = (start, end) => {
-    const months = [];
-    const cursor = new Date(start.getFullYear(), start.getMonth(), 1);
-
-    while (cursor <= end) {
-      months.push({
-        year: cursor.getFullYear(),
-        month: cursor.getMonth() // 0-based
-      });
-      cursor.setMonth(cursor.getMonth() + 1);
-    }
-
-    return months;
-  };
 
 
-  const getWeeksOfMonth = (year, month) => {
-    const weeks = [];
-
-    const monthStart = new Date(year, month, 1);
-    const monthEnd = new Date(year, month + 1, 0);
-
-    let weekIndex = 1;
-    let cursor = new Date(monthStart);
-
-    while (cursor <= monthEnd) {
-      const weekStart = new Date(cursor);
-      const weekEnd = new Date(cursor);
-      weekEnd.setDate(weekEnd.getDate() + 6);
-
-      weeks.push({
-        year,
-        month: month + 1,
-        label: `${weekIndex}`,
-        start: weekStart,
-        end: weekEnd
-      });
-
-      cursor.setDate(cursor.getDate() + 7);
-      weekIndex++;
-    }
-
-    return weeks;
-  };
-  const getWeeksByMonthRange = (startDate, endDate) => {
-    const months = getMonthsBetween(startDate, endDate);
-
-    return months.flatMap(m =>
-      getWeeksOfMonth(m.year, m.month)
-    );
-  };
-
-
-  const ganttWeeks = React.useMemo(() => {
-    const range = getDateRangeFromRows(poRows);
-    if (!range) return [];
-    return getWeeksByMonthRange(range.start, range.end);
-  }, [poRows]);
-
-  const visibleGanttWeeks = React.useMemo(() => {
-    if (!visibleMonthStart) return [];
-
-    const { start, end } = getThreeMonthRange(visibleMonthStart);
-
-    return ganttWeeks.filter(
-      (w) => w.end >= start && w.start <= end
-    );
-  }, [ganttWeeks, visibleMonthStart]);
 
   const visibleStartIndex = React.useMemo(() => {
     if (!visibleGanttWeeks.length) return 0;
@@ -391,6 +408,8 @@ export default function POManagementPage() {
   };
 
   const addSubRow = (parentId) => {
+    setShowParentOnly(false);
+
     setPoRows(prev =>
       prev.map(r =>
         r.id === parentId
@@ -492,11 +511,20 @@ export default function POManagementPage() {
         <Box sx={{ display: "flex", gap: 1 }}>
           <Button
             variant="outlined"
-            onClick={() => setEditMode(!editMode)}
+            onClick={() => {
+              const next = !editMode;
+              setEditMode(next);
+
+              // ⭐ 수정모드 켜질 때 subrow 자동 표시
+              if (next) {
+                setShowParentOnly(false);
+              }
+            }}
             sx={{ fontWeight: "bold" }}
           >
             {editMode ? "수정모드 종료" : "수정모드 활성화"}
           </Button>
+
 
           <Button variant="contained" disabled={!editMode} onClick={handleSave} >
             저장
@@ -614,16 +642,16 @@ export default function POManagementPage() {
             <col style={{ width: "6%" }} />   {/* 진행률 */}
 
             {/* ===== 우측 간트 영역 (30%) ===== */}
-            {visibleGanttWeeks.length > 0 &&
-              visibleGanttWeeks.map((_, i) => (
-                <col
-                  key={i}
-                  style={{
-                    minWidth: 28,
-                    width: `${30 / visibleGanttWeeks.length}%`
-                  }}
-                />
-              ))}
+            {Array.from({ length: ganttColCount }).map((_, i) => (
+              <col
+                key={i}
+                style={{
+                  minWidth: 28,
+                  width: `${30 / ganttColCount}%`
+                }}
+              />
+            ))}
+
 
           </colgroup>
 
@@ -642,7 +670,7 @@ export default function POManagementPage() {
               <TableCell colSpan={9} />
 
 
-              <TableCell colSpan={visibleGanttWeeks.length} sx={{ p: 0 }}>
+              <TableCell colSpan={ganttColCount} sx={{ p: 0 }}>
 
                 <HorizontalScroll
 
@@ -745,7 +773,8 @@ export default function POManagementPage() {
 
               <TableCell align="center">진행률</TableCell>
 
-              <TableCell colSpan={ganttWeeks.length} sx={{ p: 0 }}>
+              <TableCell colSpan={ganttColCount} sx={{ p: 0 }}>
+
                 <HorizontalScroll
                   ref={weekScrollRef}
                   showButtons={false}
@@ -915,7 +944,7 @@ export default function POManagementPage() {
                     <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>
                       <ProgressBar value={calcParentProgress(row.subrows)} variant="parent" />
                     </TableCell>
-                    <TableCell colSpan={visibleGanttWeeks.length} sx={{ p: 0 }}>
+                    <TableCell colSpan={ganttColCount} sx={{ p: 0 }}>
                       <Box
                         ref={(el) => {
                           if (el) subGanttRefs.current[`parent-${row.id}`] = el;
@@ -1107,7 +1136,7 @@ export default function POManagementPage() {
 
 
                           {/* 📅 sub Gantt */}
-                          <TableCell colSpan={visibleGanttWeeks.length} sx={{ p: 0 }}>
+                          <TableCell colSpan={ganttColCount} sx={{ p: 0 }}>
                             <Box
                               ref={(el) => {
                                 if (el) subGanttRefs.current[sub.id] = el;
