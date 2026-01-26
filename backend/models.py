@@ -486,7 +486,7 @@ class POSubRow(db.Model):
     work_days = db.Column(db.String(20)) 
     method = db.Column(db.String(50))
     company = db.Column(db.String(100))
-
+    editor_company = db.Column(db.String(100)) 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -501,6 +501,7 @@ class POSubRow(db.Model):
             "work_days": self.work_days,
             "method": self.method,
             "company": self.company,
+            "editor_company": self.editor_company,
         }
 
 

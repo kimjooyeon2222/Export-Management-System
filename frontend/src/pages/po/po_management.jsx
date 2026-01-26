@@ -414,7 +414,11 @@ export default function POManagementPage() {
             ...row,
             subrows: row.subrows.map(sub =>
               sub.id === subId
-                ? { ...sub, [field]: value }
+                ? {
+                  ...sub,
+                  [field]: value,
+                  editor_company: loginCompany   // ⭐ 여기 핵심
+                }
                 : sub
             )
           }
@@ -422,6 +426,7 @@ export default function POManagementPage() {
       )
     );
   };
+
 
   const addSubRow = (parentId) => {
     setShowParentOnly(false);
@@ -742,7 +747,7 @@ export default function POManagementPage() {
 
 
               <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
-                발주진행명<br /> (수정자)
+                발주진행명
               </TableCell>
 
 
@@ -756,7 +761,7 @@ export default function POManagementPage() {
 
               {/* ⭐ 업체는 항상 표시 */}
               <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
-                발주번호 / 업체
+                발주번호 / 업체<br /> (수정자)
               </TableCell>
 
               <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
@@ -852,7 +857,7 @@ export default function POManagementPage() {
                   }}>
                     {/* 결재목차 */}
 
-                    <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "13px" }}>
+                    <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "13px", borderBottom: "5px solid #c2c2c2" }}>
                       {editMode ? (
                         <TextField
                           size="small"
@@ -860,17 +865,9 @@ export default function POManagementPage() {
                           onChange={(e) => updateCell(row.id, "subject", e.target.value)}
                         />
                       ) : (
-                        <>
-                          {row.subject}
-                          {loginCompany && (
-                            <span style={{ marginLeft: 4, fontSize: 11, color: "#666" }}>
-                              ({loginCompany})
-                            </span>
-                          )}
-                        </>
+                        row.subject
                       )}
                     </TableCell>
-
 
 
                     {/* 파트구분 */}
@@ -1048,7 +1045,14 @@ export default function POManagementPage() {
                                 }
                               />
                             ) : (
-                              sub.company
+                              <>
+                                {sub.company}
+                                {sub.editor_company && (
+                                  <span style={{ marginLeft: 4, fontSize: 12, color: "#666" }}>
+                                    ({sub.editor_company})
+                                  </span>
+                                )}
+                              </>
                             )}
                           </TableCell>
 
