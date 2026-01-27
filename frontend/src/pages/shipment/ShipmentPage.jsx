@@ -32,6 +32,12 @@ const DOMESTIC_ITEMS = [
 
 const US_ITEMS = ["미국 운송료", "통관료", "ISF파일"];
 
+const ROUTE_LABEL = {
+  SAVANNAH: "BUSAN → SAVANNAH",
+  MOBILE: "BUSAN → MOBILE",
+  LA: "BUSAN → LA"
+};
+
 export default function ShipmentPage() {
   const [editMode, setEditMode] = useState(false);
   const [route, setRoute] = useState("SAVANNAH");
@@ -46,7 +52,7 @@ export default function ShipmentPage() {
     setMonth(Number(m));
   }, [usDate]);
 
-  const yearLabel = `'${usDate?.slice(2, 4)}년도`;
+  const yearShort = usDate ? usDate.slice(2, 4) : "25";
 
   const [domestic, setDomestic] = useState(
     DOMESTIC_ITEMS.map(name => ({ name, qty: 1, v20: 0, v40: 0 }))
@@ -96,14 +102,19 @@ export default function ShipmentPage() {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ p: 3, pt: 2 }}>
       {/* 제목 */}
-      <Typography fontWeight="bold" fontSize={22} mb={1}>
-        {yearLabel} {month}월 신화USA 수출 해상운임비용
+      <Typography fontWeight="bold" mb={0.5}>
+        <Box component="span" sx={{ fontSize: 16 }}>
+          '{yearShort}년도{" "}
+        </Box>
+        <Box component="span" sx={{ fontSize: 22 }}>
+          {month}월 신화USA 수출 해상운임비용
+        </Box>
       </Typography>
 
-      {/* 북미 기준 날짜 */}
-      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 1 }}>
+      {/* 북미 기준 날짜 + 버튼 */}
+      <Box sx={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 1, mb: 1 }}>
         <TextField
           label="북미 기준 날짜"
           size="small"
@@ -112,10 +123,7 @@ export default function ShipmentPage() {
           InputProps={{ readOnly: !editMode }}
           sx={{ width: 220 }}
         />
-      </Box>
 
-      {/* 버튼 */}
-      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mb: 2 }}>
         <Button variant="outlined" onClick={() => setEditMode(p => !p)}>
           {editMode ? "수정모드 종료" : "수정모드 활성화"}
         </Button>
@@ -125,18 +133,26 @@ export default function ShipmentPage() {
       </Box>
 
       {/* 조건 */}
-      <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
-        <Select value={route} onChange={e => setRoute(e.target.value)}>
-          <MenuItem value="SAVANNAH">BUSAN → SAVANNAH</MenuItem>
-          <MenuItem value="MOBILE">BUSAN → MOBILE</MenuItem>
-          <MenuItem value="LA">BUSAN → LA</MenuItem>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 3, mb: 2, ml: 1 }}>
+        <Select
+          value={route}
+          onChange={e => setRoute(e.target.value)}
+          sx={{ fontWeight: "bold" }}
+        >
+          {Object.entries(ROUTE_LABEL).map(([k, v]) => (
+            <MenuItem key={k} value={k} sx={{ fontWeight: "bold" }}>
+              {v}
+            </MenuItem>
+          ))}
         </Select>
 
-        <Typography fontWeight="bold">월</Typography>
-        {month}
+        <Typography fontWeight="bold" fontSize={16}>
+          월&nbsp;{month}
+        </Typography>
 
-        <Typography fontWeight="bold">환율</Typography>
-        {renderValue(exchangeRate, e => setExchangeRate(e.target.value))}
+        <Typography fontWeight="bold" fontSize={16}>
+          환율&nbsp;{exchangeRate.toLocaleString()}
+        </Typography>
       </Box>
 
       <Paper sx={{ p: 2 }}>
@@ -162,12 +178,16 @@ export default function ShipmentPage() {
                 )}
                 <TableCell align="center">{r.name}</TableCell>
                 <TableCell align="center">{r.qty}</TableCell>
-                <TableCell align="center">{renderValue(r.v20, e => {
-                  const v=[...domestic]; v[i].v20=e.target.value; setDomestic(v);
-                })}</TableCell>
-                <TableCell align="center">{renderValue(r.v40, e => {
-                  const v=[...domestic]; v[i].v40=e.target.value; setDomestic(v);
-                })}</TableCell>
+                <TableCell align="center">
+                  {renderValue(r.v20, e => {
+                    const v = [...domestic]; v[i].v20 = e.target.value; setDomestic(v);
+                  })}
+                </TableCell>
+                <TableCell align="center">
+                  {renderValue(r.v40, e => {
+                    const v = [...domestic]; v[i].v40 = e.target.value; setDomestic(v);
+                  })}
+                </TableCell>
               </TableRow>
             ))}
 
@@ -178,15 +198,19 @@ export default function ShipmentPage() {
               <TableCell align="center" sx={subtotalCell}>{domesticSum.v40.toLocaleString()}</TableCell>
             </TableRow>
 
-            {/* ================= 해상운임 (소계 포함) ================= */}
+            {/* ================= 해상운임 ================= */}
             <TableRow>
               <TableCell rowSpan={2} align="center" sx={groupCellStyle}>
                 해상운임
               </TableCell>
-              <TableCell align="center">BUSAN → MOBILE</TableCell>
+              <TableCell align="center">{ROUTE_LABEL[route]}</TableCell>
               <TableCell align="center">{ocean.qty}</TableCell>
-              <TableCell align="center">{renderValue(ocean.v20, e => setOcean({ ...ocean, v20: e.target.value }))}</TableCell>
-              <TableCell align="center">{renderValue(ocean.v40, e => setOcean({ ...ocean, v40: e.target.value }))}</TableCell>
+              <TableCell align="center">
+                {renderValue(ocean.v20, e => setOcean({ ...ocean, v20: e.target.value }))}
+              </TableCell>
+              <TableCell align="center">
+                {renderValue(ocean.v40, e => setOcean({ ...ocean, v40: e.target.value }))}
+              </TableCell>
             </TableRow>
 
             <TableRow>
@@ -206,12 +230,16 @@ export default function ShipmentPage() {
                 )}
                 <TableCell align="center">{r.name}</TableCell>
                 <TableCell align="center">{r.qty}</TableCell>
-                <TableCell align="center">{renderValue(r.v20, e => {
-                  const v=[...usCosts]; v[i].v20=e.target.value; setUsCosts(v);
-                })}</TableCell>
-                <TableCell align="center">{renderValue(r.v40, e => {
-                  const v=[...usCosts]; v[i].v40=e.target.value; setUsCosts(v);
-                })}</TableCell>
+                <TableCell align="center">
+                  {renderValue(r.v20, e => {
+                    const v = [...usCosts]; v[i].v20 = e.target.value; setUsCosts(v);
+                  })}
+                </TableCell>
+                <TableCell align="center">
+                  {renderValue(r.v40, e => {
+                    const v = [...usCosts]; v[i].v40 = e.target.value; setUsCosts(v);
+                  })}
+                </TableCell>
               </TableRow>
             ))}
 
