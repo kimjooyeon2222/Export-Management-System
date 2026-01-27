@@ -82,12 +82,12 @@ export default function ExportCombo() {
         endIcon={<ArrowDropDownIcon />}
         sx={{
           fontWeight: 600,
-        
+
           width: 130,
           justifyContent: "center",
-         
+
           fontSize: 14,
-          
+
           borderRadius: "6px",
           backgroundColor: isDropdownActive ? "#e3f2fd" : "#fafafa",
           border: isDropdownActive
@@ -139,17 +139,20 @@ export default function ExportCombo() {
       <Box sx={{ width: 8 }}></Box>
 
       <Button
-        onClick={() => alert("운송 페이지는 준비중입니다.")}
+        onClick={() => navigate("/shipment")}
         sx={{
           fontSize: 14,
           fontWeight: 700,
-          color: "#333",
-          textTransform: "none",
           minWidth: 130,
-          whiteSpace: "nowrap",
-          border: "1px solid #cfcfcf",
+          textTransform: "none",
           borderRadius: "6px",
-          backgroundColor: "#fafafa",
+
+          backgroundColor: isActive("/shipment") ? "#e3f2fd" : "#fafafa",
+          border: isActive("/shipment")
+            ? "1.5px solid #1976d2"
+            : "1px solid #cfcfcf",
+          color: isActive("/shipment") ? "#1976d2" : "#333",
+
           "&:hover": {
             backgroundColor: "#e9f3ff",
             borderColor: "#90caf9"
@@ -158,6 +161,7 @@ export default function ExportCombo() {
       >
         운송
       </Button>
+
 
       {/* ▼ 드롭다운 메뉴 */}
       <Menu

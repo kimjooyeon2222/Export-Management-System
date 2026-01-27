@@ -14,6 +14,9 @@ const StockAuditPage = Loadable(lazy(() => import('pages/stock-audit/StockAuditP
 const StockAuditDetailPage = Loadable(
   lazy(() => import('pages/stock-audit/StockAuditDetailPage'))
 );
+const ShipmentPage = Loadable(
+  lazy(() => import('pages/shipment/ShipmentPage'))
+);
 
 
 // render - color
@@ -130,6 +133,11 @@ const MainRoutes = {
       path: 'po-management',
       element: <POManagementPage />
     },
+    {
+      path: 'shipment',
+      element: <ShipmentPage />
+    },
+
   ]
 };
 
