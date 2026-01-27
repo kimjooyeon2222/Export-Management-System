@@ -127,11 +127,11 @@ export default function ShipmentPage() {
         <Box sx={{ p: 3, pt: 2 }}>
             {/* 제목 */}
             <Typography fontWeight="bold" mb={0.5}>
-                <Box component="span" sx={{ fontSize: 20 }}>
-                    '{yearShort}년도{" "}
+                <Box component="span" sx={{ fontSize: 19 }}>
+                    {yearShort}년도{" "}
                 </Box>
-                <Box component="span" sx={{ fontSize: 20 }}>
-                    {month}월 신화USA 수출 해상운임비용
+                <Box component="span" sx={{ fontSize: 19 }}>
+                    {month}월 신화 USA 수출 해상운임비용
                 </Box>
             </Typography>
 
