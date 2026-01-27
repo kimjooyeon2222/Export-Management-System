@@ -111,7 +111,7 @@ export default function ShipmentPage() {
         ) : (
             value.toLocaleString()
         );
- 
+
 
 
     const subtotalCell = { bgcolor: "#fff3cd" };
@@ -238,7 +238,27 @@ export default function ShipmentPage() {
                                     </TableCell>
                                 )}
                                 <TableCell align="center" >{r.name}</TableCell>
-                                <TableCell align="center">{r.qty}</TableCell>
+                                <TableCell align="center">
+                                    {editMode ? (
+                                        <TextField
+                                            size="small"
+                                            type="number"
+                                            value={r.qty}
+                                            onChange={e => {
+                                                setDomesticMap(prev => ({
+                                                    ...prev,
+                                                    [route]: prev[route].map((row, idx) =>
+                                                        idx === i ? { ...row, qty: Number(e.target.value) } : row
+                                                    )
+                                                }));
+                                            }}
+                                            sx={{ width: 70 }}
+                                        />
+                                    ) : (
+                                        r.qty
+                                    )}
+                                </TableCell>
+
                                 <TableCell align="center">
                                     {renderValue(r.v20, e => {
                                         setDomesticMap(prev => ({
@@ -302,7 +322,22 @@ export default function ShipmentPage() {
                                 BUSAN → MOBILE
                             </TableCell>
 
-                            <TableCell align="center">{ocean.qty}</TableCell>
+                            <TableCell align="center">
+                                {editMode ? (
+                                    <TextField
+                                        size="small"
+                                        type="number"
+                                        value={ocean.qty}
+                                        onChange={e =>
+                                            setOcean({ ...ocean, qty: Number(e.target.value) })
+                                        }
+                                        sx={{ width: 70 }}
+                                    />
+                                ) : (
+                                    ocean.qty
+                                )}
+                            </TableCell>
+
                             <TableCell align="center">
                                 {renderValue(ocean.v20, e =>
                                     setOcean({ ...ocean, v20: e.target.value })
@@ -353,7 +388,27 @@ export default function ShipmentPage() {
                                     </TableCell>
                                 )}
                                 <TableCell align="center">{r.name}</TableCell>
-                                <TableCell align="center">{r.qty}</TableCell>
+                                <TableCell align="center">
+                                    {editMode ? (
+                                        <TextField
+                                            size="small"
+                                            type="number"
+                                            value={r.qty}
+                                            onChange={e => {
+                                                setUsCostMap(prev => ({
+                                                    ...prev,
+                                                    [route]: prev[route].map((row, idx) =>
+                                                        idx === i ? { ...row, qty: Number(e.target.value) } : row
+                                                    )
+                                                }));
+                                            }}
+                                            sx={{ width: 70 }}
+                                        />
+                                    ) : (
+                                        r.qty
+                                    )}
+                                </TableCell>
+
                                 <TableCell align="center">
                                     {renderValue(r.v20, e => {
                                         setUsCostMap(prev => ({
