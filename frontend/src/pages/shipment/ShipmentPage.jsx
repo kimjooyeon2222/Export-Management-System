@@ -45,14 +45,14 @@ export default function ShipmentPage() {
   const [exchangeRate, setExchangeRate] = useState(1470);
   const [usDate, setUsDate] = useState("2025-12-01");
 
-  /* 날짜 ↔ 월 연동 */
+  /* 날짜 → 월 연동 */
   useEffect(() => {
     if (!usDate) return;
     const [, m] = usDate.split("-");
     setMonth(Number(m));
   }, [usDate]);
 
-  const yearShort = usDate ? usDate.slice(2, 4) : "25";
+  const yearShort = usDate.slice(2, 4);
 
   const [domestic, setDomestic] = useState(
     DOMESTIC_ITEMS.map(name => ({ name, qty: 1, v20: 0, v40: 0 }))
@@ -76,6 +76,7 @@ export default function ShipmentPage() {
     );
 
   const domesticSum = useMemo(() => sumSection(domestic), [domestic]);
+
   const oceanSum = useMemo(
     () => ({
       v20: ocean.qty * ocean.v20 * exchangeRate,
@@ -83,6 +84,7 @@ export default function ShipmentPage() {
     }),
     [ocean, exchangeRate]
   );
+
   const usSum = useMemo(() => sumSection(usCosts), [usCosts]);
 
   const total20 = domesticSum.v20 + oceanSum.v20 + usSum.v20;
@@ -114,7 +116,15 @@ export default function ShipmentPage() {
       </Typography>
 
       {/* 북미 기준 날짜 + 버튼 */}
-      <Box sx={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 1, mb: 1 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "flex-end",
+          alignItems: "center",
+          gap: 1,
+          mb: 1
+        }}
+      >
         <TextField
           label="북미 기준 날짜"
           size="small"
@@ -127,6 +137,7 @@ export default function ShipmentPage() {
         <Button variant="outlined" onClick={() => setEditMode(p => !p)}>
           {editMode ? "수정모드 종료" : "수정모드 활성화"}
         </Button>
+
         <Button variant="contained" disabled={!editMode}>
           저장
         </Button>
@@ -150,13 +161,30 @@ export default function ShipmentPage() {
           월&nbsp;{month}
         </Typography>
 
-        <Typography fontWeight="bold" fontSize={16}>
-          환율&nbsp;{exchangeRate.toLocaleString()}
-        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Typography fontWeight="bold" fontSize={16}>
+            환율
+          </Typography>
+
+          {editMode ? (
+            <TextField
+              size="small"
+              value={exchangeRate}
+              onChange={e => setExchangeRate(Number(e.target.value))}
+              sx={{ width: 110 }}
+            />
+          ) : (
+            <Typography fontWeight="bold" fontSize={16}>
+              {exchangeRate.toLocaleString()}
+            </Typography>
+          )}
+        </Box>
       </Box>
 
+      {/* ================= 테이블 ================= */}
       <Paper sx={{ p: 2 }}>
-        <Table size="small">
+        {/* 🔥 이 한 줄만 추가됨 */}
+        <Table size="small" key={route}>
           <TableHead sx={{ bgcolor: "#e6f3ff" }}>
             <TableRow>
               {["구분", "내역", "수량", "20FT", "40HQ"].map(h => (
@@ -168,11 +196,15 @@ export default function ShipmentPage() {
           </TableHead>
 
           <TableBody sx={{ "& td": { fontWeight: "bold" } }}>
-            {/* ================= 국내비용 ================= */}
+            {/* 국내비용 */}
             {domestic.map((r, i) => (
               <TableRow key={r.name}>
                 {i === 0 && (
-                  <TableCell rowSpan={domestic.length + 1} align="center" sx={groupCellStyle}>
+                  <TableCell
+                    rowSpan={domestic.length + 1}
+                    align="center"
+                    sx={groupCellStyle}
+                  >
                     국내비용
                   </TableCell>
                 )}
@@ -180,25 +212,35 @@ export default function ShipmentPage() {
                 <TableCell align="center">{r.qty}</TableCell>
                 <TableCell align="center">
                   {renderValue(r.v20, e => {
-                    const v = [...domestic]; v[i].v20 = e.target.value; setDomestic(v);
+                    const v = [...domestic];
+                    v[i].v20 = e.target.value;
+                    setDomestic(v);
                   })}
                 </TableCell>
                 <TableCell align="center">
                   {renderValue(r.v40, e => {
-                    const v = [...domestic]; v[i].v40 = e.target.value; setDomestic(v);
+                    const v = [...domestic];
+                    v[i].v40 = e.target.value;
+                    setDomestic(v);
                   })}
                 </TableCell>
               </TableRow>
             ))}
 
             <TableRow>
-              <TableCell align="center" sx={subtotalCell}>소 계</TableCell>
+              <TableCell align="center" sx={subtotalCell}>
+                소 계
+              </TableCell>
               <TableCell sx={subtotalCell} />
-              <TableCell align="center" sx={subtotalCell}>{domesticSum.v20.toLocaleString()}</TableCell>
-              <TableCell align="center" sx={subtotalCell}>{domesticSum.v40.toLocaleString()}</TableCell>
+              <TableCell align="center" sx={subtotalCell}>
+                {domesticSum.v20.toLocaleString()}
+              </TableCell>
+              <TableCell align="center" sx={subtotalCell}>
+                {domesticSum.v40.toLocaleString()}
+              </TableCell>
             </TableRow>
 
-            {/* ================= 해상운임 ================= */}
+            {/* 해상운임 */}
             <TableRow>
               <TableCell rowSpan={2} align="center" sx={groupCellStyle}>
                 해상운임
@@ -206,25 +248,39 @@ export default function ShipmentPage() {
               <TableCell align="center">{ROUTE_LABEL[route]}</TableCell>
               <TableCell align="center">{ocean.qty}</TableCell>
               <TableCell align="center">
-                {renderValue(ocean.v20, e => setOcean({ ...ocean, v20: e.target.value }))}
+                {renderValue(ocean.v20, e =>
+                  setOcean({ ...ocean, v20: e.target.value })
+                )}
               </TableCell>
               <TableCell align="center">
-                {renderValue(ocean.v40, e => setOcean({ ...ocean, v40: e.target.value }))}
+                {renderValue(ocean.v40, e =>
+                  setOcean({ ...ocean, v40: e.target.value })
+                )}
               </TableCell>
             </TableRow>
 
             <TableRow>
-              <TableCell align="center" sx={subtotalCell}>소 계</TableCell>
+              <TableCell align="center" sx={subtotalCell}>
+                소 계
+              </TableCell>
               <TableCell sx={subtotalCell} />
-              <TableCell align="center" sx={subtotalCell}>{oceanSum.v20.toLocaleString()}</TableCell>
-              <TableCell align="center" sx={subtotalCell}>{oceanSum.v40.toLocaleString()}</TableCell>
+              <TableCell align="center" sx={subtotalCell}>
+                {oceanSum.v20.toLocaleString()}
+              </TableCell>
+              <TableCell align="center" sx={subtotalCell}>
+                {oceanSum.v40.toLocaleString()}
+              </TableCell>
             </TableRow>
 
-            {/* ================= 미국비용 ================= */}
+            {/* 미국비용 */}
             {usCosts.map((r, i) => (
               <TableRow key={r.name}>
                 {i === 0 && (
-                  <TableCell rowSpan={usCosts.length + 1} align="center" sx={groupCellStyle}>
+                  <TableCell
+                    rowSpan={usCosts.length + 1}
+                    align="center"
+                    sx={groupCellStyle}
+                  >
                     미국비용
                   </TableCell>
                 )}
@@ -232,31 +288,45 @@ export default function ShipmentPage() {
                 <TableCell align="center">{r.qty}</TableCell>
                 <TableCell align="center">
                   {renderValue(r.v20, e => {
-                    const v = [...usCosts]; v[i].v20 = e.target.value; setUsCosts(v);
+                    const v = [...usCosts];
+                    v[i].v20 = e.target.value;
+                    setUsCosts(v);
                   })}
                 </TableCell>
                 <TableCell align="center">
                   {renderValue(r.v40, e => {
-                    const v = [...usCosts]; v[i].v40 = e.target.value; setUsCosts(v);
+                    const v = [...usCosts];
+                    v[i].v40 = e.target.value;
+                    setUsCosts(v);
                   })}
                 </TableCell>
               </TableRow>
             ))}
 
             <TableRow>
-              <TableCell align="center" sx={subtotalCell}>소 계</TableCell>
+              <TableCell align="center" sx={subtotalCell}>
+                소 계
+              </TableCell>
               <TableCell sx={subtotalCell} />
-              <TableCell align="center" sx={subtotalCell}>{usSum.v20.toLocaleString()}</TableCell>
-              <TableCell align="center" sx={subtotalCell}>{usSum.v40.toLocaleString()}</TableCell>
+              <TableCell align="center" sx={subtotalCell}>
+                {usSum.v20.toLocaleString()}
+              </TableCell>
+              <TableCell align="center" sx={subtotalCell}>
+                {usSum.v40.toLocaleString()}
+              </TableCell>
             </TableRow>
 
-            {/* ================= 합계 ================= */}
+            {/* 합계 */}
             <TableRow sx={{ bgcolor: "#d1e7dd" }}>
               <TableCell />
               <TableCell align="center">합 계</TableCell>
               <TableCell />
-              <TableCell align="center">{total20.toLocaleString()}</TableCell>
-              <TableCell align="center">{total40.toLocaleString()}</TableCell>
+              <TableCell align="center">
+                {total20.toLocaleString()}
+              </TableCell>
+              <TableCell align="center">
+                {total40.toLocaleString()}
+              </TableCell>
             </TableRow>
           </TableBody>
         </Table>
