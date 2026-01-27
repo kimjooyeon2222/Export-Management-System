@@ -111,18 +111,16 @@ export default function ShipmentPage() {
         ) : (
             value.toLocaleString()
         );
-    const rowBottomBorder = {
-        borderBottom: "3px solid #c5c5c5"
-    };
+ 
 
 
     const subtotalCell = { bgcolor: "#fff3cd" };
     const groupCellStyle = {
-        borderBottom: "1px solid #c5c5c5",
+        borderBottom: "2px solid #c5c5c5",
         borderRight: "3px solid #c5c5c5",
-        //borderLeft: "3px solid #c5c5c5",
-        //borderTop: "3px solid #c5c5c5",
-        verticalAlign: "middle"
+        verticalAlign: "middle",
+        backgroundColor: "#fff",
+        pointerEvents: "none"   // 🔥 핵심
     };
 
     return (
@@ -209,7 +207,7 @@ export default function ShipmentPage() {
                 <Table size="small" key={route}>
                     <TableHead sx={{ bgcolor: "#e6f3ff", borderBottom: "1px solid #c5c5c5" }}>
                         <TableRow >
-                            {["구분", "내역", "수량", "20FT", "40HQ"].map(h => (
+                            {["구분", "내역", "수량\n(CBM&M/T)", "20'FT", "40'HQ"].map(h => (
                                 <TableCell key={h} align="center" sx={{ fontWeight: "bold", fontSize: "14px", borderBottom: "3px solid  #c5c5c5" }}>
                                     {h}
                                 </TableCell>
@@ -239,7 +237,7 @@ export default function ShipmentPage() {
                                         국내비용
                                     </TableCell>
                                 )}
-                                <TableCell align="center">{r.name}</TableCell>
+                                <TableCell align="center" >{r.name}</TableCell>
                                 <TableCell align="center">{r.qty}</TableCell>
                                 <TableCell align="center">
                                     {renderValue(r.v20, e => {
@@ -271,7 +269,7 @@ export default function ShipmentPage() {
                                 align="center"
                                 sx={{
                                     ...subtotalCell,
-                                    borderBottom: "3px solid #c5c5c5"
+                                    borderBottom: "2px solid #c5c5c5"
                                 }}
                             >
 
@@ -279,17 +277,17 @@ export default function ShipmentPage() {
                             </TableCell>
                             <TableCell sx={{
                                 ...subtotalCell,
-                                borderBottom: "3px solid #c5c5c5"
+                                borderBottom: "2px solid #c5c5c5"
                             }} />
                             <TableCell align="center" sx={{
                                 ...subtotalCell,
-                                borderBottom: "3px solid #c5c5c5"
+                                borderBottom: "2px solid #c5c5c5"
                             }}>
                                 {domesticSum.v20.toLocaleString()}
                             </TableCell>
                             <TableCell align="center" sx={{
                                 ...subtotalCell,
-                                borderBottom: "3px solid #c5c5c5"
+                                borderBottom: "2px solid #c5c5c5"
                             }}>
                                 {domesticSum.v40.toLocaleString()}
                             </TableCell>
@@ -320,23 +318,23 @@ export default function ShipmentPage() {
                         <TableRow>
                             <TableCell align="center" sx={{
                                 ...subtotalCell,
-                                borderBottom: "3px solid #c5c5c5"
+                                borderBottom: "2px solid #c5c5c5"
                             }}>
                                 소 계
                             </TableCell>
                             <TableCell sx={{
                                 ...subtotalCell,
-                                borderBottom: "3px solid #c5c5c5"
+                                borderBottom: "2px solid #c5c5c5"
                             }} />
                             <TableCell align="center" sx={{
                                 ...subtotalCell,
-                                borderBottom: "3px solid #c5c5c5"
+                                borderBottom: "2px solid #c5c5c5"
                             }}>
                                 {oceanSum.v20.toLocaleString()}
                             </TableCell>
                             <TableCell align="center" sx={{
                                 ...subtotalCell,
-                                borderBottom: "3px solid #c5c5c5"
+                                borderBottom: "2px solid #c5c5c5"
                             }}>
                                 {oceanSum.v40.toLocaleString()}
                             </TableCell>
@@ -384,23 +382,23 @@ export default function ShipmentPage() {
                         <TableRow>
                             <TableCell align="center" sx={{
                                 ...subtotalCell,
-                                borderBottom: "3px solid #c5c5c5"
+                                borderBottom: "2px solid #c5c5c5"
                             }}>
                                 소 계
                             </TableCell>
                             <TableCell sx={{
                                 ...subtotalCell,
-                                borderBottom: "3px solid #c5c5c5"
+                                borderBottom: "2px solid #c5c5c5"
                             }} />
                             <TableCell align="center" sx={{
                                 ...subtotalCell,
-                                borderBottom: "3px solid #c5c5c5"
+                                borderBottom: "2px solid #c5c5c5"
                             }}>
                                 {usSum.v20.toLocaleString()}
                             </TableCell>
                             <TableCell align="center" sx={{
                                 ...subtotalCell,
-                                borderBottom: "3px solid #c5c5c5"
+                                borderBottom: "2px solid #c5c5c5"
                             }}>
                                 {usSum.v40.toLocaleString()}
                             </TableCell>
@@ -409,12 +407,12 @@ export default function ShipmentPage() {
                         {/* 합계 */}
                         <TableRow sx={{ bgcolor: "#d1e7dd" }}>
                             <TableCell />
-                            <TableCell align="center" sx={{ borderBottom: "3px solid #c5c5c5" }}>합 계</TableCell>
+                            <TableCell align="center" sx={{ borderBottom: "2px solid #c5c5c5" }}>합 계</TableCell>
                             <TableCell />
-                            <TableCell align="center" sx={{ borderBottom: "3px solid #c5c5c5" }}>
+                            <TableCell align="center" sx={{ borderBottom: "2px solid #c5c5c5" }}>
                                 {total20.toLocaleString()}
                             </TableCell>
-                            <TableCell align="center" sx={{ borderBottom: "3px solid #c5c5c5" }}>
+                            <TableCell align="center" sx={{ borderBottom: "2px solid #c5c5c5" }}>
                                 {total40.toLocaleString()}
                             </TableCell>
                         </TableRow>
