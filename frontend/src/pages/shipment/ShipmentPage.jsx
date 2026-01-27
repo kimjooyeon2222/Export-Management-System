@@ -105,7 +105,7 @@ export default function ShipmentPage() {
     <Box sx={{ p: 3, pt: 2 }}>
       {/* 제목 */}
       <Typography fontWeight="bold" mb={0.5}>
-        <Box component="span" sx={{ fontSize: 16 }}>
+        <Box component="span" sx={{ fontSize: 22 }}>
           '{yearShort}년도{" "}
         </Box>
         <Box component="span" sx={{ fontSize: 22 }}>
