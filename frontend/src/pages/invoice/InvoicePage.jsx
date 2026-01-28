@@ -315,7 +315,18 @@ export default function InvoicePage() {
     }
 
     // 🔹 입력값 정규화
-    const input = poNumber.trim().replace(/[^0-9A-Za-z]/g, "").toLowerCase();
+    const raw = poNumber.trim();
+
+    const input =
+      searchType === "name" || searchType === "vendor"
+        ? raw.toLowerCase().replace(/\s+/g, "").replace(/[^가-힣a-z0-9]/g, "")
+        : raw.replace(/[^0-9A-Za-z]/g, "").toLowerCase();
+
+    // 🔥 반드시 필요
+    if (!input) {
+      alert("유효한 검색어를 입력하세요.");
+      return;
+    }
 
     let matchedPacking = [];
 
@@ -730,7 +741,7 @@ export default function InvoicePage() {
 
                   return (
                     <TableRow key={i}>
-                      <TableCell align="center" sx={{whiteSpace: "nowrap"}}>{merged.exporter || '-'}</TableCell>
+                      <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>{merged.exporter || '-'}</TableCell>
 
                       {/* INV 클릭 시 PACKING LIST 이동 */}
                       <TableCell
@@ -759,14 +770,14 @@ export default function InvoicePage() {
 
                       <TableCell
                         align="center"
-                       sx={{whiteSpace: "nowrap"}}
+                        sx={{ whiteSpace: "nowrap" }}
                       >
                         {renderMultiline(merged.bl_no)}
                       </TableCell>
 
-                      <TableCell align="center" sx={{whiteSpace: "nowrap"}}>{displayShortDate(etd)}</TableCell>
-                      <TableCell align="center"sx={{whiteSpace: "nowrap"}}>{displayShortDate(eta)}</TableCell>
-                      <TableCell align="center"sx={{whiteSpace: "nowrap"}}>{displayShortDate(delayed)}</TableCell>
+                      <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>{displayShortDate(etd)}</TableCell>
+                      <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>{displayShortDate(eta)}</TableCell>
+                      <TableCell align="center" sx={{ whiteSpace: "nowrap" }}>{displayShortDate(delayed)}</TableCell>
 
 
                       {/* 도착 여부 컬럼 */}
