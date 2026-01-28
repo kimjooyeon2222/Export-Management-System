@@ -282,7 +282,7 @@ export default function ShipmentPage() {
             {/* 제목 */}
             <Typography fontWeight="bold" mb={0.5}>
                 <Box component="span" sx={{ fontSize: 19 }}>
-                    {yearShort}년도{" "}
+                    {yearShort}년{" "}
                 </Box>
                 <Box component="span" sx={{ fontSize: 19 }}>
                     {month}월 신화 USA 수출 해상운임비용
