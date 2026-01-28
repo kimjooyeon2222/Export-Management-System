@@ -177,13 +177,11 @@ export default function OilShipmentSchedule() {
   };
 
   const deleteOilRow = () => {
-    // 선택 수정 모드 아니면 막기
     if (!oilEditSelectMode) {
       alert("선택 행 삭제를 사용하려면 먼저 선택 행 수정 버튼을 누르세요.");
       return;
     }
 
-    // 선택된 행 없으면 막기
     if (!editingOilNo) {
       alert("삭제할 행을 선택하세요.");
       return;
@@ -193,11 +191,29 @@ export default function OilShipmentSchedule() {
       return;
     }
 
-    setOilList(prev =>
-      prev.filter(oil => oil.no !== editingOilNo)
-    );
+    // 1️⃣ oilList 재정렬
+    setOilList(prev => {
+      const filtered = prev.filter(oil => oil.no !== editingOilNo);
+      return filtered.map((oil, idx) => ({
+        ...oil,
+        no: idx + 1,     // 🔥 1부터 다시
+      }));
+    });
 
-    // 상태 정리
+    // 2️⃣ scheduleRows도 같이 재정렬
+    setScheduleRows(prev => {
+      return prev
+        // 삭제된 seq 제거
+        .filter(row => Number(row.seq) !== Number(editingOilNo))
+        // 뒤에 있던 seq 당기기
+        .map(row => {
+          if (Number(row.seq) > Number(editingOilNo)) {
+            return { ...row, seq: row.seq - 1 };
+          }
+          return row;
+        });
+    });
+
     setEditingOilNo(null);
   };
 
@@ -644,7 +660,7 @@ export default function OilShipmentSchedule() {
                 }}
               >
                 <Button variant="contained" onClick={addOilRow}>+ 행 추가</Button>
-                <Button variant="outlined" color="error" onClick={deleteOilRow}>선택 행 삭제</Button>
+                <Button variant="outlined" color="error" onClick={deleteOilRow} sx={{fontWeight:"bold"}}>선택 행 삭제</Button>
 
 
 
@@ -673,7 +689,7 @@ export default function OilShipmentSchedule() {
                   저장하기
                 </Button>
 
-                <Button variant="outlined" color="error" onClick={() => setOilEditMode(false)}>
+                <Button variant="outlined" color="error" onClick={() => setOilEditMode(false)} sx={{fontWeight:"bold"}}>
                   수정 종료
                 </Button>
               </Box>
