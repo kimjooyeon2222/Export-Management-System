@@ -13,7 +13,7 @@ import {
     Select,
     MenuItem
 } from "@mui/material";
-import { borderLeft, borderRight } from "@mui/system";
+import { apiFetch } from "api/apiFetch";
 
 /* ============================
    항목 정의
@@ -40,42 +40,187 @@ const ROUTE_LABEL = {
 };
 
 export default function ShipmentPage() {
-    const [editMode, setEditMode] = useState(false);
+    const API_BASE = import.meta.env.VITE_API_URL;
+
     const [route, setRoute] = useState("SAVANNAH");
-    const [month, setMonth] = useState(12);
-    const [exchangeRate, setExchangeRate] = useState(1470);
-    const [usDate, setUsDate] = useState("2025-12-01");
+    const EMPTY_DOMESTIC = useMemo(
+        () => DOMESTIC_ITEMS.map(name => ({ name, qty: 1, v20: 0, v40: 0 })),
+        []
+    );
 
-    /* 날짜 → 월 연동 */
-    useEffect(() => {
-        if (!usDate) return;
-        const [, m] = usDate.split("-");
-        setMonth(Number(m));
-    }, [usDate]);
+    const EMPTY_US = useMemo(
+        () => US_ITEMS.map(name => ({ name, qty: 1, v20: 0, v40: 0 })),
+        []
+    );
 
-    const yearShort = usDate.slice(2, 4);
-
-    const emptyDomestic = () =>
-        DOMESTIC_ITEMS.map(name => ({ name, qty: 1, v20: 0, v40: 0 }));
-
-    const emptyUS = () =>
-        US_ITEMS.map(name => ({ name, qty: 1, v20: 0, v40: 0 }));
 
     const [domesticMap, setDomesticMap] = useState({
-        SAVANNAH: emptyDomestic(),
-        MOBILE: emptyDomestic(),
-        LA: emptyDomestic()
+        SAVANNAH: EMPTY_DOMESTIC.map(r => ({ ...r })),
+        MOBILE: EMPTY_DOMESTIC.map(r => ({ ...r })),
+        LA: EMPTY_DOMESTIC.map(r => ({ ...r }))
     });
 
     const [usCostMap, setUsCostMap] = useState({
-        SAVANNAH: emptyUS(),
-        MOBILE: emptyUS(),
-        LA: emptyUS()
+        SAVANNAH: EMPTY_US.map(r => ({ ...r })),
+        MOBILE: EMPTY_US.map(r => ({ ...r })),
+        LA: EMPTY_US.map(r => ({ ...r }))
     });
+
     const domestic = domesticMap[route];
     const usCosts = usCostMap[route];
 
     const [ocean, setOcean] = useState({ qty: 1, v20: 2900, v40: 3500 });
+    const [saving, setSaving] = useState(false);
+
+
+    const handleSave = async () => {
+        if (saving) return;
+        setSaving(true);
+        console.log("🔥 handleSave clicked");
+
+        const num = v => (v === "" || v == null ? 0 : Number(v));
+
+        try {
+            const payload = {
+                route,
+                us_date: usDate,
+                exchange_rate: exchangeRate,
+
+                domestic: domesticMap[route].map(r => ({
+                    name: r.name,
+                    qty: r.qty,
+                    v20: num(r.v20),
+                    v40: num(r.v40)
+
+                })),
+
+                ocean: {
+                    qty: ocean.qty,
+                    v20: Number(ocean.v20),
+                    v40: Number(ocean.v40)
+                },
+
+                us_costs: usCostMap[route].map(r => ({
+                    name: r.name,
+                    qty: r.qty,
+                    v20: num(r.v20),
+                    v40: num(r.v40)
+
+                }))
+            };
+            console.log("🔥 shipment payload", payload);
+
+            await apiFetch(`${API_BASE}/api/shipment/save`, {
+                method: "POST",
+                body: JSON.stringify(payload)
+            });
+
+
+
+
+
+            alert("저장되었습니다.");
+            setEditMode(false);
+
+
+        } catch (err) {
+            console.error(err);
+            alert("저장 중 오류가 발생했습니다.");
+        }
+    };
+
+    const roundUp10k = (value) =>
+        Math.ceil(value / 100000) * 100000;
+
+    const [editMode, setEditMode] = useState(false);
+
+    const [exchangeRate, setExchangeRate] = useState(1470);
+    const [usDate, setUsDate] = useState("2025-12-01");
+    const year = Number(usDate.slice(0, 4));
+    const month = Number(usDate.slice(5, 7));
+    useEffect(() => {
+        let cancelled = false;
+
+        const load = async () => {
+            try {
+                const response = await apiFetch(
+                    `${API_BASE}/api/shipment/load?route=${route}&year=${year}&month=${month}`
+                );
+
+                const res = await response.json();   // ⭐⭐⭐ 핵심 수정
+
+                if (cancelled) return;
+
+                if (!res || !res.header) {
+                    console.warn("📛 shipment header not found");
+
+                    setDomesticMap(prev => ({
+                        ...prev,
+                        [route]: EMPTY_DOMESTIC.map(r => ({ ...r }))
+                    }));
+
+                    setUsCostMap(prev => ({
+                        ...prev,
+                        [route]: EMPTY_US.map(r => ({ ...r }))
+                    }));
+
+                    setOcean({ qty: 1, v20: 0, v40: 0 });
+
+                    if (!editMode) {
+                        setExchangeRate(1470);
+                    }
+
+                    return;
+                }
+
+                if (!editMode) {
+                    setExchangeRate(res.header.exchange_rate);
+                }
+
+                setDomesticMap(prev => ({
+                    ...prev,
+                    [route]: res.domestic.map(r => ({
+                        name: r.item_name,
+                        qty: Number(r.qty),
+                        v20: Number(r.cost_20),
+                        v40: Number(r.cost_40)
+                    }))
+                }));
+
+                if (res.ocean) {
+                    setOcean({
+                        qty: Number(res.ocean.qty),
+                        v20: Number(res.ocean.cost_20_usd),
+                        v40: Number(res.ocean.cost_40_usd)
+                    });
+                }
+
+                setUsCostMap(prev => ({
+                    ...prev,
+                    [route]: res.us_costs.map(r => ({
+                        name: r.item_name,
+                        qty: Number(r.qty),
+                        v20: Number(r.cost_20_usd),
+                        v40: Number(r.cost_40_usd)
+                    }))
+                }));
+
+            } catch (e) {
+                console.error("shipment load error", e);
+            }
+        };
+
+        load();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [route, year, month]);
+
+
+
+    const yearShort = usDate.slice(2, 4);
+
 
     /* ============================
        계산
@@ -94,16 +239,25 @@ export default function ShipmentPage() {
 
     const oceanSum = useMemo(
         () => ({
-            v20: ocean.qty * ocean.v20 * exchangeRate,
-            v40: ocean.qty * ocean.v40 * exchangeRate
+            v20: ocean.qty * ocean.v20,
+            v40: ocean.qty * ocean.v40
         }),
-        [ocean, exchangeRate]
+        [ocean]
     );
+
 
     const usSum = useMemo(() => sumSection(usCosts), [usCosts]);
 
-    const total20 = domesticSum.v20 + oceanSum.v20 + usSum.v20;
-    const total40 = domesticSum.v40 + oceanSum.v40 + usSum.v40;
+    const total20 = roundUp10k(
+        domesticSum.v20 +
+        (oceanSum.v20 + usSum.v20) * exchangeRate
+    );
+
+    const total40 = roundUp10k(
+        domesticSum.v40 +
+        (oceanSum.v40 + usSum.v40) * exchangeRate
+    );
+
 
     const renderValue = (value, onChange) =>
         editMode ? (
@@ -154,21 +308,48 @@ export default function ShipmentPage() {
                     sx={{ width: 220 }}
                 />
 
-                <Button variant="outlined" onClick={() => setEditMode(p => !p)}>
-                    {editMode ? "수정모드 종료" : "수정모드 활성화"}
-                </Button>
+                {!editMode ? (
+                    /* 🔵 수정모드 진입 */
+                    <Button
+                        variant="outlined"
+                        onClick={() => setEditMode(true)}
+                        sx={{ fontWeight: "bold" }}
+                    >
+                        수정모드 활성화
+                    </Button>
+                ) : (
+                    /* 🔴 수정모드 종료 */
+                    <Button
+                        variant="outlined"
 
-                <Button variant="contained" disabled={!editMode}>
+                        onClick={() => setEditMode(false)}
+                        sx={{ fontWeight: "bold" }}
+                    >
+                        수정모드 종료
+                    </Button>
+                )}
+
+                <Button
+                    variant="contained"
+                    disabled={!editMode}
+                    onClick={handleSave}
+                >
                     저장
                 </Button>
             </Box>
+
 
             {/* 조건 */}
             <Box sx={{ display: "flex", alignItems: "center", gap: 3, mb: 2, ml: 1 }}>
                 <Select
                     value={route}
+                    disabled={editMode}
                     onChange={e => setRoute(e.target.value)}
-                    sx={{ fontWeight: "bold" }}
+                    sx={{
+                        fontWeight: "bold",
+                        bgcolor: editMode ? "#f0f0f0" : "inherit",
+                        cursor: editMode ? "not-allowed" : "pointer"
+                    }}
                 >
                     {Object.entries(ROUTE_LABEL).map(([k, v]) => (
                         <MenuItem key={k} value={k} sx={{ fontWeight: "bold" }}>
@@ -204,7 +385,7 @@ export default function ShipmentPage() {
             {/* ================= 테이블 ================= */}
             <Paper sx={{ p: 2 }}>
                 {/* 🔥 이 한 줄만 추가됨 */}
-                <Table size="small" key={route}>
+                <Table size="small">
                     <TableHead sx={{ bgcolor: "#e6f3ff", borderBottom: "1px solid #c5c5c5" }}>
                         <TableRow >
                             {["구분", "내역", "수량\n(CBM&M/T)", "20'FT", "40'HQ"].map(h => (
@@ -319,7 +500,7 @@ export default function ShipmentPage() {
                                 해상운임
                             </TableCell>
                             <TableCell align="center">
-                                BUSAN → MOBILE
+                                {ROUTE_LABEL[route]}
                             </TableCell>
 
                             <TableCell align="center">
@@ -339,15 +520,24 @@ export default function ShipmentPage() {
                             </TableCell>
 
                             <TableCell align="center">
-                                {renderValue(ocean.v20, e =>
-                                    setOcean({ ...ocean, v20: e.target.value })
+                                {editMode ? (
+                                    renderValue(ocean.v20, e =>
+                                        setOcean({ ...ocean, v20: e.target.value })
+                                    )
+                                ) : (
+                                    <>USD {Number(ocean.v20).toLocaleString()}</>
                                 )}
                             </TableCell>
                             <TableCell align="center">
-                                {renderValue(ocean.v40, e =>
-                                    setOcean({ ...ocean, v40: e.target.value })
+                                {editMode ? (
+                                    renderValue(ocean.v40, e =>
+                                        setOcean({ ...ocean, v40: e.target.value })
+                                    )
+                                ) : (
+                                    <>USD {Number(ocean.v40).toLocaleString()}</>
                                 )}
                             </TableCell>
+
                         </TableRow>
 
                         <TableRow>
@@ -365,13 +555,13 @@ export default function ShipmentPage() {
                                 ...subtotalCell,
                                 borderBottom: "2px solid #c5c5c5"
                             }}>
-                                {oceanSum.v20.toLocaleString()}
+                                USD {oceanSum.v20.toLocaleString()}
                             </TableCell>
                             <TableCell align="center" sx={{
                                 ...subtotalCell,
                                 borderBottom: "2px solid #c5c5c5"
                             }}>
-                                {oceanSum.v40.toLocaleString()}
+                                USD {oceanSum.v40.toLocaleString()}
                             </TableCell>
                         </TableRow>
 
@@ -410,27 +600,35 @@ export default function ShipmentPage() {
                                 </TableCell>
 
                                 <TableCell align="center">
-                                    {renderValue(r.v20, e => {
-                                        setUsCostMap(prev => ({
-                                            ...prev,
-                                            [route]: prev[route].map((row, idx) =>
-                                                idx === i ? { ...row, v20: e.target.value } : row
-                                            )
-                                        }));
-                                    })}
-
+                                    {editMode ? (
+                                        renderValue(r.v20, e => {
+                                            setUsCostMap(prev => ({
+                                                ...prev,
+                                                [route]: prev[route].map((row, idx) =>
+                                                    idx === i ? { ...row, v20: e.target.value } : row
+                                                )
+                                            }));
+                                        })
+                                    ) : (
+                                        <>USD {Number(r.v20).toLocaleString()}</>
+                                    )}
                                 </TableCell>
+
                                 <TableCell align="center">
-                                    {renderValue(r.v40, e => {
-                                        setUsCostMap(prev => ({
-                                            ...prev,
-                                            [route]: prev[route].map((row, idx) =>
-                                                idx === i ? { ...row, v40: e.target.value } : row
-                                            )
-                                        }));
-                                    })}
-
+                                    {editMode ? (
+                                        renderValue(r.v40, e => {
+                                            setUsCostMap(prev => ({
+                                                ...prev,
+                                                [route]: prev[route].map((row, idx) =>
+                                                    idx === i ? { ...row, v40: e.target.value } : row
+                                                )
+                                            }));
+                                        })
+                                    ) : (
+                                        <>USD {Number(r.v40).toLocaleString()}</>
+                                    )}
                                 </TableCell>
+
                             </TableRow>
                         ))}
 
@@ -449,13 +647,13 @@ export default function ShipmentPage() {
                                 ...subtotalCell,
                                 borderBottom: "2px solid #c5c5c5"
                             }}>
-                                {usSum.v20.toLocaleString()}
+                                USD {usSum.v20.toLocaleString()}
                             </TableCell>
                             <TableCell align="center" sx={{
                                 ...subtotalCell,
                                 borderBottom: "2px solid #c5c5c5"
                             }}>
-                                {usSum.v40.toLocaleString()}
+                                USD {usSum.v40.toLocaleString()}
                             </TableCell>
                         </TableRow>
 

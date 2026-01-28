@@ -625,7 +625,7 @@ export default function BracketPage() {
       <Box sx={{ mb: -4 }}>
         <Button
           variant="outlined"
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/dashboard/default")}
           sx={{
             borderColor: "#0069a6ff",
             color: "#0056a6ff",

@@ -32,6 +32,13 @@ from models import db, Invoice, PackingList, StockSetting, StockItem, ScheduleRo
 
 from models import AxleInventory, AxleSchedule
 from models import AxleSetting
+from models import (
+    ShipmentHeader,
+    ShipmentDomesticCost,
+    ShipmentOceanCost,
+    ShipmentUSCost
+)
+
 from datetime import datetime
 
 from flask_jwt_extended import JWTManager
@@ -2290,6 +2297,181 @@ def get_arrival_summary():
             summary[base_date_str]["total"] += 1
 
     return jsonify(sorted(summary.values(), key=lambda x: x["date"]))
+@app.route("/api/shipment/save", methods=["POST", "OPTIONS"])
+@jwt_required(optional=True)
+def save_shipment():
+    print("🔥 /api/shipment/save HIT", request.method)
+
+    # 1️⃣ CORS preflight
+    if request.method == "OPTIONS":
+        return "", 200
+
+    # 2️⃣ JWT 강제 검증 (POST만)
+    verify_jwt_in_request()
+    claims = get_jwt()
+    print("🔥 JWT claims:", claims)
+
+    if claims.get("role") != "admin":
+        return jsonify({"error": "admin only"}), 403
+
+    data = request.json
+    print("🔥 shipment data:", data)
+
+    route = data["route"]
+    us_date = to_date(data["us_date"])
+    year = us_date.year
+    month = us_date.month
+
+    try:
+        header = ShipmentHeader.query.filter_by(
+            route=route,
+            year=year,
+            month=month
+        ).first()
+
+        print("🔥 existing header:", header)
+
+        if not header:
+            header = ShipmentHeader(
+                route=route,
+                year=year,
+                month=month,
+                us_date=us_date,                     # 🔥 필수
+                exchange_rate=data["exchange_rate"]
+            )
+            db.session.add(header)
+            print("🔥 header CREATED")
+
+        header.us_date = us_date
+        header.exchange_rate = data["exchange_rate"]
+
+        db.session.flush()
+        print("🔥 shipment_header.id =", header.id)
+
+        shipment_id = header.id
+
+        ShipmentDomesticCost.query.filter_by(
+            shipment_id=shipment_id
+        ).delete()
+
+        ShipmentOceanCost.query.filter_by(
+            shipment_id=shipment_id
+        ).delete()
+
+        ShipmentUSCost.query.filter_by(
+            shipment_id=shipment_id
+        ).delete()
+
+        db.session.bulk_save_objects([
+            ShipmentDomesticCost(
+                shipment_id=shipment_id,
+                item_name=r["name"],
+                qty=r["qty"],
+                cost_20=r["v20"],
+                cost_40=r["v40"],
+                sort_order=i
+            )
+            for i, r in enumerate(data["domestic"])
+        ])
+
+        ocean = data["ocean"]
+        db.session.add(ShipmentOceanCost(
+            shipment_id=shipment_id,
+            qty=ocean["qty"],
+            cost_20_usd=ocean["v20"],
+            cost_40_usd=ocean["v40"]
+        ))
+
+        db.session.bulk_save_objects([
+            ShipmentUSCost(
+                shipment_id=shipment_id,
+                item_name=r["name"],
+                qty=r["qty"],
+                cost_20_usd=r["v20"],
+                cost_40_usd=r["v40"],
+                sort_order=i
+            )
+            for i, r in enumerate(data["us_costs"])
+        ])
+
+        db.session.commit()
+        print("🔥 shipment SAVE COMMIT OK")
+
+        return jsonify({"message": "saved"})
+
+    except Exception as e:
+        db.session.rollback()
+        import traceback
+        traceback.print_exc()   # 🔥 이게 핵심
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/shipment/load", methods=["GET"])
+@jwt_required()
+def load_shipment():
+    route = request.args.get("route")
+    year = int(request.args.get("year"))
+    month = int(request.args.get("month"))
+
+    header = ShipmentHeader.query.filter_by(
+        route=route,
+        year=year,
+        month=month
+    ).first()
+
+    if not header:
+        return jsonify({})  # 🔥 프론트에서 초기화 처리
+
+    # 🔥 필요한 것만 SELECT (lazy load X)
+    domestic = (
+        ShipmentDomesticCost.query
+        .filter_by(shipment_id=header.id)
+        .order_by(ShipmentDomesticCost.sort_order.asc())
+        .all()
+    )
+
+    ocean = ShipmentOceanCost.query.filter_by(
+        shipment_id=header.id
+    ).first()
+
+    us_costs = (
+        ShipmentUSCost.query
+        .filter_by(shipment_id=header.id)
+        .order_by(ShipmentUSCost.sort_order.asc())
+        .all()
+    )
+
+    return jsonify({
+        "header": {
+            "id": header.id,
+            "route": header.route,
+            "exchange_rate": header.exchange_rate,
+            "us_date": header.us_date.strftime("%Y-%m-%d")
+        },
+        "domestic": [
+            {
+                "item_name": r.item_name,
+                "qty": r.qty,
+                "cost_20": r.cost_20,
+                "cost_40": r.cost_40
+            }
+            for r in domestic
+        ],
+        "ocean": {
+            "qty": ocean.qty if ocean else 1,
+            "cost_20_usd": ocean.cost_20_usd if ocean else 0,
+            "cost_40_usd": ocean.cost_40_usd if ocean else 0
+        },
+        "us_costs": [
+            {
+                "item_name": r.item_name,
+                "qty": r.qty,
+                "cost_20_usd": r.cost_20_usd,
+                "cost_40_usd": r.cost_40_usd
+            }
+            for r in us_costs
+        ]
+    })
 
 # ============================================
 # 서버 실행

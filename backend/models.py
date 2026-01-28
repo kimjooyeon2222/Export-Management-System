@@ -683,3 +683,187 @@ class ForgingItem(db.Model):
         db.DateTime,
         default=datetime.utcnow
     )
+# ===========================================
+# 🚢 SHIPMENT HEADER (노선 / 북미기준날짜 / 환율)
+# ===========================================
+class ShipmentHeader(db.Model):
+    __tablename__ = "shipment_header"
+
+    id = db.Column(db.BigInteger, primary_key=True,autoincrement=True)
+
+    route = db.Column(
+        db.Enum("SAVANNAH", "MOBILE", "LA", name="shipment_route_enum"),
+        nullable=False
+    )
+
+    us_date = db.Column(db.Date, nullable=False)
+    year = db.Column(db.SmallInteger, nullable=False)
+    month = db.Column(db.SmallInteger, nullable=False)
+
+    exchange_rate = db.Column(db.Integer, nullable=False)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )
+
+    __table_args__ = (
+        db.UniqueConstraint(
+            "route", "year", "month",
+            name="uk_shipment_route_month"
+        ),
+    )
+
+    # 🔥 관계
+    domestic_costs = db.relationship(
+        "ShipmentDomesticCost",
+        backref="shipment",
+        cascade="all, delete-orphan",
+        passive_deletes=True
+    )
+
+    ocean_cost = db.relationship(
+        "ShipmentOceanCost",
+        uselist=False,
+        backref="shipment",
+        cascade="all, delete-orphan",
+        passive_deletes=True
+    )
+
+    us_costs = db.relationship(
+        "ShipmentUSCost",
+        backref="shipment",
+        cascade="all, delete-orphan",
+        passive_deletes=True
+    )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "route": self.route,
+            "us_date": self.us_date.strftime("%Y-%m-%d"),
+            "year": self.year,
+            "month": self.month,
+            "exchange_rate": self.exchange_rate,
+        }
+
+
+# ===========================================
+# 🇰🇷 SHIPMENT DOMESTIC COST (국내비용)
+# ===========================================
+class ShipmentDomesticCost(db.Model):
+    __tablename__ = "shipment_domestic_cost"
+
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+
+    shipment_id = db.Column(
+        db.BigInteger,
+        db.ForeignKey("shipment_header.id", ondelete="CASCADE"),
+        nullable=False
+    )
+
+    item_name = db.Column(db.String(100), nullable=False)
+
+    qty = db.Column(db.Integer, nullable=False, default=1)
+    cost_20 = db.Column(db.Integer, nullable=False, default=0)
+    cost_40 = db.Column(db.Integer, nullable=False, default=0)
+
+    sort_order = db.Column(db.Integer, nullable=False, default=0)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "shipment_id": self.shipment_id,
+            "item_name": self.item_name,
+            "qty": self.qty,
+            "cost_20": self.cost_20,
+            "cost_40": self.cost_40,
+            "sort_order": self.sort_order,
+        }
+
+
+# ===========================================
+# 🌊 SHIPMENT OCEAN COST (해상운임 / USD)
+# ===========================================
+class ShipmentOceanCost(db.Model):
+    __tablename__ = "shipment_ocean_cost"
+
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+
+    shipment_id = db.Column(
+        db.BigInteger,
+        db.ForeignKey("shipment_header.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True      # 🔥 shipment 당 1개
+    )
+
+    qty = db.Column(db.Integer, nullable=False, default=1)
+
+    cost_20_usd = db.Column(db.Integer, nullable=False, default=0)
+    cost_40_usd = db.Column(db.Integer, nullable=False, default=0)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "shipment_id": self.shipment_id,
+            "qty": self.qty,
+            "cost_20_usd": self.cost_20_usd,
+            "cost_40_usd": self.cost_40_usd,
+        }
+
+
+# ===========================================
+# 🇺🇸 SHIPMENT US COST (미국비용 / USD)
+# ===========================================
+class ShipmentUSCost(db.Model):
+    __tablename__ = "shipment_us_cost"
+
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+
+    shipment_id = db.Column(
+        db.BigInteger,
+        db.ForeignKey("shipment_header.id", ondelete="CASCADE"),
+        nullable=False
+    )
+
+    item_name = db.Column(db.String(100), nullable=False)
+
+    qty = db.Column(db.Integer, nullable=False, default=1)
+    cost_20_usd = db.Column(db.Integer, nullable=False, default=0)
+    cost_40_usd = db.Column(db.Integer, nullable=False, default=0)
+
+    sort_order = db.Column(db.Integer, nullable=False, default=0)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "shipment_id": self.shipment_id,
+            "item_name": self.item_name,
+            "qty": self.qty,
+            "cost_20_usd": self.cost_20_usd,
+            "cost_40_usd": self.cost_40_usd,
+            "sort_order": self.sort_order,
+        }
