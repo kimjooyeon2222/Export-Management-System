@@ -600,7 +600,7 @@ export default function OilShipmentSchedule() {
         </Box>
         {showOilList && (
           <Paper sx={{ p: 2, mb: 7 }}>
-            <Typography variant="subtitle1" fontWeight="bold" mb={2} fontSize="16px">
+            <Typography variant="subtitle1" fontWeight="bold" mt={1} mb={2} fontSize="16px">
               📘 오일 관리 리스트
             </Typography>
 
@@ -889,6 +889,10 @@ export default function OilShipmentSchedule() {
 
 
         <Paper sx={{ p: 2, mb: 3 }}>
+          <Typography sx={{ fontWeight: "bold", fontSize: 17, mb:1 }}>
+            ※ 운송 스케줄 현황 ※
+          </Typography>
+          <Box sx={{ height: 24 }} /> 
           <Table
             size="small"
             sx={{
@@ -944,7 +948,7 @@ export default function OilShipmentSchedule() {
                               sx={{
                                 fontSize: "14px",
                                 fontWeight: "500",
-                              
+
                               }}
                             >
                               {oil?.spec || "규격 없음"}
