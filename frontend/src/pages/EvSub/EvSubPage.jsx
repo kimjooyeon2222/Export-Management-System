@@ -107,15 +107,12 @@ export default function EvSubPage() {
     return color;
   };
 
-  // 🔥 품번(item_code) → 회사 색상
-  const getCompanyColorByItemCode = (itemCode) => {
-    if (!itemCode) return null;
-
-    const found = inventoryRows.find(r => r.item_code === itemCode);
-    if (!found?.company) return null;
-
-    // ⭐ 기존 업체 색 우선 + 신규 업체는 해시
-    return getCompanyColor(found.company);
+  const getKoreanMonthLabel = (dateStr) => {
+    if (!dateStr) return "실사재고"; // 날짜 없으면 기본값
+    const d = new Date(dateStr);
+    const year = d.getFullYear() % 100;
+    const month = d.getMonth() + 1;
+    return `${year}년 ${month}월 실사재고`;
   };
 
   const handleSelectEvItem = (item) => {
@@ -969,7 +966,9 @@ export default function EvSubPage() {
                 <TableCell>품번</TableCell>
                 <TableCell>품명</TableCell>
                 <TableCell>박스 입수량</TableCell>
-                <TableCell>실사재고</TableCell>
+                <TableCell align="center" sx={{ fontWeight: "bold", fontSize: 15 }}>
+                  {getKoreanMonthLabel(usDate)}
+                </TableCell>
                 <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>
                   <Box sx={{ lineHeight: 1.2 }}>
                     적정재고
@@ -1331,7 +1330,7 @@ export default function EvSubPage() {
                       key={item.item_code}
                       align="center"
                       sx={{
-                        
+
                         backgroundColor: "#ffe599",
                         padding: 0,
                         "&:hover": {
