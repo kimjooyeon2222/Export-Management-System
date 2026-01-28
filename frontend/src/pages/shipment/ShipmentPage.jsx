@@ -376,7 +376,7 @@ export default function ShipmentPage() {
                         />
                     ) : (
                         <Typography fontWeight="bold" fontSize={16}>
-                            {exchangeRate.toLocaleString()}
+                            {exchangeRate.toLocaleString()} 원
                         </Typography>
                     )}
                 </Box>
@@ -663,10 +663,10 @@ export default function ShipmentPage() {
                             <TableCell align="center" sx={{ borderBottom: "2px solid #c5c5c5" }}>합 계</TableCell>
                             <TableCell />
                             <TableCell align="center" sx={{ borderBottom: "2px solid #c5c5c5" }}>
-                                {total20.toLocaleString()}
+                                {total20.toLocaleString()} 원
                             </TableCell>
                             <TableCell align="center" sx={{ borderBottom: "2px solid #c5c5c5" }}>
-                                {total40.toLocaleString()}
+                                {total40.toLocaleString()} 원
                             </TableCell>
                         </TableRow>
                     </TableBody>
