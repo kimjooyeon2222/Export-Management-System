@@ -177,8 +177,30 @@ export default function OilShipmentSchedule() {
   };
 
   const deleteOilRow = () => {
-    setOilList(prev => prev.slice(0, -1));
+    // 선택 수정 모드 아니면 막기
+    if (!oilEditSelectMode) {
+      alert("선택 행 삭제를 사용하려면 먼저 선택 행 수정 버튼을 누르세요.");
+      return;
+    }
+
+    // 선택된 행 없으면 막기
+    if (!editingOilNo) {
+      alert("삭제할 행을 선택하세요.");
+      return;
+    }
+
+    if (!window.confirm(`선택한 ${editingOilNo}번 행을 삭제하시겠습니까?`)) {
+      return;
+    }
+
+    setOilList(prev =>
+      prev.filter(oil => oil.no !== editingOilNo)
+    );
+
+    // 상태 정리
+    setEditingOilNo(null);
   };
+
 
   const updateOilCell = (no, field, value) => {
     setOilList(prev =>
@@ -622,7 +644,7 @@ export default function OilShipmentSchedule() {
                 }}
               >
                 <Button variant="contained" onClick={addOilRow}>+ 행 추가</Button>
-                <Button variant="outlined" color="error" onClick={deleteOilRow}>행 삭제</Button>
+                <Button variant="outlined" color="error" onClick={deleteOilRow}>선택 행 삭제</Button>
 
 
 
@@ -889,10 +911,10 @@ export default function OilShipmentSchedule() {
 
 
         <Paper sx={{ p: 2, mb: 3 }}>
-          <Typography sx={{ fontWeight: "bold", fontSize: 17, mb:1 }}>
+          <Typography sx={{ fontWeight: "bold", fontSize: 17, mb: 1 }}>
             ※ 운송 스케줄 현황 ※
           </Typography>
-          <Box sx={{ height: 24 }} /> 
+          <Box sx={{ height: 24 }} />
           <Table
             size="small"
             sx={{
