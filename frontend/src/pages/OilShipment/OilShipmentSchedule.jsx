@@ -928,7 +928,8 @@ export default function OilShipmentSchedule() {
                     >
                       <Tooltip
                         title={
-                          <Box sx={{ textAlign: "center", lineHeight: 1.4 }}>
+                          <Box sx={{ textAlign: "center", lineHeight: 1.5 }}>
+                            {/* 품명 */}
                             <Typography
                               sx={{
                                 fontSize: "16px",
@@ -938,10 +939,21 @@ export default function OilShipmentSchedule() {
                               {oil?.name || "미지정 품목"}
                             </Typography>
 
+                            {/* 규격 */}
                             <Typography
                               sx={{
                                 fontSize: "14px",
-                                color: "inherit",
+                                fontWeight: "500",
+                              
+                              }}
+                            >
+                              {oil?.spec || "규격 없음"}
+                            </Typography>
+
+                            {/* 품번 */}
+                            <Typography
+                              sx={{
+                                fontSize: "14px",
                                 fontWeight: "bold",
                               }}
                             >
@@ -952,6 +964,7 @@ export default function OilShipmentSchedule() {
                         arrow
                         placement="top"
                       >
+
 
                         {/* 🔥 셀 전체를 덮는 영역 */}
                         <div
