@@ -691,7 +691,7 @@ export default function InvoicePage() {
             <Table size="small">
               <TableHead sx={{ bgcolor: '#f9f9f9' }}>
                 <TableRow>
-                  {['수출자', 'INV#', 'CONT#', 'BL#', 'ETD (출발 예정일)', 'ETA (도착 예정일)', '공장 도착일', '도착여부'].map((col) => (
+                  {['수출자', 'INV#', 'CONT#', 'BL#', 'ETD', 'ETA', '공장 도착일', '상태'].map((col) => (
                     <TableCell key={col} align="center" sx={{ fontWeight: 'bold' }}>
                       {col}
                     </TableCell>
@@ -730,21 +730,24 @@ export default function InvoicePage() {
 
                   return (
                     <TableRow key={i}>
-                      <TableCell align="center">{merged.exporter || '오토텍'}</TableCell>
+                      <TableCell align="center" sx={{whiteSpace: "nowrap"}}>{merged.exporter || '-'}</TableCell>
 
                       {/* INV 클릭 시 PACKING LIST 이동 */}
                       <TableCell
                         align="center"
                         sx={{
-                          color: 'blue',
-                          cursor: 'pointer',
-                          textDecoration: 'underline',
-                          fontWeight: 'bold'
+                          whiteSpace: "nowrap",
+                          minWidth: 160,
+                          color: "blue",
+                          cursor: "pointer",
+                          textDecoration: "underline",
+                          fontWeight: "bold"
                         }}
                         onClick={() => window.location.assign(`/packing-list/${merged.inv_no}`)}
                       >
                         {merged.inv_no}
                       </TableCell>
+
 
                       {/* 하단 표 데이터 그대로 연동 */}
                       <TableCell
@@ -756,14 +759,14 @@ export default function InvoicePage() {
 
                       <TableCell
                         align="center"
-                        sx={{ whiteSpace: "pre-line" }}
+                       sx={{whiteSpace: "nowrap"}}
                       >
                         {renderMultiline(merged.bl_no)}
                       </TableCell>
 
-                      <TableCell align="center">{displayShortDate(etd)}</TableCell>
-                      <TableCell align="center">{displayShortDate(eta)}</TableCell>
-                      <TableCell align="center">{displayShortDate(delayed)}</TableCell>
+                      <TableCell align="center" sx={{whiteSpace: "nowrap"}}>{displayShortDate(etd)}</TableCell>
+                      <TableCell align="center"sx={{whiteSpace: "nowrap"}}>{displayShortDate(eta)}</TableCell>
+                      <TableCell align="center"sx={{whiteSpace: "nowrap"}}>{displayShortDate(delayed)}</TableCell>
 
 
                       {/* 도착 여부 컬럼 */}
@@ -773,7 +776,8 @@ export default function InvoicePage() {
                           fontWeight: 'bold',
                           textAlign: 'center',
                           color: arrived ? '#1b5e20' : '#c62828',
-                          bgcolor: arrived ? '#a5d6a7' : '#ffcdd2'
+                          bgcolor: arrived ? '#a5d6a7' : '#ffcdd2',
+                          whiteSpace: "nowrap"
                         }}
                       >
                         {arrived ? '도착' : '미도착'}
