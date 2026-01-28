@@ -966,9 +966,6 @@ export default function EvSubPage() {
                 <TableCell>품번</TableCell>
                 <TableCell>품명</TableCell>
                 <TableCell>박스 입수량</TableCell>
-                <TableCell align="center" sx={{ fontWeight: "bold", fontSize: 15 }}>
-                  {getKoreanMonthLabel(usDate)}
-                </TableCell>
                 <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>
                   <Box sx={{ lineHeight: 1.2 }}>
                     적정재고
@@ -984,6 +981,10 @@ export default function EvSubPage() {
                     </Typography>
                   </Box>
                 </TableCell>
+                <TableCell align="center" sx={{ fontWeight: "bold", fontSize: 15 }}>
+                  {getKoreanMonthLabel(usDate)}
+                </TableCell>
+
                 <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>
                   <Box
                     sx={{
@@ -1193,12 +1194,14 @@ export default function EvSubPage() {
                     </TableCell>
 
                     <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
+                      {formatNumber(row.target_stock)}
+                    </TableCell>
+                    
+                    <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
                       {formatNumber(row.actual_stock)}
                     </TableCell>
 
-                    <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
-                      {formatNumber(row.target_stock)}
-                    </TableCell>
+
 
 
                     <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>

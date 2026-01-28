@@ -827,9 +827,6 @@ export default function BracketPage() {
                 <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>업체명</TableCell>
                 <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>품번</TableCell>
                 <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>품명</TableCell>
-                <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
-                  {getKoreanMonthLabel(usDate)}
-                </TableCell>
                 <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>
                   <Box sx={{ lineHeight: 1.2 }}>
                     적정재고
@@ -845,6 +842,10 @@ export default function BracketPage() {
                     </Typography>
                   </Box>
                 </TableCell>
+                <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
+                  {getKoreanMonthLabel(usDate)}
+                </TableCell>
+
 
                 <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>
                   <Box
@@ -923,11 +924,12 @@ export default function BracketPage() {
                     sx={{
                       cursor: editMode ? "pointer" : "default",
                       backgroundColor: selectedBrRowIds.includes(row.tempId)
-                        ? "#ddeeff"          // ⭐ 선택 강조 (AxleSub 동일)
-                        : status === "적정재고미달"
-                          ? "#fbeaea"
+                        ? "#ddeeff"                    // ⭐ 선택 최우선
+                        : (status === "적정재고미달" || status === "위험")
+                          ? "#fbeaea"                  // ⭐ 둘 다 동일 처리
                           : "inherit",
                     }}
+
                   >
 
 
@@ -1029,12 +1031,13 @@ export default function BracketPage() {
                       )}
                     </TableCell>
 
+                    {/* 적정재고 */}
+                    <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>{formatNumber(target)}</TableCell>
 
                     {/* 실사자료 */}
                     <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>{formatNumber(actual)}</TableCell>
 
-                    {/* 적정재고 */}
-                    <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>{formatNumber(target)}</TableCell>
+
 
                     {/* ⭐ 운항중 */}
                     <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>{formatNumber(inTransit)}</TableCell>

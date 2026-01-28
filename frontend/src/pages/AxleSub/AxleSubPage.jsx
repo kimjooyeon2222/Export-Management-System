@@ -907,7 +907,6 @@ export default function AxleSubPage() {
                 <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>품번</TableCell>
                 <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>품명</TableCell>
                 <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>박스 입수량</TableCell>
-                <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>{getKoreanMonthLabel(usDate)}</TableCell>
                 <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>
                   <Box sx={{ lineHeight: 1.2 }}>
                     적정재고
@@ -923,6 +922,8 @@ export default function AxleSubPage() {
                     </Typography>
                   </Box>
                 </TableCell>
+                <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>{getKoreanMonthLabel(usDate)}</TableCell>
+
 
                 <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>
                   <Box
@@ -1118,6 +1119,9 @@ export default function AxleSubPage() {
 
                     <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>{formatNumber(row.box_qty)}</TableCell>
 
+                    {/* 적정재고 */}
+                    <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>{formatNumber(target)}</TableCell>
+                    
                     {/* 실사자료 */}
                     <TableCell
                       align="center"
@@ -1127,8 +1131,7 @@ export default function AxleSubPage() {
                     </TableCell>
 
 
-                    {/* 적정재고 */}
-                    <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>{formatNumber(target)}</TableCell>
+
 
                     {/* 🔥 운항중 → 여기 수정됨 */}
                     <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>{formatNumber(inTransit)}</TableCell>

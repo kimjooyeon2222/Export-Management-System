@@ -823,15 +823,6 @@ export default function ForgingPage() {
                 <TableCell align="center" sx={{ fontWeight: "bold", fontSize: 15 }}>
                   품목
                 </TableCell>
-
-                <TableCell align="center" sx={{ fontWeight: "bold", fontSize: 15 }}>
-                  {getKoreanMonthLabel(usDate)}
-                </TableCell>
-
-                <TableCell align="center" sx={{ fontWeight: "bold", fontSize: 15 }}>
-                  불량/발청 소재
-                </TableCell>
-
                 <TableCell align="center" sx={{ fontWeight: "bold", fontSize: 15 }}>
                   <Box sx={{ lineHeight: 1.2 }}>
                     적정재고
@@ -843,6 +834,16 @@ export default function ForgingPage() {
                     </Typography>
                   </Box>
                 </TableCell>
+
+                <TableCell align="center" sx={{ fontWeight: "bold", fontSize: 15 }}>
+                  {getKoreanMonthLabel(usDate)}
+                </TableCell>
+
+                <TableCell align="center" sx={{ fontWeight: "bold", fontSize: 15 }}>
+                  불량/발청 소재
+                </TableCell>
+
+
 
 
                 <TableCell
@@ -1046,7 +1047,11 @@ export default function ForgingPage() {
                     </TableCell>
 
 
-
+                    {/* 적정재고 */}
+                    <TableCell align="center" sx={{ fontWeight: "bold", fontSize: 15 }}>
+                      {fmt(it.optimalStock)}
+                    </TableCell>
+                    
                     {/* 실사자료 수량 */}
                     <TableCell align="center" sx={{ fontWeight: "bold", fontSize: 15 }}>
                       {fmt(it.overStock)}
@@ -1059,10 +1064,7 @@ export default function ForgingPage() {
                     </TableCell>
 
 
-                    {/* 적정재고 */}
-                    <TableCell align="center" sx={{ fontWeight: "bold", fontSize: 15 }}>
-                      {fmt(it.optimalStock)}
-                    </TableCell>
+
 
 
                     {/* 운항중 */}
