@@ -1273,7 +1273,12 @@ export default function InvoicePage() {
                                   color: "black",
                                   fontWeight: "bold",
                                 }),
-                                ...(idx === 2 && { color: "blue", cursor: "pointer", textDecoration: "underline" }),
+                                ...(idx === 2 && { color: "blue", cursor: "pointer", textDecoration: "underline", whiteSpace: "nowrap", }),
+                                ...([7, 8, 9].includes(idx) && {
+
+                                  whiteSpace: "nowrap",   // ⭐ 줄바꿈 방지
+                                  minWidth: 90,           // ⭐ ETA 폭 확보 (필수)
+                                }),
                                 ...(idx === 9 ? delayedStyle : {}),
                                 ...(idx === 10 ? countStyle : {}),
                                 ...(idx === 5 || idx === 6 || idx === 12 ? { whiteSpace: "pre-line" } : {}),
@@ -1492,7 +1497,12 @@ export default function InvoicePage() {
                               color: "black",
                               fontWeight: "bold",
                             }),
-                            ...(idx === 2 && { color: "blue", cursor: "pointer", textDecoration: "underline" }),
+                            ...(idx === 2 && { color: "blue", cursor: "pointer", textDecoration: "underline", whiteSpace: "nowrap", }),
+                            ...([7, 8, 9].includes(idx) && {
+
+                              whiteSpace: "nowrap",   // ⭐ 줄바꿈 방지
+                              minWidth: 90,           // ⭐ ETA 폭 확보 (필수)
+                            }),
                             ...(idx === 9 ? delayedStyle : {}),
                             ...(idx === 10 ? countStyle : {}),
                             ...(idx === 5 || idx === 6 || idx === 12 ? { whiteSpace: "pre-line" } : {}),
