@@ -2510,6 +2510,58 @@ def save_shipment_setting():
 
     return jsonify({"message": "saved"})
 
+@app.route("/api/shipment/graph", methods=["GET"])
+@jwt_required()
+def shipment_graph():
+    route = request.args.get("route")
+    sy = int(request.args.get("start_year"))
+    sm = int(request.args.get("start_month"))
+    ey = int(request.args.get("end_year"))
+    em = int(request.args.get("end_month"))
+
+    headers = (
+        ShipmentHeader.query
+        .filter(ShipmentHeader.route == route)
+        .filter(
+            (ShipmentHeader.year > sy) |
+            ((ShipmentHeader.year == sy) & (ShipmentHeader.month >= sm))
+        )
+        .filter(
+            (ShipmentHeader.year < ey) |
+            ((ShipmentHeader.year == ey) & (ShipmentHeader.month <= em))
+        )
+        .order_by(ShipmentHeader.year, ShipmentHeader.month)
+        .all()
+    )
+
+    result = []
+
+    for h in headers:
+        domestic = ShipmentDomesticCost.query.filter_by(shipment_id=h.id).all()
+        ocean = ShipmentOceanCost.query.filter_by(shipment_id=h.id).first()
+        us = ShipmentUSCost.query.filter_by(shipment_id=h.id).all()
+
+        dom20 = sum(r.qty * r.cost_20 for r in domestic)
+        dom40 = sum(r.qty * r.cost_40 for r in domestic)
+
+        ocean20 = (ocean.qty * ocean.cost_20_usd) if ocean else 0
+        ocean40 = (ocean.qty * ocean.cost_40_usd) if ocean else 0
+
+        us20 = sum(r.qty * r.cost_20_usd for r in us)
+        us40 = sum(r.qty * r.cost_40_usd for r in us)
+
+        total20KRW = dom20 + (ocean20 + us20) * h.exchange_rate
+        total40KRW = dom40 + (ocean40 + us40) * h.exchange_rate
+
+        result.append({
+            "year": h.year,
+            "month": h.month,
+            "total_20_usd": round(total20KRW / h.exchange_rate),
+            "total_40_usd": round(total40KRW / h.exchange_rate),
+        })
+
+    return jsonify(result)
+
 # ============================================
 # 서버 실행
 # ============================================

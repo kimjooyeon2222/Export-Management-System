@@ -424,7 +424,7 @@ export default function ShipmentPage() {
                         value={defaultMonth || ""}
                         disabled={!editMode}
                         onChange={e => setDefaultMonth(Number(e.target.value))}
-                        sx={{ width: 70, fontWeight: "bold" }}
+                        sx={{ width: 80, fontWeight: "bold" }}
                     >
                         {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
                             <MenuItem key={m} value={m}>{m}월</MenuItem>
@@ -533,7 +533,7 @@ export default function ShipmentPage() {
                             disabled={editMode}   // 🔥 중요: 수정모드일 때 막음
                             onChange={e => setMonth(Number(e.target.value))}
                             sx={{
-                                width: 70,
+                                width: 80,
                                 fontWeight: "bold",
                                 bgcolor: editMode ? "#f0f0f0" : "inherit",
                                 cursor: editMode ? "not-allowed" : "pointer"
