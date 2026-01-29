@@ -25,6 +25,7 @@ from models import StockAudit, StockAuditItem
 from models import ForgingItem
 
 from models import DashboardMemo
+import math
 
 from flask import Flask, jsonify, request
 from flask_cors import CORS
@@ -2510,6 +2511,10 @@ def save_shipment_setting():
 
     return jsonify({"message": "saved"})
 
+
+def round_up_100k(value):
+    return math.ceil(value / 100000) * 100000
+
 @app.route("/api/shipment/graph", methods=["GET"])
 @jwt_required()
 def shipment_graph():
@@ -2550,14 +2555,18 @@ def shipment_graph():
         us20 = sum(r.qty * r.cost_20_usd for r in us)
         us40 = sum(r.qty * r.cost_40_usd for r in us)
 
-        total20KRW = dom20 + (ocean20 + us20) * h.exchange_rate
-        total40KRW = dom40 + (ocean40 + us40) * h.exchange_rate
+        total20KRW = round_up_100k(
+            dom20 + (ocean20 + us20) * h.exchange_rate
+        )
+        total40KRW = round_up_100k(
+            dom40 + (ocean40 + us40) * h.exchange_rate
+        )
 
         result.append({
             "year": h.year,
             "month": h.month,
-            "total_20_usd": round(total20KRW / h.exchange_rate),
-            "total_40_usd": round(total40KRW / h.exchange_rate),
+            "total_20_usd": round(total20KRW / h.exchange_rate, 2),
+            "total_40_usd": round(total40KRW / h.exchange_rate, 2),
         })
 
     return jsonify(result)

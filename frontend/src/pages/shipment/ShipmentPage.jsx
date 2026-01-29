@@ -82,7 +82,8 @@ export default function ShipmentPage() {
                 default_month: defaultMonth
             })
         });
-
+        setYear(defaultYear);
+        setMonth(defaultMonth);
         alert("기준 연월이 저장되었습니다.");
         setEditMode(false);
 
@@ -656,7 +657,7 @@ export default function ShipmentPage() {
                                         setDomesticMap(prev => ({
                                             ...prev,
                                             [route]: prev[route].map((row, idx) =>
-                                                idx === i ? { ...row, v20: e.target.value } : row
+                                                idx === i ? { ...row, v20: Number(e.target.value) } : row
                                             )
                                         }));
 
@@ -667,7 +668,7 @@ export default function ShipmentPage() {
                                         setDomesticMap(prev => ({
                                             ...prev,
                                             [route]: prev[route].map((row, idx) =>
-                                                idx === i ? { ...row, v40: e.target.value } : row
+                                                idx === i ? { ...row, v40: Number(e.target.value) } : row
                                             )
                                         }));
 

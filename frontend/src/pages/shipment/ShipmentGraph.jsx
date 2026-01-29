@@ -190,18 +190,9 @@ export default function ShipmentGraph() {
     };
 
     return (
-        <Box sx={{ p: 1 }}>
+        <Box sx={{ p: 0 }}>
             {/* ================= 상단 ================= */}
-            <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
-                <Button variant="outlined"
-                    onClick={() => navigate(-1)}
-                    sx={{ fontWeight: "bold" }}
-                >
-                    ← 뒤로가기
-                </Button>
-
-
-            </Box>
+           
 
             <Typography
                 fontWeight="bold"
