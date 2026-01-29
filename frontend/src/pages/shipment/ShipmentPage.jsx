@@ -339,7 +339,15 @@ export default function ShipmentPage() {
 
     const renderValue = (value, onChange) =>
         editMode ? (
-            <TextField size="small" value={value} onChange={onChange} />
+            <TextField
+                size="small"
+                value={value}
+                onChange={onChange}
+                inputProps={{
+                    style: { textAlign: "right" }
+                }}
+            />
+
         ) : (
             value.toLocaleString()
         );
