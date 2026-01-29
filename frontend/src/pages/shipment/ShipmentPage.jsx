@@ -356,30 +356,32 @@ export default function ShipmentPage() {
             >
 
                 {/* 기준 연도 */}
-                <Select
-                    size="small"
-                    value={defaultYear || ""}
-                    disabled={!editMode}
-                    onChange={e => setDefaultYear(Number(e.target.value))}
-                    sx={{ width: 110, fontWeight: "bold" }}
-                >
-                    {Array.from({ length: 20 }, (_, i) => 2020 + i).map(y => (
-                        <MenuItem key={y} value={y}>{y}년</MenuItem>
-                    ))}
-                </Select>
+                {editMode && (
+                    <Select
+                        size="small"
+                        value={defaultYear || ""}
+                        disabled={!editMode}
+                        onChange={e => setDefaultYear(Number(e.target.value))}
+                        sx={{ width: 110, fontWeight: "bold" }}
+                    >
+                        {Array.from({ length: 20 }, (_, i) => 2020 + i).map(y => (
+                            <MenuItem key={y} value={y}>{y}년</MenuItem>
+                        ))}
+                    </Select>)}
 
                 {/* 기준 월 */}
-                <Select
-                    size="small"
-                    value={defaultMonth || ""}
-                    disabled={!editMode}
-                    onChange={e => setDefaultMonth(Number(e.target.value))}
-                    sx={{ width: 90, fontWeight: "bold" }}
-                >
-                    {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
-                        <MenuItem key={m} value={m}>{m}월</MenuItem>
-                    ))}
-                </Select>
+                {editMode && (
+                    <Select
+                        size="small"
+                        value={defaultMonth || ""}
+                        disabled={!editMode}
+                        onChange={e => setDefaultMonth(Number(e.target.value))}
+                        sx={{ width: 90, fontWeight: "bold" }}
+                    >
+                        {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
+                            <MenuItem key={m} value={m}>{m}월</MenuItem>
+                        ))}
+                    </Select>)}
                 {editMode && (
                     <Button
                         variant="contained"
