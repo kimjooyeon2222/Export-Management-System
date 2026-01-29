@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import {
     Box,
     Typography,
@@ -40,6 +40,29 @@ const ROUTE_LABEL = {
 };
 
 export default function ShipmentPage() {
+
+    const yearListRef = useRef(null);        // 조회연도
+
+    const ITEM_HEIGHT = 48;
+
+    const YEAR_MENU_PROPS = {
+        PaperProps: {
+            sx: {
+                maxHeight: ITEM_HEIGHT * 5,
+                overflowY: "auto"
+            }
+        },
+        MenuListProps: {
+            ref: yearListRef
+        }
+    };
+
+
+    const YEARS = Array.from(
+        { length: 2099 - 2020 + 1 },
+        (_, i) => 2020 + i
+    );
+
     const [defaultYear, setDefaultYear] = useState(null);
     const [defaultMonth, setDefaultMonth] = useState(null);
     const [year, setYear] = useState(null);
@@ -363,11 +386,25 @@ export default function ShipmentPage() {
                         disabled={!editMode}
                         onChange={e => setDefaultYear(Number(e.target.value))}
                         sx={{ width: 110, fontWeight: "bold" }}
+                        onOpen={() => {
+                            requestAnimationFrame(() => {
+                                const index = YEARS.indexOf(year);
+                                if (yearListRef.current && index >= 0) {
+                                    yearListRef.current.scrollTop = index * ITEM_HEIGHT;
+                                }
+                            });
+                        }}
+                        MenuProps={YEAR_MENU_PROPS}
                     >
-                        {Array.from({ length: 20 }, (_, i) => 2020 + i).map(y => (
-                            <MenuItem key={y} value={y}>{y}년</MenuItem>
+                        {YEARS.map(y => (
+                            <MenuItem key={y} value={y}>
+                                {y}년
+                            </MenuItem>
                         ))}
-                    </Select>)}
+                    </Select>
+
+
+                )}
 
                 {/* 기준 월 */}
                 {editMode && (
@@ -444,25 +481,38 @@ export default function ShipmentPage() {
                         </MenuItem>
                     ))}
                 </Select>
+
                 {/* 연도 */}
                 <Select
                     size="small"
                     value={year || ""}
-                    disabled={editMode}   // 🔥 수정모드에서는 고정
+                    disabled={editMode}
                     onChange={e => setYear(Number(e.target.value))}
+                    onOpen={() => {
+                        requestAnimationFrame(() => {
+                            const index = YEARS.indexOf(defaultYear);
+                            if (yearListRef.current && index >= 0) {
+                                yearListRef.current.scrollTop = index * ITEM_HEIGHT;
+                            }
+                        });
+                    }}
+
                     sx={{
                         width: 110,
                         fontWeight: "bold",
                         bgcolor: editMode ? "#f0f0f0" : "inherit",
                         cursor: editMode ? "not-allowed" : "pointer"
                     }}
+                    MenuProps={YEAR_MENU_PROPS}
                 >
-                    {Array.from({ length: 20 }, (_, i) => 2020 + i).map(y => (
+                    {YEARS.map(y => (
                         <MenuItem key={y} value={y}>
                             {y}년
                         </MenuItem>
                     ))}
                 </Select>
+
+
                 <Typography fontWeight="bold" fontSize={16}>
                     <Select
                         size="small"
