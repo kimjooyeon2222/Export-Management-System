@@ -385,7 +385,7 @@ export default function ShipmentPage() {
                         value={defaultYear || ""}
                         disabled={!editMode}
                         onChange={e => setDefaultYear(Number(e.target.value))}
-                        sx={{ width: 110, fontWeight: "bold" }}
+                        sx={{ width: 100, fontWeight: "bold" }}
                         onOpen={() => {
                             requestAnimationFrame(() => {
                                 const index = YEARS.indexOf(year);
@@ -413,7 +413,7 @@ export default function ShipmentPage() {
                         value={defaultMonth || ""}
                         disabled={!editMode}
                         onChange={e => setDefaultMonth(Number(e.target.value))}
-                        sx={{ width: 90, fontWeight: "bold" }}
+                        sx={{ width: 70, fontWeight: "bold" }}
                     >
                         {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
                             <MenuItem key={m} value={m}>{m}월</MenuItem>
@@ -464,7 +464,7 @@ export default function ShipmentPage() {
 
 
             {/* 조건 */}
-            <Box sx={{ display: "flex", alignItems: "center", gap: 3, mb: 2, ml: 1 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2, ml: 1 }}>
                 <Select
                     value={route}
                     disabled={editMode}
@@ -481,60 +481,62 @@ export default function ShipmentPage() {
                         </MenuItem>
                     ))}
                 </Select>
-
-                {/* 연도 */}
-                <Select
-                    size="small"
-                    value={year || ""}
-                    disabled={editMode}
-                    onChange={e => setYear(Number(e.target.value))}
-                    onOpen={() => {
-                        requestAnimationFrame(() => {
-                            const index = YEARS.indexOf(defaultYear);
-                            if (yearListRef.current && index >= 0) {
-                                yearListRef.current.scrollTop = index * ITEM_HEIGHT;
-                            }
-                        });
-                    }}
-
-                    sx={{
-                        width: 110,
-                        fontWeight: "bold",
-                        bgcolor: editMode ? "#f0f0f0" : "inherit",
-                        cursor: editMode ? "not-allowed" : "pointer"
-                    }}
-                    MenuProps={YEAR_MENU_PROPS}
-                >
-                    {YEARS.map(y => (
-                        <MenuItem key={y} value={y}>
-                            {y}년
-                        </MenuItem>
-                    ))}
-                </Select>
-
-
-                <Typography fontWeight="bold" fontSize={16}>
+                {/* 연도 + 월 (gap 제거) */}
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    {/* 연도 */}
                     <Select
                         size="small"
-                        value={month || ""}
-                        disabled={editMode}   // 🔥 중요: 수정모드일 때 막음
-                        onChange={e => setMonth(Number(e.target.value))}
+                        value={year || ""}
+                        disabled={editMode}
+                        onChange={e => setYear(Number(e.target.value))}
+                        onOpen={() => {
+                            requestAnimationFrame(() => {
+                                const index = YEARS.indexOf(defaultYear);
+                                if (yearListRef.current && index >= 0) {
+                                    yearListRef.current.scrollTop = index * ITEM_HEIGHT;
+                                }
+                            });
+                        }}
+
                         sx={{
-                            width: 90,
+
+                            width: 100,
                             fontWeight: "bold",
                             bgcolor: editMode ? "#f0f0f0" : "inherit",
                             cursor: editMode ? "not-allowed" : "pointer"
                         }}
+                        MenuProps={YEAR_MENU_PROPS}
                     >
-                        {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
-                            <MenuItem key={m} value={m}>
-                                {m}월
+                        {YEARS.map(y => (
+                            <MenuItem key={y} value={y}>
+                                {y}년
                             </MenuItem>
                         ))}
                     </Select>
 
-                </Typography>
 
+                    <Typography fontWeight="bold" fontSize={16}>
+                        <Select
+                            size="small"
+                            value={month || ""}
+                            disabled={editMode}   // 🔥 중요: 수정모드일 때 막음
+                            onChange={e => setMonth(Number(e.target.value))}
+                            sx={{
+                                width: 70,
+                                fontWeight: "bold",
+                                bgcolor: editMode ? "#f0f0f0" : "inherit",
+                                cursor: editMode ? "not-allowed" : "pointer"
+                            }}
+                        >
+                            {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
+                                <MenuItem key={m} value={m}>
+                                    {m}월
+                                </MenuItem>
+                            ))}
+                        </Select>
+
+                    </Typography>
+                </Box>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <Typography fontWeight="bold" fontSize={16}>
                         환율
