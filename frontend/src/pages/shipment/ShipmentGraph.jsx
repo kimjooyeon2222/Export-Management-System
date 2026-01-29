@@ -25,16 +25,17 @@ const YEARS = Array.from({ length: 10 }, (_, i) => 2020 + i);
 const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
 
 export default function ShipmentGraph() {
+
     const navigate = useNavigate();
     const API_BASE = import.meta.env.VITE_API_URL;
 
     /* ============================
        기간 상태
     ============================ */
-    const [startYear, setStartYear] = useState(2026);
-    const [startMonth, setStartMonth] = useState(1);
-    const [endYear, setEndYear] = useState(2026);
-    const [endMonth, setEndMonth] = useState(12);
+    const [startYear, setStartYear] = useState(null);
+    const [startMonth, setStartMonth] = useState(null);
+    const [endYear, setEndYear] = useState(null);
+    const [endMonth, setEndMonth] = useState(null);
 
     /* ============================
        노선별 데이터
@@ -67,6 +68,32 @@ export default function ShipmentGraph() {
         }
         return result;
     }, [startYear, startMonth, endYear, endMonth]);
+
+    useEffect(() => {
+        const loadDefaultPeriod = async () => {
+            const res = await apiFetch(`${API_BASE}/api/shipment/setting`);
+            const data = await res.json();
+
+            if (data.default_year && data.default_month) {
+                setStartYear(data.default_year);
+                setStartMonth(data.default_month);
+
+                // ✅ 기본은 "기준연월 ~ 기준연월 + 11개월"
+                let ey = data.default_year;
+                let em = data.default_month + 11;
+
+                if (em > 12) {
+                    ey += Math.floor((em - 1) / 12);
+                    em = ((em - 1) % 12) + 1;
+                }
+
+                setEndYear(ey);
+                setEndMonth(em);
+            }
+        };
+
+        loadDefaultPeriod();
+    }, []);
 
     /* ============================
        데이터 로드 (노선별)
@@ -163,27 +190,29 @@ export default function ShipmentGraph() {
     };
 
     return (
-        <Box sx={{ p: 3 }}>
+        <Box sx={{ p: 1 }}>
             {/* ================= 상단 ================= */}
-            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-                <Button
+            <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
+                <Button variant="outlined"
                     onClick={() => navigate(-1)}
                     sx={{ fontWeight: "bold" }}
                 >
-                    ← 운임비용 페이지로
+                    ← 뒤로가기
                 </Button>
 
-                <Typography
-                    fontWeight="bold"
-                    fontSize={20}
-                    sx={{ ml: 2 }}
-                >
-                    노선별 운임비 추이 (USD / 20'FT · 40'HQ)
-                </Typography>
+
             </Box>
 
+            <Typography
+                fontWeight="bold"
+                fontSize={18}
+                sx={{ ml: 2, mb: 2 }}
+            >
+                노선별 운임비 추이 (USD / 20'FT · 40'HQ)
+            </Typography>
+
             {/* ================= 기간 선택 ================= */}
-            <Box sx={{ display: "flex", gap: 1.5, mb: 3 }}>
+            <Box sx={{ display: "flex", gap: 1.5, mb: 1 }}>
                 <Select value={startYear} onChange={e => setStartYear(e.target.value)} sx={{ fontWeight: "bold" }}>
                     {YEARS.map(y => <MenuItem key={y} value={y}>{y}년</MenuItem>)}
                 </Select>
@@ -192,7 +221,7 @@ export default function ShipmentGraph() {
                     {MONTHS.map(m => <MenuItem key={m} value={m}>{m}월</MenuItem>)}
                 </Select>
 
-                <Typography fontWeight="bold" sx={{ mt: 1 }}>~</Typography>
+                <Typography fontWeight="bold" sx={{ mt: 1, fontSize: "18px" }}>~</Typography>
 
                 <Select value={endYear} onChange={e => setEndYear(e.target.value)} sx={{ fontWeight: "bold" }}>
                     {YEARS.map(y => <MenuItem key={y} value={y}>{y}년</MenuItem>)}
