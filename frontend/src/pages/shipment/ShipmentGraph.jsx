@@ -1,5 +1,5 @@
 // pages/shipment/ShipmentGraph.jsx
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import {
     Box,
     Typography,
@@ -25,9 +25,28 @@ const YEARS = Array.from({ length: 10 }, (_, i) => 2020 + i);
 const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
 
 export default function ShipmentGraph() {
-
-    const navigate = useNavigate();
     const API_BASE = import.meta.env.VITE_API_URL;
+
+    const ITEM_HEIGHT = 48;
+
+    const YEARS = Array.from(
+        { length: 2099 - 2020 + 1 },
+        (_, i) => 2020 + i
+    );
+
+    const yearListRef = useRef(null);
+
+    const YEAR_MENU_PROPS = {
+        PaperProps: {
+            sx: {
+                maxHeight: ITEM_HEIGHT * 5,   // ✅ 5년 단위
+                overflowY: "auto"
+            }
+        },
+        MenuListProps: {
+            ref: yearListRef
+        }
+    };
 
     /* ============================
        기간 상태
@@ -192,7 +211,7 @@ export default function ShipmentGraph() {
     return (
         <Box sx={{ p: 0 }}>
             {/* ================= 상단 ================= */}
-           
+
 
             <Typography
                 fontWeight="bold"
@@ -204,7 +223,7 @@ export default function ShipmentGraph() {
 
             {/* ================= 기간 선택 ================= */}
             <Box sx={{ display: "flex", gap: 1.5, mb: 1 }}>
-                <Select value={startYear} onChange={e => setStartYear(e.target.value)} sx={{ fontWeight: "bold" }}>
+                <Select value={startYear} onChange={e => setStartYear(e.target.value)} sx={{ fontWeight: "bold" }} MenuProps={YEAR_MENU_PROPS}>
                     {YEARS.map(y => <MenuItem key={y} value={y}>{y}년</MenuItem>)}
                 </Select>
 
@@ -214,7 +233,7 @@ export default function ShipmentGraph() {
 
                 <Typography fontWeight="bold" sx={{ mt: 1, fontSize: "18px" }}>~</Typography>
 
-                <Select value={endYear} onChange={e => setEndYear(e.target.value)} sx={{ fontWeight: "bold" }}>
+                <Select value={endYear} onChange={e => setEndYear(e.target.value)} sx={{ fontWeight: "bold" }} MenuProps={YEAR_MENU_PROPS}>
                     {YEARS.map(y => <MenuItem key={y} value={y}>{y}년</MenuItem>)}
                 </Select>
 
