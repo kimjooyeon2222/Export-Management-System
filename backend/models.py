@@ -279,7 +279,7 @@ class EvInventory(db.Model):
             "item_code": self.item_code,
             "box_qty": self.box_qty,
             "actual_stock": self.actual_stock,
-            "target_stock": self.target_stock,   # ⭐ 필수 추가
+            "target_stock": self.target_stock,   
             "updated_at": self.updated_at,
         }
 # ===========================================
@@ -696,7 +696,6 @@ class ShipmentHeader(db.Model):
         nullable=False
     )
 
-    us_date = db.Column(db.Date, nullable=False)
     year = db.Column(db.SmallInteger, nullable=False)
     month = db.Column(db.SmallInteger, nullable=False)
 
@@ -743,7 +742,6 @@ class ShipmentHeader(db.Model):
         return {
             "id": self.id,
             "route": self.route,
-            "us_date": self.us_date.strftime("%Y-%m-%d"),
             "year": self.year,
             "month": self.month,
             "exchange_rate": self.exchange_rate,
@@ -866,4 +864,24 @@ class ShipmentUSCost(db.Model):
             "cost_20_usd": self.cost_20_usd,
             "cost_40_usd": self.cost_40_usd,
             "sort_order": self.sort_order,
+        }
+        
+class ShipmentSetting(db.Model):
+    __tablename__ = "shipment_setting"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    default_year = db.Column(db.SmallInteger, nullable=False)
+    default_month = db.Column(db.SmallInteger, nullable=False)
+
+    updated_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )
+
+    def to_dict(self):
+        return {
+            "default_year": self.default_year,
+            "default_month": self.default_month
         }

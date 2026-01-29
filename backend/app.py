@@ -13,6 +13,7 @@ from auth_utils import admin_required
 from flask_jwt_extended import jwt_required
 from models import ItemMaster
 from sqlalchemy import asc
+from models import ShipmentSetting
 
 from models import ForgingAudit
 from models import OilScheduleRow
@@ -2318,9 +2319,8 @@ def save_shipment():
     print("🔥 shipment data:", data)
 
     route = data["route"]
-    us_date = to_date(data["us_date"])
-    year = us_date.year
-    month = us_date.month
+    year = int(data["year"])
+    month = int(data["month"])
 
     try:
         header = ShipmentHeader.query.filter_by(
@@ -2336,13 +2336,11 @@ def save_shipment():
                 route=route,
                 year=year,
                 month=month,
-                us_date=us_date,                     # 🔥 필수
                 exchange_rate=data["exchange_rate"]
             )
             db.session.add(header)
             print("🔥 header CREATED")
 
-        header.us_date = us_date
         header.exchange_rate = data["exchange_rate"]
 
         db.session.flush()
@@ -2446,7 +2444,6 @@ def load_shipment():
             "id": header.id,
             "route": header.route,
             "exchange_rate": header.exchange_rate,
-            "us_date": header.us_date.strftime("%Y-%m-%d")
         },
         "domestic": [
             {
@@ -2472,6 +2469,46 @@ def load_shipment():
             for r in us_costs
         ]
     })
+
+@app.route("/api/shipment/setting", methods=["GET"])
+@jwt_required()
+def get_shipment_setting():
+    setting = ShipmentSetting.query.first()
+
+    if not setting:
+        return jsonify({
+            "default_year": None,
+            "default_month": None
+        })
+
+    return jsonify(setting.to_dict())
+
+@app.route("/api/shipment/setting", methods=["POST"])
+@jwt_required()
+@admin_required
+def save_shipment_setting():
+    data = request.json
+
+    year = data.get("default_year")
+    month = data.get("default_month")
+
+    if not year or not month:
+        return jsonify({"error": "invalid year/month"}), 400
+
+    setting = ShipmentSetting.query.first()
+    if not setting:
+        setting = ShipmentSetting(
+            default_year=year,
+            default_month=month
+        )
+        db.session.add(setting)
+    else:
+        setting.default_year = year
+        setting.default_month = month
+
+    db.session.commit()
+
+    return jsonify({"message": "saved"})
 
 # ============================================
 # 서버 실행

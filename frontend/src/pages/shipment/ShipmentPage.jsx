@@ -40,9 +40,29 @@ const ROUTE_LABEL = {
 };
 
 export default function ShipmentPage() {
+    const [defaultYear, setDefaultYear] = useState(null);
+    const [defaultMonth, setDefaultMonth] = useState(null);
+    const [year, setYear] = useState(null);
+    const [month, setMonth] = useState(null);
+    const yearShort = year ? String(year).slice(2, 4) : "";
+
     const API_BASE = import.meta.env.VITE_API_URL;
 
     const [route, setRoute] = useState("SAVANNAH");
+    const saveDefaultYM = async () => {
+        await apiFetch(`${API_BASE}/api/shipment/setting`, {
+            method: "POST",
+            body: JSON.stringify({
+                default_year: defaultYear,
+                default_month: defaultMonth
+            })
+        });
+
+        alert("기준 연월이 저장되었습니다.");
+        setEditMode(false);
+
+    };
+
     const EMPTY_DOMESTIC = useMemo(
         () => DOMESTIC_ITEMS.map(name => ({ name, qty: 1, v20: 0, v40: 0 })),
         []
@@ -83,7 +103,8 @@ export default function ShipmentPage() {
         try {
             const payload = {
                 route,
-                us_date: usDate,
+                year,
+                month,
                 exchange_rate: exchangeRate,
 
                 domestic: domesticMap[route].map(r => ({
@@ -126,6 +147,9 @@ export default function ShipmentPage() {
         } catch (err) {
             console.error(err);
             alert("저장 중 오류가 발생했습니다.");
+        } finally {
+            // 🔥🔥🔥 이게 핵심
+            setSaving(false);
         }
     };
 
@@ -135,10 +159,42 @@ export default function ShipmentPage() {
     const [editMode, setEditMode] = useState(false);
 
     const [exchangeRate, setExchangeRate] = useState(1470);
-    const [usDate, setUsDate] = useState("2025-12-01");
-    const year = Number(usDate.slice(0, 4));
-    const month = Number(usDate.slice(5, 7));
     useEffect(() => {
+        const loadDefault = async () => {
+            try {
+                const res = await apiFetch(`${API_BASE}/api/shipment/setting`);
+                const data = await res.json();
+
+                if (data.default_year && data.default_month) {
+                    // 🔥 기준연월 콤보용
+                    setDefaultYear(data.default_year);
+                    setDefaultMonth(data.default_month);
+
+                    // 🔥 실제 조회용
+                    setYear(data.default_year);
+                    setMonth(data.default_month);
+                } else {
+                    const now = new Date();
+                    const y = now.getFullYear();
+                    const m = now.getMonth() + 1;
+
+                    setDefaultYear(y);
+                    setDefaultMonth(m);
+                    setYear(y);
+                    setMonth(m);
+                }
+
+            } catch (e) {
+                console.error("shipment setting load error", e);
+            }
+        };
+
+        loadDefault();
+    }, []);
+
+    useEffect(() => {
+        if (!year || !month) return;   // ⭐ 핵심
+
         let cancelled = false;
 
         const load = async () => {
@@ -219,7 +275,6 @@ export default function ShipmentPage() {
 
 
 
-    const yearShort = usDate.slice(2, 4);
 
 
     /* ============================
@@ -285,7 +340,7 @@ export default function ShipmentPage() {
                     {yearShort}년{" "}
                 </Box>
                 <Box component="span" sx={{ fontSize: 19 }}>
-                    {month}월 신화 USA 수출 해상운임비용
+                    {month}월 신화 USA 수출 운임비용
                 </Box>
             </Typography>
 
@@ -299,15 +354,52 @@ export default function ShipmentPage() {
                     mb: 1
                 }}
             >
-                <TextField
-                    label="북미 기준 날짜"
-                    size="small"
-                    value={usDate}
-                    onChange={e => editMode && setUsDate(e.target.value)}
-                    InputProps={{ readOnly: !editMode }}
-                    sx={{ width: 220 }}
-                />
 
+                {/* 기준 연도 */}
+                <Select
+                    size="small"
+                    value={defaultYear || ""}
+                    disabled={!editMode}
+                    onChange={e => setDefaultYear(Number(e.target.value))}
+                    sx={{ width: 110, fontWeight: "bold" }}
+                >
+                    {Array.from({ length: 20 }, (_, i) => 2020 + i).map(y => (
+                        <MenuItem key={y} value={y}>{y}년</MenuItem>
+                    ))}
+                </Select>
+
+                {/* 기준 월 */}
+                <Select
+                    size="small"
+                    value={defaultMonth || ""}
+                    disabled={!editMode}
+                    onChange={e => setDefaultMonth(Number(e.target.value))}
+                    sx={{ width: 90, fontWeight: "bold" }}
+                >
+                    {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
+                        <MenuItem key={m} value={m}>{m}월</MenuItem>
+                    ))}
+                </Select>
+                {editMode && (
+                    <Button
+                        variant="contained"
+                        onClick={saveDefaultYM}
+                        sx={{ fontWeight: "bold" }}
+                    >
+                        기준연월 저장
+                    </Button>
+                )}
+
+                {editMode && (
+                    <Button
+                        variant="contained"
+                        disabled={!editMode}
+                        onClick={handleSave}
+                        sx={{ fontWeight: "bold" }}
+                    >
+                        저장
+                    </Button>
+                )}
                 {!editMode ? (
                     /* 🔵 수정모드 진입 */
                     <Button
@@ -329,13 +421,6 @@ export default function ShipmentPage() {
                     </Button>
                 )}
 
-                <Button
-                    variant="contained"
-                    disabled={!editMode}
-                    onClick={handleSave}
-                >
-                    저장
-                </Button>
             </Box>
 
 
@@ -357,9 +442,45 @@ export default function ShipmentPage() {
                         </MenuItem>
                     ))}
                 </Select>
-
+                {/* 연도 */}
+                <Select
+                    size="small"
+                    value={year || ""}
+                    disabled={editMode}   // 🔥 수정모드에서는 고정
+                    onChange={e => setYear(Number(e.target.value))}
+                    sx={{
+                        width: 110,
+                        fontWeight: "bold",
+                        bgcolor: editMode ? "#f0f0f0" : "inherit",
+                        cursor: editMode ? "not-allowed" : "pointer"
+                    }}
+                >
+                    {Array.from({ length: 20 }, (_, i) => 2020 + i).map(y => (
+                        <MenuItem key={y} value={y}>
+                            {y}년
+                        </MenuItem>
+                    ))}
+                </Select>
                 <Typography fontWeight="bold" fontSize={16}>
-                    {month}월
+                    <Select
+                        size="small"
+                        value={month || ""}
+                        disabled={editMode}   // 🔥 중요: 수정모드일 때 막음
+                        onChange={e => setMonth(Number(e.target.value))}
+                        sx={{
+                            width: 90,
+                            fontWeight: "bold",
+                            bgcolor: editMode ? "#f0f0f0" : "inherit",
+                            cursor: editMode ? "not-allowed" : "pointer"
+                        }}
+                    >
+                        {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
+                            <MenuItem key={m} value={m}>
+                                {m}월
+                            </MenuItem>
+                        ))}
+                    </Select>
+
                 </Typography>
 
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
