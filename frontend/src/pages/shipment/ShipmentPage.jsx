@@ -14,6 +14,7 @@ import {
     MenuItem
 } from "@mui/material";
 import { apiFetch } from "api/apiFetch";
+import { useNavigate } from "react-router-dom";
 
 /* ============================
    항목 정의
@@ -40,6 +41,7 @@ const ROUTE_LABEL = {
 };
 
 export default function ShipmentPage() {
+    const navigate = useNavigate();
 
     const yearListRef = useRef(null);        // 조회연도
 
@@ -375,6 +377,7 @@ export default function ShipmentPage() {
                 </Box>
             </Typography>
 
+
             {/* 북미 기준 날짜 + 버튼 */}
             <Box
                 sx={{
@@ -563,6 +566,31 @@ export default function ShipmentPage() {
                         </Typography>
                     )}
                 </Box>
+                {/* 🔵 우측 끝으로 밀릴 버튼 */}
+                <Button
+                    variant="outlined"
+                    sx={{
+                        ml: "auto",
+                        fontWeight: "bold",
+                        fontSize: "14px",
+                        color: "#1F2A37",
+                        borderColor: "#1F2A37",
+                        backgroundColor: "#F8FAFC",
+                        "&:hover": {
+                            backgroundColor: "#E5E7EB",
+                            borderColor: "#111827"
+                        }
+                    }}
+                    onClick={() => {
+                        navigate("/shipment/graph", {
+                            state: { route, year, month }
+                        });
+                    }}
+                >
+                    운임비 추이 그래프
+                </Button>
+
+
             </Box>
 
             {/* ================= 테이블 ================= */}

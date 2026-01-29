@@ -17,7 +17,9 @@ const StockAuditDetailPage = Loadable(
 const ShipmentPage = Loadable(
   lazy(() => import('pages/shipment/ShipmentPage'))
 );
-
+const ShipmentGraph = Loadable(
+  lazy(() => import('pages/shipment/ShipmentGraph'))
+);
 
 // render - color
 const Color = Loadable(lazy(() => import('pages/component-overview/color')));
@@ -135,8 +137,18 @@ const MainRoutes = {
     },
     {
       path: 'shipment',
-      element: <ShipmentPage />
+      children: [
+        {
+          path: '',
+          element: <ShipmentPage />
+        },
+        {
+          path: 'graph',
+          element: <ShipmentGraph />
+        }
+      ]
     },
+
 
   ]
 };
