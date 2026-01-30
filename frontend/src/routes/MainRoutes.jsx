@@ -20,6 +20,10 @@ const ShipmentPage = Loadable(
 const ShipmentGraph = Loadable(
   lazy(() => import('pages/shipment/ShipmentGraph'))
 );
+const UserManagementPage = Loadable(
+  lazy(() => import('pages/Administration/administration'))
+);
+
 
 // render - color
 const Color = Loadable(lazy(() => import('pages/component-overview/color')));
@@ -148,6 +152,10 @@ const MainRoutes = {
         }
       ]
     },
+    {
+      path: 'users',
+      element: <UserManagementPage />
+    }
 
 
   ]

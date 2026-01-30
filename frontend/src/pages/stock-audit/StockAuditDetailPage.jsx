@@ -223,6 +223,7 @@ export default function StockAuditDetailPage() {
                         }
                         navigate(-1);
                     }}
+                    sx={{fontWeight:"bold"}}
                 >
                     ← 뒤로가기
                 </Button>

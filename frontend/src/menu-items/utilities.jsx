@@ -5,7 +5,8 @@ import {
   BarcodeOutlined,
   BgColorsOutlined,
   FontSizeOutlined,
-  LoadingOutlined
+  LoadingOutlined,
+  TeamOutlined
 } from '@ant-design/icons';
 
 // icons
@@ -15,23 +16,27 @@ const icons = {
   BarcodeOutlined,
   AntDesignOutlined,
   LoadingOutlined,
-  AppstoreAddOutlined
+  AppstoreAddOutlined,
+  TeamOutlined
 };
 
 // ==============================|| MENU ITEMS - UTILITIES ||============================== //
 
 const utilities = {
   id: 'utilities',
-  title: 'Utilities',
+  title: 'Administration',
   type: 'group',
   children: [
-/*     {
-      id: 'util-typography',
-      title: 'Typography',
+    {
+      id: 'utilities',
+      title: '사용자 관리',
       type: 'item',
-      url: '/typography',
-      icon: icons.FontSizeOutlined
-    },
+      url: '/users',
+      icon: icons.TeamOutlined,
+      breadcrumbs: false
+    }
+    /*  
+    ,
     {
       id: 'util-color',
       title: 'Color',
