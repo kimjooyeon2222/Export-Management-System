@@ -46,7 +46,7 @@ export default function UserAccountPage() {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ p: 2 }}>
       {/* 제목 */}
       <Box
         sx={{
@@ -63,7 +63,7 @@ export default function UserAccountPage() {
         <Button
           variant="contained"
           onClick={() => setOpen(true)}
-          sx={{ fontWeight: 700 }}
+          sx={{ fontWeight: 'bold' }}
         >
           사용자 추가
         </Button>
@@ -84,12 +84,17 @@ export default function UserAccountPage() {
           <TableBody>
             {users.map(user => (
               <TableRow key={user.id}>
-                <TableCell>{user.loginId}</TableCell>
-                <TableCell>{user.company}</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>
+                  {user.loginId}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>
+                  {user.company}
+                </TableCell>
                 <TableCell align="center">
                   <Button
                     color="error"
                     size="small"
+                    sx={{ fontWeight: 'bold' }}
                     onClick={() => handleDeleteUser(user.id)}
                   >
                     삭제
@@ -103,28 +108,48 @@ export default function UserAccountPage() {
 
       {/* 사용자 추가 다이얼로그 */}
       <Dialog open={open} onClose={() => setOpen(false)}>
-        <DialogTitle>사용자 추가</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 'bold' }}>
+          사용자 추가
+        </DialogTitle>
 
-        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+        <DialogContent
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 2,
+            mt: 1
+          }}
+        >
           <TextField
             label="Login ID"
             value={newUser.loginId}
             onChange={(e) =>
               setNewUser(prev => ({ ...prev, loginId: e.target.value }))
             }
+            InputLabelProps={{ sx: { fontWeight: 'bold' } }}
+            InputProps={{ sx: { fontWeight: 'bold' } }}
           />
+
           <TextField
             label="회사"
             value={newUser.company}
             onChange={(e) =>
               setNewUser(prev => ({ ...prev, company: e.target.value }))
             }
+            InputLabelProps={{ sx: { fontWeight: 'bold' } }}
+            InputProps={{ sx: { fontWeight: 'bold' } }}
           />
         </DialogContent>
 
         <DialogActions>
-          <Button onClick={() => setOpen(false)}>취소</Button>
-          <Button variant="contained" onClick={handleAddUser}>
+          <Button sx={{ fontWeight: 'bold' }} onClick={() => setOpen(false)}>
+            취소
+          </Button>
+          <Button
+            variant="contained"
+            sx={{ fontWeight: 'bold' }}
+            onClick={handleAddUser}
+          >
             추가
           </Button>
         </DialogActions>
