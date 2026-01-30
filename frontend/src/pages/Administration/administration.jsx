@@ -16,8 +16,23 @@ import {
 } from '@mui/material';
 
 import { PERMISSION_PAGES } from './permissionPages';
-
+import { useNavigate } from 'react-router-dom';
 export default function UserManagementPage() {
+    const navigate = useNavigate();
+    const actionBtnSx = {
+        height: 40,
+        px: 2,
+        fontWeight: 700,          // ✅ bold 유지
+        fontSize: 14,
+        textTransform: 'none',
+    };
+
+    const handleToggleEditMode = () => {
+        setIsEditMode(prev => !prev);
+    };
+
+    const [isEditMode, setIsEditMode] = useState(false);
+
     // ✅ 임시 사용자 목록 (나중에 API로 대체)
     const users = [
         { id: 1, loginId: 'admin', company: 'ADMIN' },
@@ -110,16 +125,54 @@ export default function UserManagementPage() {
                     </Select>
                 </Box>
 
-                <Button
-                    variant="contained"
-                    onClick={handleSave}
-                    sx={{
-                        fontWeight: 'bold',
-                        height: 40
-                    }}
-                >
-                    저장
-                </Button>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                    {isEditMode && (
+                        <>
+                            <Button
+                                variant="outlined"
+                                color="secondary"
+                                sx={{ fontWeight: 'bold', height: 40 }}
+                                onClick={() => navigate('/admin/accounts')}
+                            >
+                                사용자 계정 관리
+                            </Button>
+
+                            <Button
+                                variant="contained"
+                                onClick={handleSave}
+                                sx={{
+                                    ...actionBtnSx,
+                                    backgroundColor: '#1E3A8A',   // 남색 (navy)
+                                    boxShadow: 'none',
+                                    '&:hover': {
+                                        backgroundColor: '#172554', // 더 진한 남색
+                                        boxShadow: 'none',
+                                    },
+                                }}
+                            >
+                                저장
+                            </Button>
+
+                        </>
+                    )}
+                    <Button
+                        variant="outlined"
+                        onClick={handleToggleEditMode}
+                        sx={{
+                            borderColor: isEditMode ? 'grey.500' : 'primary.main',
+                            color: isEditMode ? 'grey.700' : 'primary.main',
+                            fontWeight: 'bold',
+                            height: 40
+                        }}
+                    >
+                        {isEditMode ? '수정 종료' : '수정'}
+                    </Button>
+
+
+
+
+                </Box>
+
             </Box>
 
             {/* 권한 테이블 */}

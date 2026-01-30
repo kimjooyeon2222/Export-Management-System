@@ -31,7 +31,7 @@ const utilities = {
       id: 'utilities',
       title: '사용자 권한 관리',
       type: 'item',
-      url: '/users',
+      url: '/admin/users',
       icon: icons.TeamOutlined,
       breadcrumbs: false
     }
