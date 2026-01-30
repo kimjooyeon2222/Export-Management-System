@@ -29,7 +29,7 @@ const utilities = {
   children: [
     {
       id: 'utilities',
-      title: '사용자 관리',
+      title: '사용자 권한 관리',
       type: 'item',
       url: '/users',
       icon: icons.TeamOutlined,

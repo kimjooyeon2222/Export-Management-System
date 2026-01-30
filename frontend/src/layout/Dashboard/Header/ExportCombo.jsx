@@ -159,7 +159,7 @@ export default function ExportCombo() {
           }
         }}
       >
-        운송
+        운임 비용
       </Button>
 
 
