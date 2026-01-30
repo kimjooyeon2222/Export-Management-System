@@ -206,14 +206,17 @@ export default function UserManagementPage() {
                                     <Checkbox
                                         size="small"
                                         checked={permissions[page.id].read}
+                                        disabled={!isEditMode}
                                         onChange={() => handleToggle(page.id, 'read')}
                                     />
+
                                 </TableCell>
 
                                 <TableCell align="center" sx={{ py: 0 }}>
                                     <Checkbox
                                         size="small"
                                         checked={permissions[page.id].write}
+                                        disabled={!isEditMode}
                                         onChange={() => handleToggle(page.id, 'write')}
                                     />
                                 </TableCell>
@@ -222,6 +225,7 @@ export default function UserManagementPage() {
                                     <Checkbox
                                         size="small"
                                         checked={permissions[page.id].delete}
+                                        disabled={!isEditMode}
                                         onChange={() => handleToggle(page.id, 'delete')}
                                     />
                                 </TableCell>
