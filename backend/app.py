@@ -44,6 +44,8 @@ from models import (
 from datetime import datetime
 
 from flask_jwt_extended import JWTManager
+from flask_bcrypt import Bcrypt
+
 from auth import auth_bp
 
 def to_date(value):
@@ -65,7 +67,7 @@ app = Flask(__name__)
 app.config.from_object(Config)
 app.config["SQLALCHEMY_DATABASE_URI"] = Config.get_db_uri()
 
-
+bcrypt = Bcrypt(app) 
 jwt = JWTManager(app)   # ⭐ 이 줄 필수
 
 from flask_jwt_extended import (
@@ -143,6 +145,93 @@ def calc_status(etd, eta):
 
 def home():
     return "Flask + MySQL Connected!"
+
+# ============================================
+# 🔐 USER MANAGEMENT API
+# ============================================
+
+@app.route("/api/admin/users", methods=["POST"])
+@jwt_required()
+@admin_required
+def create_user():
+    data = request.json
+
+    login_id = data.get("login_id")
+    password = data.get("password")      # 🔥 평문
+    company = data.get("company")
+    role = data.get("role", "user")
+
+    # 1️⃣ 필수값 체크
+    if not login_id or not password:
+        return jsonify({"error": "login_id and password required"}), 400
+
+    # 2️⃣ login_id 중복 체크
+    exists = db.session.execute(
+        text("SELECT 1 FROM users WHERE login_id = :login_id"),
+        {"login_id": login_id}
+    ).fetchone()
+
+    if exists:
+        return jsonify({"error": "login_id already exists"}), 400
+
+    # 3️⃣ 비밀번호 해시
+    password_hash = bcrypt.generate_password_hash(password).decode("utf-8")
+
+    # 4️⃣ 사용자 생성
+    try:
+        db.session.execute(
+            text("""
+                INSERT INTO users (login_id, company, password_hash, role)
+                VALUES (:login_id, :company, :password_hash, :role)
+            """),
+            {
+                "login_id": login_id,
+                "company": company,
+                "password_hash": password_hash,
+                "role": role
+            }
+        )
+        db.session.commit()
+
+    except Exception as e:
+        db.session.rollback()
+        print("❌ user create error:", e)
+        return jsonify({"error": "user create failed"}), 500
+
+    return jsonify({"message": "user created"}), 201
+
+
+
+@app.route("/api/admin/users", methods=["GET"])
+@jwt_required()
+@admin_required
+def get_users():
+    rows = db.session.execute(
+        text("""
+            SELECT id, login_id, company, role
+            FROM users
+            ORDER BY id ASC
+        """)
+    ).fetchall()
+
+    return jsonify([dict(r._mapping) for r in rows])
+
+@app.route("/api/admin/users/<int:user_id>", methods=["DELETE"])
+@jwt_required()
+@admin_required
+def delete_user(user_id):
+    # 🔥 자기 자신 삭제 방지
+    if user_id == get_jwt_identity():
+        return jsonify({"error": "cannot delete yourself"}), 400
+
+    db.session.execute(
+        text("DELETE FROM users WHERE id = :id"),
+        {"id": user_id}
+    )
+    db.session.commit()
+
+    return jsonify({"message": "deleted"})
+
 
 
 # ============================================

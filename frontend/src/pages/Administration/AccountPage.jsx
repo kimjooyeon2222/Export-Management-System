@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
     Box,
     Typography,
@@ -15,36 +15,97 @@ import {
     DialogContent,
     DialogActions
 } from '@mui/material';
+import { apiFetch } from 'api/apiFetch';
+
+const API_BASE = import.meta.env.VITE_API_URL;
 
 export default function UserAccountPage() {
     const [isEditMode, setIsEditMode] = useState(false);
-
-    const [users, setUsers] = useState([
-        { id: 1, loginId: 'admin', company: 'ADMIN' },
-        { id: 2, loginId: 'user01', company: '모텍' },
-        { id: 3, loginId: 'user02', company: '오토텍' }
-    ]);
+    const [users, setUsers] = useState([]);
 
     const [open, setOpen] = useState(false);
     const [newUser, setNewUser] = useState({
         loginId: '',
-        company: ''
+        company: '',
+        password: ''
     });
 
-    const handleAddUser = () => {
-        setUsers(prev => [
-            ...prev,
-            {
-                id: Date.now(),
-                ...newUser
-            }
-        ]);
-        setNewUser({ loginId: '', company: '' });
-        setOpen(false);
+    /* =========================
+       사용자 목록 로드
+    ========================= */
+    useEffect(() => {
+        fetchUsers();
+    }, []);
+
+    const fetchUsers = async () => {
+        try {
+            const res = await apiFetch(`${API_BASE}/api/admin/users`);
+            const list = await res.json();
+
+            // 🔥 admin 계정 숨김
+            const filtered = Array.isArray(list)
+                ? list.filter(u => u.role !== 'admin')
+                : [];
+
+            setUsers(filtered);
+        } catch (e) {
+            console.error('유저 로딩 실패:', e);
+            setUsers([]);
+        }
     };
 
-    const handleDeleteUser = (id) => {
-        setUsers(prev => prev.filter(u => u.id !== id));
+    /* =========================
+       사용자 추가
+    ========================= */
+    const handleAddUser = async () => {
+        if (!newUser.loginId || !newUser.password) {
+            alert('Login ID와 비밀번호는 필수입니다.');
+            return;
+        }
+
+        try {
+            const res = await apiFetch(`${API_BASE}/api/admin/users`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    login_id: newUser.loginId,
+                    company: newUser.company,
+                    password: newUser.password,
+                    role: 'user'
+                })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                alert(data.error || '사용자 생성 실패');
+                return;
+            }
+
+            setOpen(false);
+            setNewUser({ loginId: '', company: '', password: '' });
+            fetchUsers(); // 🔄 목록 갱신
+        } catch (e) {
+            console.error('유저 추가 실패:', e);
+            alert('사용자 생성 중 오류 발생');
+        }
+    };
+
+    /* =========================
+       사용자 삭제
+    ========================= */
+    const handleDeleteUser = async (id) => {
+        if (!window.confirm('정말 삭제하시겠습니까?')) return;
+
+        try {
+            await apiFetch(`${API_BASE}/api/admin/users/${id}`, {
+                method: 'DELETE'
+            });
+
+            fetchUsers();
+        } catch (e) {
+            console.error('유저 삭제 실패:', e);
+            alert('삭제 실패');
+        }
     };
 
     return (
@@ -63,7 +124,6 @@ export default function UserAccountPage() {
                 </Typography>
 
                 <Box sx={{ display: 'flex', gap: 1 }}>
-                    {/* ✅ 사용자 추가 버튼 (수정 모드에서만) */}
                     {isEditMode && (
                         <Button
                             variant="contained"
@@ -73,7 +133,7 @@ export default function UserAccountPage() {
                             사용자 추가
                         </Button>
                     )}
-                    {/* ✅ 수정 / 수정 종료 버튼 (항상 표시) */}
+
                     <Button
                         variant={isEditMode ? 'outlined' : 'contained'}
                         sx={{ fontWeight: 'bold' }}
@@ -81,11 +141,8 @@ export default function UserAccountPage() {
                     >
                         {isEditMode ? '수정 종료' : '수정'}
                     </Button>
-
-
                 </Box>
             </Box>
-
 
             <Paper>
                 <Table size="small">
@@ -103,7 +160,7 @@ export default function UserAccountPage() {
                         {users.map(user => (
                             <TableRow key={user.id}>
                                 <TableCell sx={{ fontWeight: 'bold' }}>
-                                    {user.loginId}
+                                    {user.login_id}
                                 </TableCell>
                                 <TableCell sx={{ fontWeight: 'bold' }}>
                                     {user.company}
@@ -155,6 +212,17 @@ export default function UserAccountPage() {
                         value={newUser.company}
                         onChange={(e) =>
                             setNewUser(prev => ({ ...prev, company: e.target.value }))
+                        }
+                        InputLabelProps={{ sx: { fontWeight: 'bold' } }}
+                        InputProps={{ sx: { fontWeight: 'bold' } }}
+                    />
+
+                    <TextField
+                        label="비밀번호"
+                        type="password"
+                        value={newUser.password}
+                        onChange={(e) =>
+                            setNewUser(prev => ({ ...prev, password: e.target.value }))
                         }
                         InputLabelProps={{ sx: { fontWeight: 'bold' } }}
                         InputProps={{ sx: { fontWeight: 'bold' } }}
