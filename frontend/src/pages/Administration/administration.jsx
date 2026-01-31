@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { apiFetch } from 'api/apiFetch';
+
 import {
     Box,
     Typography,
@@ -18,6 +20,36 @@ import {
 import { PERMISSION_PAGES } from './permissionPages';
 import { useNavigate } from 'react-router-dom';
 export default function UserManagementPage() {
+    const API_BASE = import.meta.env.VITE_API_URL;
+    const [users, setUsers] = useState([]);
+    const [selectedUserId, setSelectedUserId] = useState('');
+    useEffect(() => {
+        fetchUsers();
+    }, []);
+
+    const fetchUsers = async () => {
+        try {
+            const res = await apiFetch(`${API_BASE}/api/admin/users`);
+            const list = await res.json();
+
+            // 🔥 admin 제외
+            const filtered = Array.isArray(list)
+                ? list.filter(u => u.role !== 'admin')
+                : [];
+
+            setUsers(filtered);
+
+            // 🔥 최초 사용자 자동 선택
+            if (filtered.length > 0) {
+                setSelectedUserId(filtered[0].id);
+            }
+
+        } catch (e) {
+            console.error('유저 목록 로딩 실패:', e);
+            setUsers([]);
+        }
+    };
+
     const navigate = useNavigate();
     const actionBtnSx = {
         height: 40,
@@ -33,14 +65,7 @@ export default function UserManagementPage() {
 
     const [isEditMode, setIsEditMode] = useState(false);
 
-    // ✅ 임시 사용자 목록 (나중에 API로 대체)
-    const users = [
-        { id: 1, loginId: 'admin', company: 'ADMIN' },
-        { id: 2, loginId: 'user01', company: '모텍' },
-        { id: 3, loginId: 'user02', company: '오토텍' }
-    ];
 
-    const [selectedUserId, setSelectedUserId] = useState(users[0].id);
 
     // ✅ 권한 상태
     const [permissions, setPermissions] = useState(() =>
@@ -119,10 +144,12 @@ export default function UserManagementPage() {
                                 value={u.id}
                                 sx={{ fontWeight: 'bold' }}
                             >
-                                {u.loginId} ({u.company})
+                                {/* 🔥 company (role) */}
+                                {u.company} ({u.role})
                             </MenuItem>
                         ))}
                     </Select>
+
                 </Box>
 
                 <Box sx={{ display: 'flex', gap: 1 }}>
