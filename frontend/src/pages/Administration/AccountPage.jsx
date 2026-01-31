@@ -20,7 +20,10 @@ import { apiFetch } from 'api/apiFetch';
 const API_BASE = import.meta.env.VITE_API_URL;
 
 export default function UserAccountPage() {
+    const [editingUsers, setEditingUsers] = useState({});
+
     const [isEditMode, setIsEditMode] = useState(false);
+
     const [users, setUsers] = useState([]);
 
     const [open, setOpen] = useState(false);
@@ -29,6 +32,19 @@ export default function UserAccountPage() {
         company: '',
         password: ''
     });
+    useEffect(() => {
+        if (isEditMode) {
+            const map = {};
+            users.forEach(u => {
+                map[u.id] = {
+                    login_id: u.login_id,
+                    company: u.company,
+                    password: ''
+                };
+            });
+            setEditingUsers(map);
+        }
+    }, [isEditMode, users]);
 
     /* =========================
        사용자 목록 로드
@@ -51,6 +67,30 @@ export default function UserAccountPage() {
         } catch (e) {
             console.error('유저 로딩 실패:', e);
             setUsers([]);
+        }
+    };
+    const handleUpdateUser = async (userId) => {
+        const payload = editingUsers[userId];
+
+        try {
+            const res = await apiFetch(
+                `${API_BASE}/api/admin/users/${userId}`,
+                {
+                    method: 'PUT',
+                    body: JSON.stringify(payload)
+                }
+            );
+
+            const data = await res.json();
+            if (!res.ok) {
+                alert(data.error || '수정 실패');
+                return;
+            }
+            alert('저장 완료');
+            fetchUsers(); // 🔄 갱신
+        } catch (e) {
+            console.error('유저 수정 실패:', e);
+            alert('사용자 수정 오류');
         }
     };
 
@@ -150,21 +190,80 @@ export default function UserAccountPage() {
                         <TableRow>
                             <TableCell sx={{ fontWeight: 'bold' }}>Login ID</TableCell>
                             <TableCell sx={{ fontWeight: 'bold' }}>회사</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }}>비밀번호</TableCell>
+                            <TableCell align="center" sx={{ fontWeight: 'bold' }}>
+                                저장
+                            </TableCell>
                             <TableCell align="center" sx={{ fontWeight: 'bold' }}>
                                 삭제
                             </TableCell>
                         </TableRow>
                     </TableHead>
 
+
                     <TableBody>
                         {users.map(user => (
                             <TableRow key={user.id}>
                                 <TableCell sx={{ fontWeight: 'bold' }}>
-                                    {user.login_id}
+                                    {isEditMode ? (
+                                        <TextField
+                                            size="small"
+                                            value={editingUsers[user.id]?.login_id || ''}
+                                            onChange={(e) =>
+                                                setEditingUsers(prev => ({
+                                                    ...prev,
+                                                    [user.id]: {
+                                                        ...prev[user.id],
+                                                        login_id: e.target.value
+                                                    }
+                                                }))
+                                            }
+                                        />
+                                    ) : (
+                                        user.login_id
+                                    )}
                                 </TableCell>
+
                                 <TableCell sx={{ fontWeight: 'bold' }}>
-                                    {user.company}
+                                    {isEditMode ? (
+                                        <TextField
+                                            size="small"
+                                            value={editingUsers[user.id]?.company || ''}
+                                            onChange={(e) =>
+                                                setEditingUsers(prev => ({
+                                                    ...prev,
+                                                    [user.id]: {
+                                                        ...prev[user.id],
+                                                        company: e.target.value
+                                                    }
+                                                }))
+                                            }
+                                        />
+                                    ) : (
+                                        user.company
+                                    )}
                                 </TableCell>
+
+                                <TableCell>
+                                    {isEditMode && (
+                                        <TextField
+                                            size="small"
+                                            type="password"
+                                            placeholder="변경 시 입력"
+                                            value={editingUsers[user.id]?.password || ''}
+                                            onChange={(e) =>
+                                                setEditingUsers(prev => ({
+                                                    ...prev,
+                                                    [user.id]: {
+                                                        ...prev[user.id],
+                                                        password: e.target.value
+                                                    }
+                                                }))
+                                            }
+                                        />
+                                    )}
+                                </TableCell>
+
                                 <TableCell align="center">
                                     {isEditMode && (
                                         <Button
@@ -177,6 +276,19 @@ export default function UserAccountPage() {
                                         </Button>
                                     )}
                                 </TableCell>
+                                <TableCell align="center">
+                                    {isEditMode && (
+                                        <Button
+                                            size="small"
+                                            variant="contained"
+                                            sx={{ fontWeight: 'bold' }}
+                                            onClick={() => handleUpdateUser(user.id)}
+                                        >
+                                            저장
+                                        </Button>
+                                    )}
+                                </TableCell>
+
                             </TableRow>
                         ))}
                     </TableBody>

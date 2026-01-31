@@ -215,51 +215,69 @@ def get_users():
     ).fetchall()
 
     return jsonify([dict(r._mapping) for r in rows])
-
-@app.route("/api/admin/users/<int:user_id>", methods=["DELETE"])
+@app.route("/api/admin/users/<int:user_id>", methods=["PUT", "DELETE"])
 @jwt_required()
 @admin_required
-def delete_user(user_id):
-    # 🔥 자기 자신 삭제 방지
-    if user_id == get_jwt_identity():
-        return jsonify({"error": "cannot delete yourself"}), 400
+def user_detail(user_id):
 
-    db.session.execute(
-        text("DELETE FROM users WHERE id = :id"),
-        {"id": user_id}
-    )
+    if request.method == "DELETE":
+        if user_id == get_jwt_identity():
+            return jsonify({"error": "cannot delete yourself"}), 400
+
+        db.session.execute(
+            text("DELETE FROM users WHERE id = :id"),
+            {"id": user_id}
+        )
+        db.session.commit()
+        return jsonify({"message": "deleted"})
+
+    # =========================
+    # PUT (수정)
+    # =========================
+    data = request.json
+
+    login_id = data.get("login_id")
+    company = data.get("company")
+    password = data.get("password")
+
+    if not login_id:
+        return jsonify({"error": "login_id required"}), 400
+
+    exists = db.session.execute(
+        text("""
+            SELECT 1 FROM users
+            WHERE login_id = :login_id
+              AND id != :id
+        """),
+        {"login_id": login_id, "id": user_id}
+    ).fetchone()
+
+    if exists:
+        return jsonify({"error": "login_id already exists"}), 400
+
+    params = {
+        "id": user_id,
+        "login_id": login_id,
+        "company": company
+    }
+
+    sql = """
+        UPDATE users
+        SET login_id = :login_id,
+            company = :company
+    """
+
+    if password:
+        password_hash = bcrypt.generate_password_hash(password).decode("utf-8")
+        sql += ", password_hash = :password_hash"
+        params["password_hash"] = password_hash
+
+    sql += " WHERE id = :id"
+
+    db.session.execute(text(sql), params)
     db.session.commit()
 
-    return jsonify({"message": "deleted"})
-
-
-
-# ============================================
-# 🔥 1) 모든 invoice 조회 (GET)
-# ============================================
-@app.route("/api/invoices", methods=["GET"])
-@jwt_required()
-def get_invoices():
-    invoices = Invoice.query.all()
-    return jsonify([
-        {
-            "id": i.id,
-            "sort_order":i.sort_order,
-            "inv_no": i.inv_no,
-            "exporter": i.exporter,
-            "amount": i.amount,
-            "item_type": i.item_type,
-            "cont_no": i.cont_no,
-            "bl_no": i.bl_no,
-            "etd": i.etd,
-            "eta": i.eta,
-            "delayed_date": i.delayed_date,
-            "count_days": i.count_days,
-            "needs_help": i.needs_help,
-            "remark": i.remark
-        }
-        for i in invoices
-    ])
+    return jsonify({"message": "updated"})
 
 
 # ============================================
