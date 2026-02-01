@@ -2626,10 +2626,23 @@ def round_up_100k(value):
 @jwt_required()
 def shipment_graph():
     route = request.args.get("route")
-    sy = int(request.args.get("start_year"))
-    sm = int(request.args.get("start_month"))
-    ey = int(request.args.get("end_year"))
-    em = int(request.args.get("end_month"))
+    sy = request.args.get("start_year")
+    sm = request.args.get("start_month")
+    ey = request.args.get("end_year")
+    em = request.args.get("end_month")
+
+    # 🔒 None, "", "null" 전부 방어
+    if not route:
+        return jsonify([])
+
+    for v in [sy, sm, ey, em]:
+        if v in (None, "", "null"):
+            return jsonify([])
+
+    sy = int(sy)
+    sm = int(sm)
+    ey = int(ey)
+    em = int(em)
 
     headers = (
         ShipmentHeader.query
@@ -2677,6 +2690,7 @@ def shipment_graph():
         })
 
     return jsonify(result)
+
 
 # ============================================
 # 서버 실행
