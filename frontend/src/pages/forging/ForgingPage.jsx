@@ -882,7 +882,7 @@ export default function ForgingPage() {
                   {/* 🔹 아래 설명 */}
                   <Typography
                     sx={{
-                      fontSize: "15px",
+                      fontSize: "13px",
                       color: "#555",
                       lineHeight: 1.1,
                       mt: 0.2,
@@ -1051,7 +1051,7 @@ export default function ForgingPage() {
                     <TableCell align="center" sx={{ fontWeight: "bold", fontSize: 15 }}>
                       {fmt(it.optimalStock)}
                     </TableCell>
-                    
+
                     {/* 실사자료 수량 */}
                     <TableCell align="center" sx={{ fontWeight: "bold", fontSize: 15 }}>
                       {fmt(it.overStock)}

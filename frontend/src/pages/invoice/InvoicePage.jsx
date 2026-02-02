@@ -58,6 +58,7 @@ const itemToExporters = {
 
 
 export default function InvoicePage() {
+
   const [editingItemValue, setEditingItemValue] = useState("");
   const [editingItemRowId, setEditingItemRowId] = useState(null);
   const [customItemValue, setCustomItemValue] = useState("");
@@ -1056,7 +1057,9 @@ export default function InvoicePage() {
               if (newMode) {
                 alert('🔧 수정 모드가 활성화되었습니다.\n셀을 클릭하면 데이터를 편집할 수 있습니다.\n\n ETD,ETA,DELAYED DATE는\n 반드시 YYYY-MM-DD 형식으로 입력바랍니다.');
               } else {
-               
+                setDeleteMode(false);        // 삭제 모드 강제 종료
+                setSelectedInvs([]);         // 선택된 행 전부 해제
+                setEditingItemRowId(null);   // 편집 중 셀 해제
               }
               // 🔥 색상 다시 적용하도록 강제 refresh
               setRefreshTick(t => t + 1);
@@ -1101,26 +1104,28 @@ export default function InvoicePage() {
           variant="contained"
           color="error"
           size="small"
-          disabled={!isEditMode}   // 🔥 수정 모드 OFF면 삭제 불가
+          disabled={!isEditMode}
           onClick={async () => {
             if (!isEditMode) {
               alert("수정 모드를 먼저 활성화하세요.");
               return;
             }
 
-            // 기존 삭제 로직 그대로
+            // 🔹 1. 삭제 모드 진입
             if (!deleteMode) {
               setDeleteMode(true);
+              setSelectedInvs([]);
               alert("🗑 삭제 모드 활성화\n행을 클릭해서 선택하세요.");
               return;
             }
 
-            if (selectedInvs.length === 0) {
-              alert("삭제할 항목이 없습니다.");
+            // 🔹 2. 삭제 모드 + 선택 0건 → 취소
+            if (deleteMode && selectedInvs.length === 0) {
               setDeleteMode(false);
               return;
             }
 
+            // 🔹 3. 삭제 실행
             if (!window.confirm(`${selectedInvs.length}개 항목을 삭제할까요?`)) return;
 
             for (const inv of selectedInvs) {
@@ -1134,8 +1139,13 @@ export default function InvoicePage() {
             setDeleteMode(false);
           }}
         >
-          {deleteMode ? "삭제 실행" : "삭제"}
+          {!deleteMode
+            ? "삭제"
+            : selectedInvs.length > 0
+              ? "삭제 실행"
+              : "삭제 취소"}
         </Button>
+
 
 
       </Box>
@@ -1146,66 +1156,73 @@ export default function InvoicePage() {
           <Table size="small" stickyHeader>
             <TableHead sx={{ bgcolor: '#ffda66', '& th': { fontSize: '0.8rem', fontWeight: 700 } }}>
               <TableRow>
-                {[
-                  'ID',
-                  'EXPORTER',
-                  'INV#',
-                  'INV 금액',
-                  <TableCell sx={{ width: '140px', textAlign: 'center', fontWeight: 'bold' }}>
-                    <div>품목<br/>구분</div>
-                  </TableCell>
-                  ,
-                  'CONT#',
-                  'BL#',
-                  <Box key="etdHeader" sx={{ textAlign: 'center', whiteSpace: 'pre-line' }}>
-                    ETD<br />(공장 출발 예정일)
-                  </Box>,
-                  <Box key="etaHeader" sx={{ textAlign: 'center', whiteSpace: 'pre-line' }}>
-                    ETA<br />(공장 도착 예정일)
-                  </Box>,
-                  <Box key="delayed" sx={{ textAlign: 'center', lineHeight: 1.2 }}>
+                <TableCell align="center">ID</TableCell>
+                <TableCell align="center">EXPORTER</TableCell>
+                <TableCell align="center">INV#</TableCell>
+                <TableCell align="center">INV 금액</TableCell>
+
+                {/* ⭐ 문제 원인이던 품목구분 – 정상 구조 */}
+                <TableCell
+                  align="center"
+                  sx={{ width: 140, fontWeight: 'bold' }}
+                >
+                  <Box sx={{ lineHeight: 1.2 }}>
+                    품목 구분
+                  </Box>
+                </TableCell>
+
+                <TableCell align="center">CONT#</TableCell>
+                <TableCell align="center">BL#</TableCell>
+
+                <TableCell align="center">
+                  <Box sx={{ lineHeight: 1.6 }}>
+                    ETD<br />(공장 출발일)
+                  </Box>
+                </TableCell>
+
+                <TableCell align="center">
+                  <Box sx={{ lineHeight: 1.6, fontSize: "13" }}>
+                    ETA<br />(공장 도착일)
+                  </Box>
+                </TableCell>
+
+                {/* DELAYED DATE */}
+                <TableCell align="center">
+                  <Box sx={{ lineHeight: 1.2 }}>
                     <Typography sx={{ fontWeight: 'bold' }}>DELAYED DATE</Typography>
-                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1 }}>
-                      <Box sx={{ width: 14, height: 14, bgcolor: '#d6eaff', border: '1px solid #bbb' }} />
-                      <Typography sx={{ fontSize: '0.7rem' }}>: 도착 완료</Typography>
+
+                    <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.5, mt: 0.3 }}>
+                      <Box sx={{ width: 12, height: 12, bgcolor: '#d6eaff', border: '1px solid #bbb' }} />
+                      <Typography sx={{ fontSize: '0.65rem', fontWeight: "bold" }}> 도착 완료</Typography>
                     </Box>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        gap: 1,
-                        mt: 0.3
-                      }}
-                    >
-                      <Box sx={{ width: 14, height: 14, bgcolor: '#ffcccc', border: '1px solid #bbb' }} />
-                      <Typography sx={{ fontSize: '0.6rem', color: '#333' }}>
-                        : 금일 이후 도착<br />{' '}
-                        <span style={{ color: 'red', fontWeight: 'bold', fontSize: '0.7rem' }}> (5일전)</span>
+
+                    <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.5, mt: 0.2 }}>
+                      <Box sx={{ width: 12, height: 12, bgcolor: '#ffcccc', border: '1px solid #bbb' }} />
+                      <Typography sx={{ fontSize: '0.65rem', color: 'red', fontWeight: "bold" }}>
+                        금일 이후 도착 (5일전)
                       </Typography>
                     </Box>
-                  </Box>,
-                  <Box key="countHeader" sx={{ textAlign: 'center', lineHeight: 1.2 }}>
+                  </Box>
+                </TableCell>
+
+                {/* COUNT */}
+                <TableCell align="center">
+                  <Box sx={{ lineHeight: 1.2 }}>
                     <Typography sx={{ fontWeight: 'bold' }}>COUNT</Typography>
-                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1 }}>
-                      <Box sx={{ width: 14, height: 14, bgcolor: '#ccf2e0', border: '1px solid #bbb' }} />
-                      <Typography sx={{ fontSize: '0.7rem', fontWeight: 'bold' }}>
-                        <Box component="span" sx={{ color: '#333' }}>:</Box>{' '}
-                        <Box component="span" sx={{ color: 'red', fontSize: "10px" }}>
-                          지연<br /> 경고<br />(10일)
-                        </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.5, mt: 0.3 }}>
+                      <Box sx={{ width: 12, height: 12, bgcolor: '#ccf2e0', border: '1px solid #bbb' }} />
+                      <Typography sx={{ fontSize: '0.65rem', color: 'red', fontWeight: "bold" }}>
+                        지연 경고 (10일)
                       </Typography>
                     </Box>
-                  </Box>,
-                  '도비필요',
-                  '비고'
-                ].map((h) => (
-                  <TableCell key={h} align="center" sx={{ fontWeight: 'bold', color: '#333' }}>
-                    {h}
-                  </TableCell>
-                ))}
+                  </Box>
+                </TableCell>
+
+                <TableCell align="center">도비</TableCell>
+                <TableCell align="center">비고</TableCell>
               </TableRow>
             </TableHead>
+
 
             {/* ==========================  
     🔥 정렬 모드 조건부 렌더링  
@@ -1316,6 +1333,7 @@ export default function InvoicePage() {
                                 }
 
                                 if (idx === 4 && isEditMode) {
+                                  if (deleteMode) return;
                                   setEditingItemRowId(row.id);
                                   return;
                                 }
@@ -1345,7 +1363,7 @@ export default function InvoicePage() {
 
                             >
                               {/* 🔥 여기서부터 품목구분 전용 렌더링 */}
-                              {idx === 4 && isEditMode ? (
+                              {idx === 4 && isEditMode && !deleteMode ? (
                                 editingItemRowId === row.id ? (
                                   <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
                                     <Select
@@ -1540,6 +1558,7 @@ export default function InvoicePage() {
                             }
 
                             if (idx === 4 && isEditMode) {
+                              if (deleteMode) return;
                               setEditingItemRowId(row.id);
                               return;
                             }
@@ -1569,7 +1588,7 @@ export default function InvoicePage() {
 
                         >
                           {/* 🔥 여기서부터 품목구분 전용 렌더링 */}
-                          {idx === 4 && isEditMode ? (
+                          {idx === 4 && isEditMode && !deleteMode ? (
                             editingItemRowId === row.id ? (
                               <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
                                 <Select

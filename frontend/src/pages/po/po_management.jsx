@@ -765,8 +765,12 @@ export default function POManagementPage() {
 
               {/* ⭐ 업체는 항상 표시 */}
               <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
-                발주번호 / 업체<br /> (수정자)
+                발주번호 / 업체
+                <Box sx={{ fontSize: "13px", fontWeight: "normal", lineHeight: 1.2 ,fontWeight: "bold",color: "#777"}}>
+                  (수정자)
+                </Box>
               </TableCell>
+
 
               <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
                 발주일자

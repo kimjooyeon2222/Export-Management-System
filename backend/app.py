@@ -394,13 +394,13 @@ def get_all_packing():
 
 def get_packing_by_inv(inv_no):
     
-    print("🔥 Flask 받은 inv_no:", repr(inv_no))
+   
 
     invoice = Invoice.query.filter_by(inv_no=inv_no).first_or_404()
-    print("🔥 invoice 검색 결과:", invoice)
+   
 
     rows = PackingList.query.filter_by(invoice_id=invoice.id).all()
-    print("🔥 packing rows:", rows)
+   
 
     return jsonify([
         {
@@ -2045,7 +2045,7 @@ def get_forging_inv_item_qty():
         item_code = data.get("item_code")
 
 
-        print("🔥 qty API input:", inv_no, item_code)
+        
 
         if not inv_no or not item_code:
             print("❌ missing param")
@@ -2061,7 +2061,7 @@ def get_forging_inv_item_qty():
             PackingList.part_no == item_code,
         ).all()
 
-        print("🔥 qty rows:", [(r.part_no, r.part_name, r.qty) for r in rows])
+      
 
         total_qty = sum(int(r.qty or 0) for r in rows)
 
