@@ -730,7 +730,16 @@ export default function AxleSubPage() {
       <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2, gap: 1 }}>
         <Button
           variant="outlined"
-          onClick={() => setEditMode(!editMode)}
+          onClick={() => {
+            if (editMode) {
+              // ✅ 수정모드 종료
+              setEditMode(false);
+              setSelectedRowIds([]);   // ⭐ 핵심
+            } else {
+              // 수정모드 진입
+              setEditMode(true);
+            }
+          }}
           sx={{
             borderColor: editMode ? "#d32f2f" : "#1976d2",
             color: editMode ? "#d32f2f" : "#1976d2",
@@ -739,6 +748,7 @@ export default function AxleSubPage() {
         >
           {editMode ? "수정모드 종료" : "수정모드 활성화"}
         </Button>
+
 
         <Button
           variant="contained"
@@ -1121,7 +1131,7 @@ export default function AxleSubPage() {
 
                     {/* 적정재고 */}
                     <TableCell align="center" sx={{ fontSize: "15px", fontWeight: "bold" }}>{formatNumber(target)}</TableCell>
-                    
+
                     {/* 실사자료 */}
                     <TableCell
                       align="center"
