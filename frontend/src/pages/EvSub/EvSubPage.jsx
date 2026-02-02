@@ -760,7 +760,16 @@ export default function EvSubPage() {
       <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2, gap: 1 }}>
         <Button
           variant="outlined"
-          onClick={handleToggleEditMode}
+          onClick={() => {
+            if (editMode) {
+              // ✅ 수정모드 종료 시만 초기화
+              setEditMode(false);
+              setSelectedEvRowIds([]);   // 선택 행 초기화
+              setDeleteMode(false);      // 삭제모드도 같이 종료
+            } else {
+              setEditMode(true);
+            }
+          }}
           sx={{
             borderColor: editMode ? "#d32f2f" : "#1976d2",
             color: editMode ? "#d32f2f" : "#1976d2",
@@ -1196,7 +1205,7 @@ export default function EvSubPage() {
                     <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
                       {formatNumber(row.target_stock)}
                     </TableCell>
-                    
+
                     <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
                       {formatNumber(row.actual_stock)}
                     </TableCell>
