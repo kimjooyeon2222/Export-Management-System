@@ -672,7 +672,7 @@ export default function OilShipmentSchedule() {
                   mb: 2
                 }}
               >
-                <Button variant="contained" onClick={addOilRow}>+ 행 추가</Button>
+                <Button variant="contained" onClick={addOilRow} sx={{ fontWeight: "bold" }}>+ 행 추가</Button>
                 <Button variant="outlined" color="error" onClick={deleteOilRow} sx={{ fontWeight: "bold" }}>선택 행 삭제</Button>
 
 
@@ -694,11 +694,12 @@ export default function OilShipmentSchedule() {
                     setEditingOilNo(null);
                     alert("✏ 수정할 행을 클릭하세요.");
                   }}
+                  sx={{ fontWeight: "bold" }}
                 >
                   {oilEditSelectMode ? "선택 수정 취소" : "선택 행 수정"}
                 </Button>
 
-                <Button variant="contained" color="success" onClick={saveOilList}>
+                <Button variant="contained" color="success" onClick={saveOilList} sx={{ fontWeight: "bold" }}>
                   저장하기
                 </Button>
 
@@ -910,7 +911,7 @@ export default function OilShipmentSchedule() {
               justifyContent: "flex-end"
             }}
           >
-            <Button variant="contained" onClick={addRow}>
+            <Button variant="contained" onClick={addRow} sx={{ fontWeight: "bold" }}>
               + 행 추가
             </Button>
 
@@ -918,23 +919,30 @@ export default function OilShipmentSchedule() {
               variant="outlined"
               color="error"
               onClick={deleteSelectedGroups}
+              sx={{ fontWeight: "bold" }}
             >
               선택 행 삭제
             </Button>
 
-
+            <Button variant="contained" color="success" onClick={saveAll} sx={{ fontWeight: "bold" }}>
+              저장하기
+            </Button>
 
             <Button
               variant="outlined"
               color="error"
-              onClick={() => setEditMode(false)}
+              onClick={() => {
+                setEditMode(false);
+                setDeleteSelectMode(false);
+                setSelectedGroups([]);
+              }}
+              sx={{ fontWeight: "bold" }}
             >
               수정 종료
             </Button>
 
-            <Button variant="contained" color="success" onClick={saveAll}>
-              저장하기
-            </Button>
+
+
           </Box>
         )}
 
