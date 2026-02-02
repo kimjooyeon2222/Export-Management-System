@@ -10,8 +10,8 @@ db = SQLAlchemy()
 class Invoice(db.Model):
     __tablename__ = "invoice"
 
-    id = db.Column(db.Integer, primary_key=True)   # PK
-    sort_order = db.Column(db.Integer, nullable=False, default=999999)  # ⭐ 추가
+    id = db.Column(db.Integer, primary_key=True)
+    sort_order = db.Column(db.Integer, nullable=False, default=999999)
 
     exporter = db.Column(db.String(100))
     inv_no = db.Column(db.String(100), unique=True, nullable=False)
@@ -28,14 +28,33 @@ class Invoice(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    # 🔥 PACKING_LIST CASCADE DELETE 100% 적용
     packing_list = db.relationship(
         "PackingList",
         backref="invoice",
         cascade="all, delete-orphan",
-        passive_deletes=True     # ← MySQL CASCADE 연동
+        passive_deletes=True
     )
 
+    # ⭐⭐⭐ 이거 추가
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "sort_order": self.sort_order,
+            "exporter": self.exporter,
+            "inv_no": self.inv_no,
+            "amount": self.amount,
+            "item_type": self.item_type,
+            "cont_no": self.cont_no,
+            "bl_no": self.bl_no,
+            "etd": self.etd,
+            "eta": self.eta,
+            "delayed_date": self.delayed_date,
+            "count_days": self.count_days,
+            "needs_help": self.needs_help,
+            "remark": self.remark,
+            "created_at": self.created_at.strftime("%Y-%m-%d %H:%M:%S") if self.created_at else None,
+            "updated_at": self.updated_at.strftime("%Y-%m-%d %H:%M:%S") if self.updated_at else None,
+        }
 
 # ===========================================
 # 🚀 PACKING LIST MODEL

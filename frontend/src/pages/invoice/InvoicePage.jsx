@@ -1056,7 +1056,7 @@ export default function InvoicePage() {
               if (newMode) {
                 alert('🔧 수정 모드가 활성화되었습니다.\n셀을 클릭하면 데이터를 편집할 수 있습니다.\n\n ETD,ETA,DELAYED DATE는\n 반드시 YYYY-MM-DD 형식으로 입력바랍니다.');
               } else {
-                alert('✅ 수정 모드가 종료되었습니다.\n이제 표는 읽기 전용 상태입니다.');
+               
               }
               // 🔥 색상 다시 적용하도록 강제 refresh
               setRefreshTick(t => t + 1);
@@ -1152,7 +1152,7 @@ export default function InvoicePage() {
                   'INV#',
                   'INV 금액',
                   <TableCell sx={{ width: '140px', textAlign: 'center', fontWeight: 'bold' }}>
-                    <div>품목구분</div>
+                    <div>품목<br/>구분</div>
                   </TableCell>
                   ,
                   'CONT#',

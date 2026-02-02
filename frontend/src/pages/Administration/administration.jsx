@@ -40,7 +40,7 @@ export default function UserManagementPage() {
             setUsers(filtered);
 
             // 🔥 최초 사용자 자동 선택
-            if (filtered.length > 0) {
+            if (filtered.length > 0 && !selectedUserId) {
                 setSelectedUserId(filtered[0].id);
             }
 
@@ -79,6 +79,34 @@ export default function UserManagementPage() {
         }, {})
     );
 
+    // 🔥 선택된 사용자 권한 불러오기
+    useEffect(() => {
+        if (!selectedUserId) return;
+
+        (async () => {
+            try {
+                const res = await apiFetch(
+                    `${API_BASE}/api/admin/users/${selectedUserId}/permissions`
+                );
+                const data = await res.json();
+
+                const next = {};
+                PERMISSION_PAGES.forEach(p => {
+                    next[p.id] = data[p.id] || {
+                        read: false,
+                        write: false,
+                        delete: false
+                    };
+                });
+
+                setPermissions(next);
+            } catch (e) {
+                console.error('권한 로딩 실패:', e);
+            }
+        })();
+    }, [selectedUserId]);
+
+
     const handleToggle = (pageId, type) => {
         setPermissions((prev) => ({
             ...prev,
@@ -89,12 +117,23 @@ export default function UserManagementPage() {
         }));
     };
 
-    const handleSave = () => {
-        console.log('SAVE', {
-            userId: selectedUserId,
-            permissions
-        });
-        // 👉 나중에 API 연결
+    const handleSave = async () => {
+        if (!selectedUserId) return;
+
+        try {
+            await apiFetch(
+                `${API_BASE}/api/admin/users/${selectedUserId}/permissions`,
+                {
+                    method: 'POST',
+                    body: JSON.stringify(permissions)
+                }
+            );
+            alert('저장 완료');
+            setIsEditMode(false); // 선택
+        } catch (e) {
+            console.error('권한 저장 실패:', e);
+            alert('저장 실패');
+        }
     };
 
     return (
