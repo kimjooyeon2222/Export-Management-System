@@ -83,7 +83,11 @@ export default function OilShipmentSchedule() {
           `${API_BASE}/api/oil/auto-load?inv_no=${inv}`
         );
         const qtyData = await res.json();
-
+        // 🔥🔥🔥 이 줄이 핵심
+        if (!Array.isArray(qtyData)) {
+          console.warn("qty auto-load skipped:", inv, qtyData);
+          continue;
+        }
         setScheduleRows(prev =>
           prev.map(row => {
             if (row.inv_no !== inv) return row;
@@ -322,6 +326,10 @@ export default function OilShipmentSchedule() {
         `${API_BASE}/api/oil/auto-load?inv_no=${newInv}` // ✅ query param
       );
       const qtyData = await qtyRes.json();
+      if (!Array.isArray(qtyData)) {
+        console.warn("qty auto-load skipped:", qtyData);
+        return;
+      }
 
       setScheduleRows(prev =>
         prev.map(row => {
@@ -522,15 +530,20 @@ export default function OilShipmentSchedule() {
         return;
       }
 
-      // 1️⃣ 구조 먼저 세팅
-      setScheduleRows(data);
+      // 🔥 여기 추가
+      const withGroupKey = data.map(row => ({
+        ...row,
+        _groupKey: row._groupKey || row.inv_no, // 최초 1회 고정
+      }));
 
-      // 2️⃣ qty 자동 연동 (🔥 핵심)
-      await autoLoadQtyForAllInv(data);
+      setScheduleRows(withGroupKey);
+
+      await autoLoadQtyForAllInv(withGroupKey);
     };
 
     init();
   }, []);
+
 
 
 
@@ -660,7 +673,7 @@ export default function OilShipmentSchedule() {
                 }}
               >
                 <Button variant="contained" onClick={addOilRow}>+ 행 추가</Button>
-                <Button variant="outlined" color="error" onClick={deleteOilRow} sx={{fontWeight:"bold"}}>선택 행 삭제</Button>
+                <Button variant="outlined" color="error" onClick={deleteOilRow} sx={{ fontWeight: "bold" }}>선택 행 삭제</Button>
 
 
 
@@ -689,7 +702,7 @@ export default function OilShipmentSchedule() {
                   저장하기
                 </Button>
 
-                <Button variant="outlined" color="error" onClick={() => setOilEditMode(false)} sx={{fontWeight:"bold"}}>
+                <Button variant="outlined" color="error" onClick={() => setOilEditMode(false)} sx={{ fontWeight: "bold" }}>
                   수정 종료
                 </Button>
               </Box>
