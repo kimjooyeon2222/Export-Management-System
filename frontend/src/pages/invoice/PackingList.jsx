@@ -343,16 +343,27 @@ export default function PackingList() {
             color={isEditMode ? "secondary" : "warning"}
             size="small"
             onClick={() => {
-              setIsEditMode((prev) => {
+              setIsEditMode(prev => {
                 const newMode = !prev;
+
+                if (!newMode) {
+                  // 🔥 수정 종료 시 모든 상태 강제 초기화
+                  setDeleteMode(false);
+                  setSelectedRows([]);
+                  setItemDialogOpen(false);
+                  setTargetRowId(null);
+                }
+
                 alert(
                   newMode
                     ? "🔧 수정 모드가 활성화되었습니다.\n셀을 클릭하면 데이터를 편집할 수 있습니다."
                     : "✅ 수정 모드가 종료되었습니다.\n표는 다시 읽기 전용이 됩니다."
                 );
+
                 return newMode;
               });
             }}
+
           >
             {isEditMode ? "수정 종료" : "수정 모드"}
           </Button>
