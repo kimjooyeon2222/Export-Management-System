@@ -21,7 +21,6 @@ const ROUTES = [
     { key: "LA", label: "BUSAN → LA" }
 ];
 
-const YEARS = Array.from({ length: 10 }, (_, i) => 2020 + i);
 const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
 
 export default function ShipmentGraph() {
@@ -69,6 +68,15 @@ export default function ShipmentGraph() {
        X축 월 범위
     ============================ */
     const monthRange = useMemo(() => {
+        if (
+            startYear == null ||
+            startMonth == null ||
+            endYear == null ||
+            endMonth == null
+        ) {
+            return [];
+        }
+
         const result = [];
         let y = startYear;
         let m = startMonth;
@@ -87,6 +95,7 @@ export default function ShipmentGraph() {
         }
         return result;
     }, [startYear, startMonth, endYear, endMonth]);
+
 
     useEffect(() => {
         const loadDefaultPeriod = async () => {
@@ -118,21 +127,36 @@ export default function ShipmentGraph() {
        데이터 로드 (노선별)
     ============================ */
     useEffect(() => {
+        // 🔒 기간 값 다 준비되기 전엔 절대 호출하지 않음
+        if (
+            startYear == null ||
+            startMonth == null ||
+            endYear == null ||
+            endMonth == null
+        ) {
+            return;
+        }
+
         const load = async () => {
             const results = {};
 
-            for (const r of ROUTES) {
-                const res = await apiFetch(
-                    `${API_BASE}/api/shipment/graph?route=${r.key}&start_year=${startYear}&start_month=${startMonth}&end_year=${endYear}&end_month=${endMonth}`
-                );
-                results[r.key] = await res.json();
-            }
+            try {
+                for (const r of ROUTES) {
+                    const res = await apiFetch(
+                        `${API_BASE}/api/shipment/graph?route=${r.key}&start_year=${startYear}&start_month=${startMonth}&end_year=${endYear}&end_month=${endMonth}`
+                    );
+                    results[r.key] = await res.json();
+                }
 
-            setDataMap(results);
+                setDataMap(results);
+            } catch (e) {
+                console.warn("shipment graph load skipped:", e);
+            }
         };
 
         load();
     }, [startYear, startMonth, endYear, endMonth]);
+
 
     /* ============================
        노선별 차트 데이터 (USD 변환)
