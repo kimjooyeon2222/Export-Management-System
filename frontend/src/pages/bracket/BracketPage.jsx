@@ -646,7 +646,16 @@ export default function BracketPage() {
       <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2, gap: 1 }}>
         <Button
           variant="outlined"
-          onClick={() => setEditMode(!editMode)}
+          onClick={() => {
+            if (editMode) {
+              // ✅ 수정모드 종료 시만 초기화
+              setEditMode(false);
+              setSelectedBrRowIds([]);   // 선택 행 초기화
+              setDeleteMode(false);      // 삭제모드 종료
+            } else {
+              setEditMode(true);
+            }
+          }}
           sx={{
             borderColor: editMode ? "#d32f2f" : "#1976d2",
             color: editMode ? "#d32f2f" : "#1976d2",
@@ -655,6 +664,7 @@ export default function BracketPage() {
         >
           {editMode ? "수정모드 종료" : "수정모드 활성화"}
         </Button>
+
 
         <Button
           variant="contained"
