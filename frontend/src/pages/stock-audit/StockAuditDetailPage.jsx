@@ -223,7 +223,7 @@ export default function StockAuditDetailPage() {
                         }
                         navigate(-1);
                     }}
-                    sx={{fontWeight:"bold"}}
+                    sx={{ fontWeight: "bold" }}
                 >
                     ← 뒤로가기
                 </Button>
@@ -341,12 +341,15 @@ export default function StockAuditDetailPage() {
                                     window.confirm("저장하지 않고 수정모드를 종료하시겠습니까?")
                                 ) {
                                     setEditMode(false);
+                                    setEditSelectMode(false);   // ✅ 핵심
+                                    setEditingRowId(null);      // ✅ 핵심
                                     setDirty(false);
                                 }
                             }}
                         >
                             종료
                         </Button>
+
                     </>
                 )}
             </Paper>
