@@ -66,6 +66,11 @@ print("🔥 Flask 실제 연결 DB:", Config.get_db_uri())
 
 app = Flask(__name__)
 app.config.from_object(Config)
+
+# (개발용이면 hours=8~24 추천)
+from datetime import timedelta
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=8)
+
 app.config["SQLALCHEMY_DATABASE_URI"] = Config.get_db_uri()
 
 bcrypt = Bcrypt(app) 
