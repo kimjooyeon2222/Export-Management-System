@@ -982,7 +982,7 @@ export default function OilShipmentSchedule() {
                       key={day}
                       align="center"
                       sx={{
-                        backgroundColor: "#f1f8e9",
+                        backgroundColor: "#e8f5e9",
                         padding: 0,
                         "&:hover": {
                           backgroundColor: "#ffe6eb", // 🔥 hover 강조
