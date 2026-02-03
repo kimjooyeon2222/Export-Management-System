@@ -365,6 +365,8 @@ export default function POManagementPage() {
         상태
   ---------------------------------- */
   const [editMode, setEditMode] = useState(false);
+  const [poDeleteMode, setPoDeleteMode] = useState(false);
+  const [selectedPoRowIds, setSelectedPoRowIds] = useState([]);
   const [showParentOnly, setShowParentOnly] = useState(true);
   const [partFilter, setPartFilter] = useState("전체");
   const PART_OPTIONS = [
@@ -539,11 +541,14 @@ export default function POManagementPage() {
               const next = !editMode;
               setEditMode(next);
 
-              // ⭐ 수정모드 켜질 때 subrow 자동 표시
               if (next) {
                 setShowParentOnly(false);
+              } else {
+                setPoDeleteMode(false);
+                setSelectedPoRowIds([]);
               }
             }}
+
             sx={{ fontWeight: "bold" }}
           >
             {editMode ? "수정모드 종료" : "수정모드 활성화"}
@@ -627,11 +632,43 @@ export default function POManagementPage() {
           <Button
             variant="contained"
             color="error"
-            disabled={!editMode || poRows.length === 0}
-            onClick={() => deleteRow(poRows[poRows.length - 1].id)}
+            disabled={!editMode}
+            onClick={async () => {
+              // 1️⃣ 삭제모드 진입
+              if (!poDeleteMode) {
+                setPoDeleteMode(true);
+                setSelectedPoRowIds([]);
+
+                alert("삭제할 PO 행을 선택하세요."); 
+
+                return;
+              }
+
+
+              // 2️⃣ 선택 안 했을 때
+              if (selectedPoRowIds.length === 0) {
+                alert("삭제할 PO 행을 선택하세요.");
+                return;
+              }
+
+              // 3️⃣ DB 삭제 (부모만 삭제 → subrow는 cascade)
+              for (const id of selectedPoRowIds) {
+                await apiFetch(`${API_BASE}/api/po/${id}`, {
+                  method: "DELETE",
+                });
+              }
+
+              // 4️⃣ 프론트 반영
+              setPoRows(prev => prev.filter(r => !selectedPoRowIds.includes(r.id)));
+
+              // 5️⃣ 초기화
+              setSelectedPoRowIds([]);
+              setPoDeleteMode(false);
+            }}
           >
-            - 행삭제
+            {poDeleteMode ? "선택 삭제" : "- 행삭제"}
           </Button>
+
 
         </Box>
       </Box>
@@ -766,7 +803,7 @@ export default function POManagementPage() {
               {/* ⭐ 업체는 항상 표시 */}
               <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
                 발주번호 / 업체
-                <Box sx={{ fontSize: "13px", lineHeight: 1.2 ,fontWeight: "bold",color: "#777"}}>
+                <Box sx={{ fontSize: "13px", lineHeight: 1.2, fontWeight: "bold", color: "#777" }}>
                   (수정자)
                 </Box>
               </TableCell>
@@ -858,11 +895,28 @@ export default function POManagementPage() {
                 <React.Fragment key={row.id}>
 
                   {/* 부모 행 */}
-                  <TableRow sx={{
-                    height: 42, fontWeight: "bold", fontSize: "15px",
-                    borderTop: "3px solid #e0e0e0",   // ⭐⭐ 여기 추가!!
+                  <TableRow
+                    onClick={() => {
+                      if (!editMode || !poDeleteMode) return;
 
-                  }}>
+                      setSelectedPoRowIds(prev =>
+                        prev.includes(row.id)
+                          ? prev.filter(id => id !== row.id)
+                          : [...prev, row.id]
+                      );
+                    }}
+                    sx={{
+                      height: 42,
+                      fontWeight: "bold",
+                      fontSize: "15px",
+                      borderTop: "3px solid #e0e0e0",
+                      cursor: poDeleteMode ? "pointer" : "default",
+                      backgroundColor: selectedPoRowIds.includes(row.id)
+                        ? "#cfe8ff"   // ⭐ 선택 강조
+                        : "inherit",
+                    }}
+                  >
+
                     {/* 결재목차 */}
 
                     <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "13px", borderBottom: "5px solid #c2c2c2" }}>
@@ -870,8 +924,12 @@ export default function POManagementPage() {
                         <TextField
                           size="small"
                           value={row.subject}
+                          onClick={(e) => {
+                            if (poDeleteMode) e.stopPropagation();
+                          }}
                           onChange={(e) => updateCell(row.id, "subject", e.target.value)}
                         />
+
                       ) : (
                         row.subject
                       )}
@@ -885,6 +943,9 @@ export default function POManagementPage() {
                         <TextField
                           size="small"
                           value={row.manager}
+                          onClick={(e) => {
+                            if (poDeleteMode) e.stopPropagation();
+                          }}
                           onChange={(e) => updateCell(row.id, "manager", e.target.value)}
                         />
                       ) : (
@@ -902,6 +963,9 @@ export default function POManagementPage() {
                         <TextField
                           size="small"
                           value={row.company}
+                          onClick={(e) => {
+                            if (poDeleteMode) e.stopPropagation();
+                          }}
                           onChange={(e) => updateCell(row.id, "company", e.target.value)}
                         />
                       ) : (
@@ -949,7 +1013,10 @@ export default function POManagementPage() {
                           <Button
                             size="small"
                             variant="outlined"
-                            onClick={() => addSubRow(row.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              addSubRow(row.id);
+                            }}
                             sx={{ minWidth: 26, padding: "0 6px" }}
                           >
                             +
@@ -1018,16 +1085,18 @@ export default function POManagementPage() {
                         {/* subRow 실제 데이터 */}
                         <TableRow
                           sx={{
-                            bgcolor: "#fff",
-                            height: 42,                // 부모와 동일한 세로 높이
-
+                            bgcolor: selectedPoRowIds.includes(row.id)
+                              ? "#eaf2ff"    // ⭐ 부모 선택 시 같이 표시
+                              : "#fff",
+                            height: 42,
                             "& td": {
                               fontWeight: "bold",
-                              padding: "6px 8px",     // 부모와 비슷한 padding 적용
-                              fontSize: "15px"        // 글자 크기도 동일하게
-                            }
+                              padding: "6px 8px",
+                              fontSize: "15px",
+                            },
                           }}
                         >
+
 
                           {/* 결재목차 ->  발주진행명 */}
 
@@ -1048,6 +1117,9 @@ export default function POManagementPage() {
                               <TextField
                                 size="small"
                                 value={sub.company}
+                                onClick={(e) => {
+                                  if (poDeleteMode) e.stopPropagation();
+                                }}
                                 onChange={(e) =>
                                   updateSubCell(row.id, sub.id, "company", e.target.value)
                                 }
@@ -1073,6 +1145,9 @@ export default function POManagementPage() {
                               <TextField
                                 size="small"
                                 value={sub.ototek_date}
+                                onClick={(e) => {
+                                  if (poDeleteMode) e.stopPropagation();
+                                }}
                                 onChange={(e) =>
                                   updateSubCell(row.id, sub.id, "ototek_date", e.target.value)
                                 }
@@ -1088,6 +1163,9 @@ export default function POManagementPage() {
                               <TextField
                                 size="small"
                                 value={sub.work_days}
+                                onClick={(e) => {
+                                  if (poDeleteMode) e.stopPropagation();
+                                }}
                                 onChange={(e) =>
                                   updateSubCell(row.id, sub.id, "work_days", e.target.value)
                                 }
@@ -1103,6 +1181,9 @@ export default function POManagementPage() {
                               <TextField
                                 size="small"
                                 value={sub.order_date}
+                                onClick={(e) => {
+                                  if (poDeleteMode) e.stopPropagation();
+                                }}
                                 onChange={(e) =>
                                   updateSubCell(row.id, sub.id, "order_date", e.target.value)
                                 }
@@ -1119,6 +1200,9 @@ export default function POManagementPage() {
                                 <TextField
                                   size="small"
                                   value={sub.request_date}
+                                  onClick={(e) => {
+                                    if (poDeleteMode) e.stopPropagation();
+                                  }}
                                   onChange={(e) =>
                                     updateSubCell(row.id, sub.id, "request_date", e.target.value)
                                   }
@@ -1132,7 +1216,10 @@ export default function POManagementPage() {
                                   size="small"
                                   variant="outlined"
                                   color="error"
-                                  onClick={() => removeSubRow(row.id, sub.id)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    removeSubRow(row.id, sub.id);
+                                  }}
 
 
                                   sx={{ minWidth: "26px", padding: "0 6px" }}
@@ -1156,6 +1243,9 @@ export default function POManagementPage() {
                               <TextField
                                 size="small"
                                 value={sub.method}
+                                onClick={(e) => {
+                                  if (poDeleteMode) e.stopPropagation();
+                                }}
                                 onChange={(e) =>
                                   updateSubCell(row.id, sub.id, "method", e.target.value)
                                 }
