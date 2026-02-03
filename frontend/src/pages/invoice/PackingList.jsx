@@ -326,12 +326,16 @@ export default function PackingList({ inv: propInv, isPopup = false, onClose }) 
 
           </Button>
         ) : (
-          <Button varaiant="outlined" onClick={onClose}
+          <Button onClick={onClose}
             sx={{
               borderColor: "#b34b00",
               color: "#b34b00",
               fontWeight: "bold",
-              "&:hover": { bgcolor: "#fff2e0" },
+              "&:hover": {
+                bgcolor: "#fff2e0",
+                borderColor: "#b34b00",
+                color: "#b34b00",   // ⭐ hover 때도 색 고정
+              },
             }}>
             ← INVOICE로 돌아가기
           </Button>
