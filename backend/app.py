@@ -2827,6 +2827,22 @@ def save_user_permissions(user_id):
     db.session.commit()
     return jsonify({"message": "saved"})
 
+from flask import send_from_directory
+import os
+
+@app.route("/api/excel/template/<path:filename>", methods=["GET"])
+@jwt_required()
+@permission_required("SHIPMENT", "read")
+def download_excel_template(filename):
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    excel_dir = os.path.join(base_dir, "static", "excel")
+
+    return send_from_directory(
+        excel_dir,
+        filename,
+        as_attachment=True
+    )
+    
 # ============================================
 # 서버 실행
 # ============================================

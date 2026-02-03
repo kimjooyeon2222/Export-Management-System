@@ -110,6 +110,37 @@ export default function ShipmentPage() {
         e.target.value = "";
     };
 
+    const downloadExcelTemplate = async () => {
+        const token = localStorage.getItem("access_token");
+
+        const res = await fetch(
+            `${API_BASE}/api/excel/template/운임비용_엑셀.xlsx`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+
+        if (!res.ok) {
+            alert("엑셀 다운로드 실패");
+            return;
+        }
+
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "운임비용_엑셀.xlsx";
+        document.body.appendChild(a);
+        a.click();
+
+        a.remove();
+        window.URL.revokeObjectURL(url);
+    };
+
+
     const [graphOpen, setGraphOpen] = useState(false);
 
 
@@ -511,6 +542,16 @@ export default function ShipmentPage() {
                     </Button>
                 )}
 
+                {editMode && (
+                    <Button
+                        variant="contained"
+                        onClick={downloadExcelTemplate}
+                        sx={{ fontWeight: "bold" }}
+                    >
+                        엑셀 양식
+                    </Button>
+
+                )}
 
                 {editMode && (
                     <Button
