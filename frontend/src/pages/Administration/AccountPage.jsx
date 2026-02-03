@@ -20,6 +20,8 @@ import { apiFetch } from 'api/apiFetch';
 const API_BASE = import.meta.env.VITE_API_URL;
 
 export default function UserAccountPage() {
+    const [editTargetUserId, setEditTargetUserId] = useState(null);
+
     const handleClose = () => {
         setOpen(false);
         setNewUser({
@@ -216,7 +218,16 @@ export default function UserAccountPage() {
                     <Button
                         variant={isEditMode ? 'outlined' : 'contained'}
                         sx={{ fontWeight: 'bold' }}
-                        onClick={() => setIsEditMode(prev => !prev)}
+                        onClick={() => {
+                            if (!isEditMode) {
+                                alert('수정할 행을 클릭하세요');
+                                setIsEditMode(true);
+                            } else {
+                                setIsEditMode(false);
+                                setEditTargetUserId(null);
+                            }
+                        }}
+
                     >
                         {isEditMode ? '수정 종료' : '수정'}
                     </Button>
@@ -246,9 +257,22 @@ export default function UserAccountPage() {
 
                     <TableBody>
                         {users.map(user => (
-                            <TableRow key={user.id}>
+                            <TableRow
+                                key={user.id}
+                                hover
+                                onClick={() => {
+                                    if (!isEditMode) return;
+                                    setEditTargetUserId(user.id);
+                                }}
+                                sx={{
+                                    cursor: isEditMode ? 'pointer' : 'default',
+                                    backgroundColor:
+                                        editTargetUserId === user.id ? 'rgba(30,58,138,0.06)' : 'inherit',
+                                }}
+                            >
+
                                 <TableCell sx={{ fontWeight: 'bold' }}>
-                                    {isEditMode ? (
+                                    {isEditMode && editTargetUserId === user.id ? (
                                         <TextField
                                             size="small"
                                             value={editingUsers[user.id]?.login_id || ''}
@@ -268,7 +292,7 @@ export default function UserAccountPage() {
                                 </TableCell>
 
                                 <TableCell sx={{ fontWeight: 'bold' }}>
-                                    {isEditMode ? (
+                                    {isEditMode && editTargetUserId === user.id ? (
                                         <TextField
                                             size="small"
                                             value={editingUsers[user.id]?.user_name || ''}
@@ -288,7 +312,7 @@ export default function UserAccountPage() {
                                 </TableCell>
 
                                 <TableCell sx={{ fontWeight: 'bold' }}>
-                                    {isEditMode ? (
+                                    {isEditMode && editTargetUserId === user.id ? (
                                         <TextField
                                             size="small"
                                             value={editingUsers[user.id]?.phone || ''}
@@ -308,7 +332,7 @@ export default function UserAccountPage() {
                                 </TableCell>
 
                                 <TableCell sx={{ fontWeight: 'bold' }}>
-                                    {isEditMode ? (
+                                    {isEditMode && editTargetUserId === user.id ? (
                                         <TextField
                                             size="small"
                                             value={editingUsers[user.id]?.email || ''}
@@ -328,7 +352,7 @@ export default function UserAccountPage() {
                                 </TableCell>
 
                                 <TableCell sx={{ fontWeight: 'bold' }}>
-                                    {isEditMode ? (
+                                    {isEditMode && editTargetUserId === user.id ? (
                                         <TextField
                                             size="small"
                                             value={editingUsers[user.id]?.company || ''}
@@ -348,7 +372,7 @@ export default function UserAccountPage() {
                                 </TableCell>
 
                                 <TableCell sx={{ fontWeight: 'bold' }}>
-                                    {isEditMode ? (
+                                    {isEditMode && editTargetUserId === user.id ? (
                                         <TextField
                                             size="small"
                                             value={editingUsers[user.id]?.biz_no || ''}
@@ -368,7 +392,8 @@ export default function UserAccountPage() {
                                 </TableCell>
 
                                 <TableCell>
-                                    {isEditMode && (
+                                    {isEditMode && editTargetUserId === user.id && (
+
                                         <TextField
                                             size="small"
                                             type="password"
@@ -388,7 +413,8 @@ export default function UserAccountPage() {
                                 </TableCell>
 
                                 <TableCell align="center">
-                                    {isEditMode && (
+                                    {isEditMode && editTargetUserId === user.id && (
+
                                         <Button
                                             color="error"
                                             size="small"
@@ -400,7 +426,8 @@ export default function UserAccountPage() {
                                     )}
                                 </TableCell>
                                 <TableCell align="center">
-                                    {isEditMode && (
+                                    {isEditMode && editTargetUserId === user.id && (
+
                                         <Button
                                             size="small"
                                             variant="contained"
