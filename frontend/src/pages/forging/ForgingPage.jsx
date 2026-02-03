@@ -22,6 +22,9 @@ import ItemSearchDialog from "components/dialog/ItemSearchDialog";
 
 
 export default function ForgingPage() {
+  const [selectedRowIds, setSelectedRowIds] = useState([]);
+  const [deleteSelectMode, setDeleteSelectMode] = useState(false);
+
   const stockBluePill = {
     display: "inline-block",
     px: 1.6,
@@ -595,7 +598,17 @@ export default function ForgingPage() {
         {/* 🔧 수정모드 버튼 */}
         <Button
           variant="outlined"
-          onClick={() => setEditMode(!editMode)}
+          onClick={() => {
+            if (editMode) {
+              setEditMode(false);
+              setDeleteSelectMode(false);
+              setSelectedRowIds([]);
+            }
+            else {
+              setEditMode(true);
+            }
+          }}
+
           sx={{
             borderColor: editMode ? "#d32f2f" : "#1976d2",
             color: editMode ? "#d32f2f" : "#1976d2",
@@ -1158,21 +1171,35 @@ export default function ForgingPage() {
             color="error"
             size="small"
             disabled={!editMode}
+            onClick={() => {
+              // 🔹 1단계: 아직 선택모드 아님
+              if (!deleteSelectMode) {
+                alert("삭제할 행을 선택하세요.");
+                setDeleteSelectMode(true);
+                setSelectedRowIds([]);
+                return;
+              }
 
-            onClick={() =>
-              setRows((prev) => {
-                if (prev.length === 0) return prev;
+              // 🔹 2단계: 선택모드인데 선택 없음
+              if (selectedRowIds.length === 0) {
+                alert("삭제할 행을 선택해주세요.");
+                return;
+              }
 
-                const newRows = prev.slice(0, -1);
+              // 🔹 3단계: 실제 삭제
+              setRows(prev =>
+                prev.filter(r => !selectedRowIds.includes(r.id))
+              );
 
-
-
-                return newRows;
-              })
-            }
+              // 🔹 종료
+              setSelectedRowIds([]);
+              setDeleteSelectMode(false);
+            }}
           >
-            - 행삭제
+            {deleteSelectMode ? "선택 행 삭제" : "선택 행삭제"}
           </Button>
+
+
         </Box>
 
         {/* ===============================  
@@ -1206,7 +1233,27 @@ export default function ForgingPage() {
 
           <TableBody>
             {rows.map((row) => (
-              <TableRow key={row.id}>
+              <TableRow
+                onClick={() => {
+                  if (!deleteSelectMode) return;
+
+                  setSelectedRowIds(prev =>
+                    prev.includes(row.id)
+                      ? prev.filter(id => id !== row.id)
+                      : [...prev, row.id]
+                  );
+                }}
+                sx={{
+                  cursor: deleteSelectMode ? "pointer" : "default",
+                  backgroundColor:
+                    deleteSelectMode && selectedRowIds.includes(row.id)
+                      ? "#ddeeff"
+                      : "inherit",
+                }}
+              >
+
+
+
 
                 {/* 🔹 INV 입력 → 자동 매핑 */}
                 <TableCell align="center">
