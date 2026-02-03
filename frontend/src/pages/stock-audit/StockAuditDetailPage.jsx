@@ -25,6 +25,40 @@ export default function StockAuditDetailPage() {
 
     const [editSelectMode, setEditSelectMode] = useState(false); // 행 선택 단계
     const [editingRowId, setEditingRowId] = useState(null);
+    const handleExcelDownload = async () => {
+        try {
+            const token = localStorage.getItem("access_token");
+
+            const res = await fetch(
+                `${import.meta.env.VITE_API_URL}/api/excel/template/재고실사관리_엑셀.xlsx`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            if (!res.ok) {
+                alert("재고실사 엑셀 다운로드 실패");
+                return;
+            }
+
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "재고실사관리_엑셀.xlsx";
+            document.body.appendChild(a);
+            a.click();
+
+            a.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (e) {
+            console.error(e);
+            alert("재고실사 엑셀 다운로드 실패");
+        }
+    };
 
 
     // 숫자 포맷 (1,000 단위 콤마)
@@ -251,14 +285,25 @@ export default function StockAuditDetailPage() {
                                 handleAddItem();
                                 setDirty(true);
                             }}
+                            sx={{ fontWeight: "bold" }}
                         >
                             + 품목 추가
+                        </Button>
+
+                        {/* 엑셀 다운로드 */}
+                        <Button
+                            variant="contained"
+                            onClick={handleExcelDownload}
+                            sx={{ fontWeight: "bold" }}
+                        >
+                            엑셀 양식
                         </Button>
 
                         <Button
                             variant="contained"
                             component="label"
                             startIcon={<UploadFileIcon />}
+                            sx={{ fontWeight: "bold" }}
                         >
                             엑셀 업로드
                             <input
@@ -291,8 +336,9 @@ export default function StockAuditDetailPage() {
                                 setEditingRowId(null);
                                 alert("✏ 수정할 행을 클릭하세요.");
                             }}
-
+                            sx={{ fontWeight: "bold" }}
                         >
+
                             {editSelectMode ? "수정 취소" : "수정"}
                         </Button>
 
@@ -327,6 +373,7 @@ export default function StockAuditDetailPage() {
                                         console.error(err);
                                     });
                             }}
+                            sx={{ fontWeight: "bold" }}
                         >
                             저장
                         </Button>
@@ -346,6 +393,7 @@ export default function StockAuditDetailPage() {
                                     setDirty(false);
                                 }
                             }}
+                            sx={{ fontWeight: "bold" }}
                         >
                             종료
                         </Button>
