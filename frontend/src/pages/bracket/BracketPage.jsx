@@ -19,6 +19,10 @@ import UnitSearchDialog from "components/dialog/UnitSearchDialog";
 import { useRef } from "react";
 
 export default function BracketPage() {
+  // 🔥 운송 스케줄 삭제 모드
+  const [scheduleDeleteMode, setScheduleDeleteMode] = useState(false);
+  const [selectedScheduleRowIds, setSelectedScheduleRowIds] = useState([]);
+
   const API_BASE = import.meta.env.VITE_API_URL;
   const getKoreanMonthLabel = (dateStr) => {
     if (!dateStr) return "실사재고";
@@ -603,11 +607,7 @@ export default function BracketPage() {
   };
 
 
-  const deleteRow = () => {
-    if (scheduleRows.length === 0) return;
-    const last = scheduleRows[scheduleRows.length - 1].tempId;
-    setScheduleRows((prev) => prev.filter((r) => r.tempId !== last));
-  };
+
 
   const updateScheduleCell = (tempId, field, value) => {
     setScheduleRows((prev) =>
@@ -648,11 +648,17 @@ export default function BracketPage() {
           variant="outlined"
           onClick={() => {
             if (editMode) {
-              // ✅ 수정모드 종료 시만 초기화
               setEditMode(false);
-              setSelectedBrRowIds([]);   // 선택 행 초기화
-              setDeleteMode(false);      // 삭제모드 종료
-            } else {
+
+              // 품목 쪽
+              setSelectedBrRowIds([]);
+              setDeleteMode(false);
+
+              // ⭐ 스케줄 쪽 (추가)
+              setSelectedScheduleRowIds([]);
+              setScheduleDeleteMode(false);
+            }
+            else {
               setEditMode(true);
             }
           }}
@@ -1091,9 +1097,31 @@ export default function BracketPage() {
               variant="contained"
               color="error"
               size="small"
-              onClick={deleteRow}
+              onClick={() => {
+                // 1️⃣ 삭제모드 진입
+                if (!scheduleDeleteMode) {
+                  setScheduleDeleteMode(true);
+                  setSelectedScheduleRowIds([]);
+                  return;
+                }
+
+                // 2️⃣ 선택 안 했을 때
+                if (selectedScheduleRowIds.length === 0) {
+                  alert("삭제할 행을 선택하세요.");
+                  return;
+                }
+
+                // 3️⃣ 선택 삭제
+                setScheduleRows(prev =>
+                  prev.filter(r => !selectedScheduleRowIds.includes(r.tempId))
+                );
+
+                // 4️⃣ 초기화
+                setSelectedScheduleRowIds([]);
+                setScheduleDeleteMode(false);
+              }}
             >
-              - 행삭제
+              {scheduleDeleteMode ? "선택 삭제" : "- 행삭제"}
             </Button>
           </Box>
         )}
@@ -1179,16 +1207,38 @@ export default function BracketPage() {
 
           <TableBody>
             {scheduleRows.map((row) => (
-              <TableRow key={row.tempId}>
+              <TableRow
+                key={row.tempId}
+                onClick={() => {
+                  if (!editMode || !scheduleDeleteMode) return;
+
+                  setSelectedScheduleRowIds(prev =>
+                    prev.includes(row.tempId)
+                      ? prev.filter(id => id !== row.tempId)
+                      : [...prev, row.tempId]
+                  );
+                }}
+                sx={{
+                  cursor: scheduleDeleteMode ? "pointer" : "default",
+                  backgroundColor: selectedScheduleRowIds.includes(row.tempId)
+                    ? "#cfe8ff"          // ✅ 선택 강조
+                    : "inherit",
+                  "&:hover": scheduleDeleteMode
+                    ? { backgroundColor: "#e3f2fd" }
+                    : {},
+                }}
+              >
+
                 <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "15px" }}>
                   {editMode ? (
                     <TextField
                       size="small"
                       value={row.inv_no}
+                      onClick={(e) => {
+                        if (scheduleDeleteMode) e.stopPropagation(); // ⭐ 핵심
+                      }}
                       onChange={async (e) => {
                         const inv = e.target.value.trim();
-
-                        // 1️⃣ inv_no 반영
                         updateScheduleCell(row.tempId, "inv_no", inv);
 
                         if (!inv) {
@@ -1196,16 +1246,12 @@ export default function BracketPage() {
                           return;
                         }
 
-                        // 2️⃣ 🔥 qty 즉시 로딩 (AxleSub와 동일)
                         const quantities = await loadBracketRowQuantities(inv);
                         updateScheduleCell(row.tempId, "quantities", quantities);
 
-
-                        // 3️⃣ ETD / ETA 로딩
                         try {
                           const res = await apiFetch(`${API_BASE}/api/invoice/${inv}`);
                           const ship = await res.json();
-
                           if (!ship?.error) {
                             updateScheduleCell(row.tempId, "etd", ship.etd || "");
                             updateScheduleCell(row.tempId, "eta", ship.eta || "");
@@ -1216,6 +1262,7 @@ export default function BracketPage() {
                       }}
                       sx={{ width: 90 }}
                     />
+
 
                   ) : (
                     row.inv_no
