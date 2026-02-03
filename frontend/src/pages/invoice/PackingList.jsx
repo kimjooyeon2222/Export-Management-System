@@ -28,6 +28,41 @@ export default function PackingList({ inv: propInv, isPopup = false, onClose }) 
     );
   }
   const API = import.meta.env.VITE_API_URL;
+  const handlePackingExcelDownload = async () => {
+    try {
+      const token = localStorage.getItem("access_token");
+
+      const res = await fetch(
+        `${API}/api/excel/template/패킹리스트_엑셀.xlsx`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!res.ok) {
+        alert("패킹리스트 엑셀 다운로드 실패");
+        return;
+      }
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "패킹리스트_엑셀.xlsx";
+      document.body.appendChild(a);
+      a.click();
+
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error(e);
+      alert("패킹리스트 엑셀 다운로드 실패");
+    }
+  };
+
   const [itemDialogOpen, setItemDialogOpen] = useState(false);
   const [targetRowId, setTargetRowId] = useState(null);
   const packingPlaceholders = {
@@ -340,26 +375,38 @@ export default function PackingList({ inv: propInv, isPopup = false, onClose }) 
             ← INVOICE로 돌아가기
           </Button>
         )}
+
         <Box sx={{ display: "flex", gap: 1 }}>
+          {isEditMode && (
 
-          {/* 🔵 엑셀 업로드 버튼 (수정모드 아니면 disabled) */}
-          <Button
-            variant="contained"
-            color="info"
-            size="small"
-            component="label"
-            disabled={!isEditMode}
-          >
-            엑셀 업로드
-            <input
-              type="file"
-              accept=".xlsx, .xls"
-              hidden
-              onChange={handleExcelUpload}
+            <Button
+              variant="contained"
+              size="small"
+              onClick={handlePackingExcelDownload}
+
+            >
+              엑셀 다운로드
+            </Button>
+          )}
+          {isEditMode && (
+
+            <Button
+              variant="contained"
+              color="info"
+              size="small"
+              component="label"
               disabled={!isEditMode}
-            />
-          </Button>
-
+            >
+              엑셀 업로드
+              <input
+                type="file"
+                accept=".xlsx, .xls"
+                hidden
+                onChange={handleExcelUpload}
+                disabled={!isEditMode}
+              />
+            </Button>
+          )}
           {/* 🟢 행 추가 버튼 (수정모드에서만 가능) */}
           <Button
             variant="contained"
@@ -369,37 +416,6 @@ export default function PackingList({ inv: propInv, isPopup = false, onClose }) 
             disabled={!isEditMode}
           >
             추가
-          </Button>
-
-          {/* 🟠 수정 모드 버튼 — 그대로 유지 */}
-          <Button
-            variant="contained"
-            color={isEditMode ? "secondary" : "warning"}
-            size="small"
-            onClick={() => {
-              setIsEditMode(prev => {
-                const newMode = !prev;
-
-                if (!newMode) {
-                  // 🔥 수정 종료 시 모든 상태 강제 초기화
-                  setDeleteMode(false);
-                  setSelectedRows([]);
-                  setItemDialogOpen(false);
-                  setTargetRowId(null);
-                }
-
-                alert(
-                  newMode
-                    ? "🔧 수정 모드가 활성화되었습니다.\n셀을 클릭하면 데이터를 편집할 수 있습니다."
-                    : "✅ 수정 모드가 종료되었습니다.\n표는 다시 읽기 전용이 됩니다."
-                );
-
-                return newMode;
-              });
-            }}
-
-          >
-            {isEditMode ? "수정 종료" : "수정 모드"}
           </Button>
 
           {/* 🔴 삭제 버튼 (수정모드 아닐 때는 disabled) */}
@@ -437,7 +453,40 @@ export default function PackingList({ inv: propInv, isPopup = false, onClose }) 
             }}
           >
             {deleteMode ? "삭제 실행" : "삭제"}
+            
           </Button>
+          {/* 🟠 수정 모드 버튼 — 그대로 유지 */}
+          <Button
+            variant="contained"
+            color={isEditMode ? "secondary" : "warning"}
+            size="small"
+            onClick={() => {
+              setIsEditMode(prev => {
+                const newMode = !prev;
+
+                if (!newMode) {
+                  // 🔥 수정 종료 시 모든 상태 강제 초기화
+                  setDeleteMode(false);
+                  setSelectedRows([]);
+                  setItemDialogOpen(false);
+                  setTargetRowId(null);
+                }
+
+                alert(
+                  newMode
+                    ? "🔧 수정 모드가 활성화되었습니다.\n셀을 클릭하면 데이터를 편집할 수 있습니다."
+                    : "✅ 수정 모드가 종료되었습니다.\n표는 다시 읽기 전용이 됩니다."
+                );
+
+                return newMode;
+              });
+            }}
+
+          >
+            {isEditMode ? "수정 종료" : "수정 모드"}
+          </Button>
+
+
 
         </Box>
 
