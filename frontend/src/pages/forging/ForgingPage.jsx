@@ -24,6 +24,8 @@ import ItemSearchDialog from "components/dialog/ItemSearchDialog";
 export default function ForgingPage() {
   const [selectedRowIds, setSelectedRowIds] = useState([]);
   const [deleteSelectMode, setDeleteSelectMode] = useState(false);
+  const [itemDeleteSelectMode, setItemDeleteSelectMode] = useState(false);
+  const [selectedItemIds, setSelectedItemIds] = useState([]);
 
   const stockBluePill = {
     display: "inline-block",
@@ -601,13 +603,20 @@ export default function ForgingPage() {
           onClick={() => {
             if (editMode) {
               setEditMode(false);
+
+              // 🔹 운송 스케줄
               setDeleteSelectMode(false);
               setSelectedRowIds([]);
+
+              // 🔹 품목
+              setItemDeleteSelectMode(false);
+              setSelectedItemIds([]);
             }
             else {
               setEditMode(true);
             }
           }}
+
 
           sx={{
             borderColor: editMode ? "#d32f2f" : "#1976d2",
@@ -811,12 +820,34 @@ export default function ForgingPage() {
               color="error"
               size="small"
               disabled={!editMode}
-              onClick={() =>
-                setItems(prev => (prev.length > 1 ? prev.slice(0, -1) : prev))
-              }
+              onClick={() => {
+                // 1️⃣ 아직 선택모드 아님
+                if (!itemDeleteSelectMode) {
+                  alert("삭제할 품목을 선택하세요.");
+                  setItemDeleteSelectMode(true);
+                  setSelectedItemIds([]);
+                  return;
+                }
+
+                // 2️⃣ 선택모드인데 선택 없음
+                if (selectedItemIds.length === 0) {
+                  alert("삭제할 품목을 선택해주세요.");
+                  return;
+                }
+
+                // 3️⃣ 실제 삭제
+                setItems(prev =>
+                  prev.filter(it => !selectedItemIds.includes(it.id))
+                );
+
+                // 4️⃣ 종료
+                setSelectedItemIds([]);
+                setItemDeleteSelectMode(false);
+              }}
             >
-              - 품목삭제
+              {itemDeleteSelectMode ? "선택 품목 삭제" : "품목삭제"}
             </Button>
+
           </Box>
 
 
@@ -974,10 +1005,28 @@ export default function ForgingPage() {
                 );
 
                 return (
-                  <TableRow key={idx}
+                  <TableRow
+                    key={it.id}   // ⭐ idx ❌ → it.id ✅
+                    onClick={() => {
+                      if (!itemDeleteSelectMode) return;
+
+                      setSelectedItemIds(prev =>
+                        prev.includes(it.id)
+                          ? prev.filter(id => id !== it.id)
+                          : [...prev, it.id]
+                      );
+                    }}
                     sx={{
-                      backgroundColor: status === "적정재고미달" ? "#faeaea" : "inherit",
-                    }}>
+                      cursor: itemDeleteSelectMode ? "pointer" : "default",
+                      backgroundColor:
+                        itemDeleteSelectMode && selectedItemIds.includes(it.id)
+                          ? "#ddeeff"                     // ⭐ 선택 색
+                          : status === "적정재고미달"
+                            ? "#faeaea"
+                            : "inherit",
+                    }}
+                  >
+
 
 
                     <TableCell
