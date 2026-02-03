@@ -74,6 +74,7 @@ export default function AxleSubPage() {
 
 
   const [scheduleRows, setScheduleRows] = useState([]); // 🔥 운송 스케줄
+  const [selectedScheduleRowIds, setSelectedScheduleRowIds] = useState([]); // ⭐ 추가
 
   const [axleRows, setAxleRows] = useState([]);
   const companyGroups = React.useMemo(() => {
@@ -735,6 +736,8 @@ export default function AxleSubPage() {
               // ✅ 수정모드 종료
               setEditMode(false);
               setSelectedRowIds([]);   // ⭐ 핵심
+              setSelectedScheduleRowIds([]); // ⭐ 추가
+
             } else {
               // 수정모드 진입
               setEditMode(true);
@@ -1207,11 +1210,19 @@ export default function AxleSubPage() {
             size="small"
             disabled={!editMode}
             onClick={() => {
-              if (scheduleRows.length === 0) return;
+              if (selectedScheduleRowIds.length === 0) {
+                alert("삭제할 행을 선택해주세요.");
+                return;
+              }
 
-              const lastTempId = scheduleRows[scheduleRows.length - 1].tempId;
-              setScheduleRows(prev => prev.filter(r => r.tempId !== lastTempId));
+              setScheduleRows(prev =>
+                prev.filter(r => !selectedScheduleRowIds.includes(r.tempId))
+              );
+
+              // ⭐ 선택 초기화
+              setSelectedScheduleRowIds([]);
             }}
+
 
 
 
@@ -1334,7 +1345,25 @@ export default function AxleSubPage() {
 
           <TableBody>
             {scheduleRows.map(row => (
-              <TableRow key={row.tempId}>
+              <TableRow
+                key={row.tempId}
+                onClick={() => {
+                  if (!editMode) return;
+
+                  setSelectedScheduleRowIds(prev =>
+                    prev.includes(row.tempId)
+                      ? prev.filter(id => id !== row.tempId) // 선택 해제
+                      : [...prev, row.tempId]                // 선택
+                  );
+                }}
+                sx={{
+                  cursor: editMode ? "pointer" : "default",
+                  backgroundColor: selectedScheduleRowIds.includes(row.tempId)
+                    ? "#ddeeff"   // ⭐ 선택 강조
+                    : "inherit",
+                }}
+              >
+
 
 
                 {/* INV 번호 입력 */}
