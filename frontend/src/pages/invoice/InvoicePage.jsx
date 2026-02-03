@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from "uuid";
 import { useRef } from "react";
 import { apiFetch } from "api/apiFetch";
+import PackingList from "./PackingList";
+import { Dialog } from "@mui/material";
 
 import {
   Box,
@@ -58,6 +60,9 @@ const itemToExporters = {
 
 
 export default function InvoicePage() {
+
+  const [openPackingPopup, setOpenPackingPopup] = useState(false);
+  const [selectedInvNo, setSelectedInvNo] = useState(null);
 
   function formatAmountUSD(val) {
     if (val === null || val === undefined || val === "") return "";
@@ -769,7 +774,10 @@ export default function InvoicePage() {
                           textDecoration: "underline",
                           fontWeight: "bold"
                         }}
-                        onClick={() => window.location.assign(`/packing-list/${merged.inv_no}`)}
+                        onClick={() => {
+                          setSelectedInvNo(merged.inv_no);
+                          setOpenPackingPopup(true);
+                        }}
                       >
                         {merged.inv_no}
                       </TableCell>
@@ -1343,7 +1351,9 @@ export default function InvoicePage() {
 
                                 // 🔽 아래는 기존 수정 / 이동 로직 그대로
                                 if (idx === 2 && !isEditMode) {
-                                  return navigate(`/packing-list/${row.inv_no}`);
+                                  setSelectedInvNo(row.inv_no);
+                                  setOpenPackingPopup(true);
+                                  return;
                                 }
 
                                 if (idx === 4 && isEditMode) {
@@ -1568,7 +1578,9 @@ export default function InvoicePage() {
 
                             // 🔽 아래는 기존 수정 / 이동 로직 그대로
                             if (idx === 2 && !isEditMode) {
-                              return navigate(`/packing-list/${row.inv_no}`);
+                              setSelectedInvNo(row.inv_no);
+                              setOpenPackingPopup(true);
+                              return;
                             }
 
                             if (idx === 4 && isEditMode) {
@@ -1691,6 +1703,35 @@ export default function InvoicePage() {
           </Table>
         </Paper>
       </Box>
+      {/* ⭐⭐⭐ 여기에 넣는다 ⭐⭐⭐ */}
+      <Dialog
+        open={openPackingPopup}
+        onClose={() => {
+          setOpenPackingPopup(false);
+          setSelectedInvNo(null);
+        }}
+        maxWidth="xl"
+        fullWidth
+        PaperProps={{
+          sx: {
+            height: "90vh",
+            borderRadius: 2,
+          },
+        }}
+      >
+        {selectedInvNo && (
+          <PackingList
+            inv={selectedInvNo}
+            isPopup
+            onClose={() => {
+              setOpenPackingPopup(false);
+              setSelectedInvNo(null);
+            }}
+          />
+        )}
+      </Dialog>
+      {/* ⭐⭐⭐ 여기 끝 ⭐⭐⭐ */}
+
     </Box>
   );
 }

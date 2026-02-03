@@ -15,7 +15,18 @@ import {
 import { apiFetch } from "api/apiFetch";
 import UnitSearchDialog from "components/dialog/UnitSearchDialog";
 
-export default function PackingList() {
+export default function PackingList({ inv: propInv, isPopup = false, onClose }) {
+  const { inv: routeInv } = useParams();
+  const inv = propInv || routeInv;
+  if (!inv) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Typography color="error">
+          ❌ INV 값이 없습니다.
+        </Typography>
+      </Box>
+    );
+  }
   const API = import.meta.env.VITE_API_URL;
   const [itemDialogOpen, setItemDialogOpen] = useState(false);
   const [targetRowId, setTargetRowId] = useState(null);
@@ -64,7 +75,6 @@ export default function PackingList() {
 
 
 
-  const { inv } = useParams();
   const [invoiceId, setInvoiceId] = useState(null);
   const [deleteMode, setDeleteMode] = useState(false);
   const [selectedRows, setSelectedRows] = useState([]);
@@ -285,27 +295,47 @@ export default function PackingList() {
 
 
   return (
-    <Box sx={{ bgcolor: "#fff", height: "100vh", p: 3 }}>
+    <Box
+      sx={{
+        bgcolor: "#fff",
+        height: isPopup ? "100%" : "100vh",
+        display: "flex",            // ⭐ 추가
+        flexDirection: "column",    // ⭐ 추가
+        p: 3,
+      }}
+    >
+
       {/* 제목 */}
       <Typography variant="h5" sx={{ fontWeight: "bold", mb: 2 }}>
         📦 PACKING LIST - {inv}
       </Typography>
 
       {/* 상단 버튼 */}
-      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
-        <Button
-          variant="outlined"
-          onClick={() => navigate(-1)}
-          sx={{
-            borderColor: "#b34b00",
-            color: "#b34b00",
-            fontWeight: "bold",
-            "&:hover": { bgcolor: "#fff2e0" },
-          }}
-        >
-          ← INVOICE로 돌아가기
-        </Button>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          mb: 2,
+          flexShrink: 0,   // ⭐ 추가 (위 영역 높이 고정)
+        }}
+      >
 
+        {!isPopup ? (
+          <Button onClick={() => navigate(-1)}
+          >
+
+          </Button>
+        ) : (
+          <Button varaiant="outlined" onClick={onClose}
+            sx={{
+              borderColor: "#b34b00",
+              color: "#b34b00",
+              fontWeight: "bold",
+              "&:hover": { bgcolor: "#fff2e0" },
+            }}>
+            ← INVOICE로 돌아가기
+          </Button>
+        )}
         <Box sx={{ display: "flex", gap: 1 }}>
 
           {/* 🔵 엑셀 업로드 버튼 (수정모드 아니면 disabled) */}
@@ -414,12 +444,16 @@ export default function PackingList() {
       <Paper
         elevation={2}
         sx={{
-          maxHeight: "88vh",
+          flex: 1,            // ⭐ 남은 영역 전부 차지
           overflowY: "auto",
           "&::-webkit-scrollbar": { width: 8 },
-          "&::-webkit-scrollbar-thumb": { backgroundColor: "#ccc", borderRadius: 4 },
+          "&::-webkit-scrollbar-thumb": {
+            backgroundColor: "#ccc",
+            borderRadius: 4,
+          },
         }}
       >
+
         <Table size="small" stickyHeader>
           <TableHead sx={{ bgcolor: "#fff3cd" }}>
             <TableRow>
