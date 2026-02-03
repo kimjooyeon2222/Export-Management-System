@@ -59,6 +59,20 @@ const itemToExporters = {
 
 export default function InvoicePage() {
 
+  function formatAmountUSD(val) {
+    if (val === null || val === undefined || val === "") return "";
+
+    // $, 쉼표, 공백 제거 → 숫자만
+    const num = Number(String(val).replace(/[^0-9.-]/g, ""));
+    if (isNaN(num)) return val;
+
+    return `$${num.toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+  }
+
+
   const [editingItemValue, setEditingItemValue] = useState("");
   const [editingItemRowId, setEditingItemRowId] = useState(null);
   const [customItemValue, setCustomItemValue] = useState("");
@@ -1284,7 +1298,7 @@ export default function InvoicePage() {
                             row.id,
                             row.exporter,
                             row.inv_no,
-                            row.amount,
+                            formatAmountUSD(row.amount),
                             row.item_type,
                             row.cont_no,
                             row.bl_no,
@@ -1509,7 +1523,7 @@ export default function InvoicePage() {
                         row.id,
                         row.exporter,
                         row.inv_no,
-                        row.amount,
+                        formatAmountUSD(row.amount),
                         row.item_type,
                         row.cont_no,
                         row.bl_no,
