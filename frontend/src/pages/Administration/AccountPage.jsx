@@ -20,6 +20,19 @@ import { apiFetch } from 'api/apiFetch';
 const API_BASE = import.meta.env.VITE_API_URL;
 
 export default function UserAccountPage() {
+    const handleClose = () => {
+        setOpen(false);
+        setNewUser({
+            loginId: '',
+            user_name: '',
+            phone: '',
+            email: '',
+            biz_no: '',
+            company: '',
+            password: ''
+        });
+    };
+
     const [editingUsers, setEditingUsers] = useState({});
 
     const [isEditMode, setIsEditMode] = useState(false);
@@ -29,22 +42,34 @@ export default function UserAccountPage() {
     const [open, setOpen] = useState(false);
     const [newUser, setNewUser] = useState({
         loginId: '',
+        user_name: '',
+        phone: '',
+        email: '',
+        biz_no: '',
         company: '',
         password: ''
     });
+
     useEffect(() => {
         if (isEditMode) {
             const map = {};
             users.forEach(u => {
                 map[u.id] = {
                     login_id: u.login_id,
+                    user_name: u.user_name || '',
+                    phone: u.phone || '',
+                    email: u.email || '',
+                    biz_no: u.biz_no || '',
                     company: u.company,
                     password: ''
                 };
             });
             setEditingUsers(map);
+        } else {
+            setEditingUsers({});
         }
     }, [isEditMode, users]);
+
 
     /* =========================
        사용자 목록 로드
@@ -108,10 +133,15 @@ export default function UserAccountPage() {
                 method: 'POST',
                 body: JSON.stringify({
                     login_id: newUser.loginId,
+                    user_name: newUser.user_name,
+                    phone: newUser.phone,
+                    email: newUser.email,
+                    biz_no: newUser.biz_no,
                     company: newUser.company,
                     password: newUser.password,
                     role: 'user'
                 })
+
             });
 
             const data = await res.json();
@@ -122,7 +152,16 @@ export default function UserAccountPage() {
             }
 
             setOpen(false);
-            setNewUser({ loginId: '', company: '', password: '' });
+            setNewUser({
+                loginId: '',
+                user_name: '',
+                phone: '',
+                email: '',
+                biz_no: '',
+                company: '',
+                password: ''
+            });
+
             fetchUsers(); // 🔄 목록 갱신
         } catch (e) {
             console.error('유저 추가 실패:', e);
@@ -189,7 +228,11 @@ export default function UserAccountPage() {
                     <TableHead>
                         <TableRow>
                             <TableCell sx={{ fontWeight: 'bold' }}>Login ID</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }}>사용자명</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }}>휴대전화</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }}>이메일</TableCell>
                             <TableCell sx={{ fontWeight: 'bold' }}>회사</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }}>사업자번호</TableCell>
                             <TableCell sx={{ fontWeight: 'bold' }}>비밀번호</TableCell>
                             <TableCell align="center" sx={{ fontWeight: 'bold' }}>
                                 저장
@@ -228,6 +271,66 @@ export default function UserAccountPage() {
                                     {isEditMode ? (
                                         <TextField
                                             size="small"
+                                            value={editingUsers[user.id]?.user_name || ''}
+                                            onChange={(e) =>
+                                                setEditingUsers(prev => ({
+                                                    ...prev,
+                                                    [user.id]: {
+                                                        ...prev[user.id],
+                                                        user_name: e.target.value
+                                                    }
+                                                }))
+                                            }
+                                        />
+                                    ) : (
+                                        user.user_name
+                                    )}
+                                </TableCell>
+
+                                <TableCell sx={{ fontWeight: 'bold' }}>
+                                    {isEditMode ? (
+                                        <TextField
+                                            size="small"
+                                            value={editingUsers[user.id]?.phone || ''}
+                                            onChange={(e) =>
+                                                setEditingUsers(prev => ({
+                                                    ...prev,
+                                                    [user.id]: {
+                                                        ...prev[user.id],
+                                                        phone: e.target.value
+                                                    }
+                                                }))
+                                            }
+                                        />
+                                    ) : (
+                                        user.phone
+                                    )}
+                                </TableCell>
+
+                                <TableCell sx={{ fontWeight: 'bold' }}>
+                                    {isEditMode ? (
+                                        <TextField
+                                            size="small"
+                                            value={editingUsers[user.id]?.email || ''}
+                                            onChange={(e) =>
+                                                setEditingUsers(prev => ({
+                                                    ...prev,
+                                                    [user.id]: {
+                                                        ...prev[user.id],
+                                                        email: e.target.value
+                                                    }
+                                                }))
+                                            }
+                                        />
+                                    ) : (
+                                        user.email
+                                    )}
+                                </TableCell>
+
+                                <TableCell sx={{ fontWeight: 'bold' }}>
+                                    {isEditMode ? (
+                                        <TextField
+                                            size="small"
                                             value={editingUsers[user.id]?.company || ''}
                                             onChange={(e) =>
                                                 setEditingUsers(prev => ({
@@ -241,6 +344,26 @@ export default function UserAccountPage() {
                                         />
                                     ) : (
                                         user.company
+                                    )}
+                                </TableCell>
+
+                                <TableCell sx={{ fontWeight: 'bold' }}>
+                                    {isEditMode ? (
+                                        <TextField
+                                            size="small"
+                                            value={editingUsers[user.id]?.biz_no || ''}
+                                            onChange={(e) =>
+                                                setEditingUsers(prev => ({
+                                                    ...prev,
+                                                    [user.id]: {
+                                                        ...prev[user.id],
+                                                        biz_no: e.target.value
+                                                    }
+                                                }))
+                                            }
+                                        />
+                                    ) : (
+                                        user.biz_no
                                     )}
                                 </TableCell>
 
@@ -296,7 +419,8 @@ export default function UserAccountPage() {
             </Paper>
 
             {/* 사용자 추가 다이얼로그 */}
-            <Dialog open={open} onClose={() => setOpen(false)}>
+            <Dialog open={open} onClose={handleClose}>
+
                 <DialogTitle sx={{ fontWeight: 'bold' }}>
                     사용자 추가
                 </DialogTitle>
@@ -315,8 +439,38 @@ export default function UserAccountPage() {
                         onChange={(e) =>
                             setNewUser(prev => ({ ...prev, loginId: e.target.value }))
                         }
-                        InputLabelProps={{ sx: { fontWeight: 'bold' } }}
-                        InputProps={{ sx: { fontWeight: 'bold' } }}
+                    />
+
+                    <TextField
+                        label="사용자명"
+                        value={newUser.user_name}
+                        onChange={(e) =>
+                            setNewUser(prev => ({ ...prev, user_name: e.target.value }))
+                        }
+                    />
+
+                    <TextField
+                        label="휴대전화"
+                        value={newUser.phone}
+                        onChange={(e) =>
+                            setNewUser(prev => ({ ...prev, phone: e.target.value }))
+                        }
+                    />
+
+                    <TextField
+                        label="이메일"
+                        value={newUser.email}
+                        onChange={(e) =>
+                            setNewUser(prev => ({ ...prev, email: e.target.value }))
+                        }
+                    />
+
+                    <TextField
+                        label="사업자번호"
+                        value={newUser.biz_no}
+                        onChange={(e) =>
+                            setNewUser(prev => ({ ...prev, biz_no: e.target.value }))
+                        }
                     />
 
                     <TextField
@@ -325,8 +479,6 @@ export default function UserAccountPage() {
                         onChange={(e) =>
                             setNewUser(prev => ({ ...prev, company: e.target.value }))
                         }
-                        InputLabelProps={{ sx: { fontWeight: 'bold' } }}
-                        InputProps={{ sx: { fontWeight: 'bold' } }}
                     />
 
                     <TextField
@@ -336,15 +488,15 @@ export default function UserAccountPage() {
                         onChange={(e) =>
                             setNewUser(prev => ({ ...prev, password: e.target.value }))
                         }
-                        InputLabelProps={{ sx: { fontWeight: 'bold' } }}
-                        InputProps={{ sx: { fontWeight: 'bold' } }}
                     />
                 </DialogContent>
 
+
                 <DialogActions>
-                    <Button sx={{ fontWeight: 'bold' }} onClick={() => setOpen(false)}>
+                    <Button sx={{ fontWeight: 'bold' }} onClick={handleClose}>
                         취소
                     </Button>
+
                     <Button
                         variant="contained"
                         sx={{ fontWeight: 'bold' }}

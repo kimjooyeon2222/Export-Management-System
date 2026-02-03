@@ -163,6 +163,10 @@ def create_user():
     data = request.json
 
     login_id = data.get("login_id")
+    user_name = data.get("user_name")
+    phone = data.get("phone")
+    email = data.get("email")
+    biz_no = data.get("biz_no")
     password = data.get("password")      # 🔥 평문
     company = data.get("company")
     role = data.get("role", "user")
@@ -187,11 +191,15 @@ def create_user():
     try:
         db.session.execute(
             text("""
-                INSERT INTO users (login_id, company, password_hash, role)
-                VALUES (:login_id, :company, :password_hash, :role)
+                INSERT INTO users (login_id, user_name, phone, email, biz_no, company, password_hash, role)
+                VALUES (:login_id, :user_name, :phone, :email, :biz_no, :company, :password_hash, :role)
             """),
             {
                 "login_id": login_id,
+                "user_name": user_name,
+                "phone": phone,
+                "email": email,
+                "biz_no": biz_no,
                 "company": company,
                 "password_hash": password_hash,
                 "role": role
@@ -214,7 +222,7 @@ def create_user():
 def get_users():
     rows = db.session.execute(
         text("""
-            SELECT id, login_id, company, role
+            SELECT id, login_id, user_name, phone, email, biz_no, company, role
             FROM users
             ORDER BY id ASC
         """)
@@ -244,6 +252,10 @@ def user_detail(user_id):
     data = request.json
 
     login_id = data.get("login_id")
+    user_name = data.get("user_name")
+    phone = data.get("phone")
+    email = data.get("email")
+    biz_no = data.get("biz_no")
     company = data.get("company")
     password = data.get("password")
 
@@ -265,12 +277,20 @@ def user_detail(user_id):
     params = {
         "id": user_id,
         "login_id": login_id,
+        "user_name": user_name,
+        "phone": phone,
+        "email": email,
+        "biz_no": biz_no,
         "company": company
     }
 
     sql = """
         UPDATE users
         SET login_id = :login_id,
+            user_name = :user_name,
+            phone = :phone,
+            email = :email,
+            biz_no = :biz_no,
             company = :company
     """
 
