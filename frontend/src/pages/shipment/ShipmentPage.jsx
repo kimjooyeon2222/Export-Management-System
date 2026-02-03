@@ -43,9 +43,75 @@ const ROUTE_LABEL = {
 };
 
 export default function ShipmentPage() {
+    useEffect(() => {
+        const script = document.createElement("script");
+        script.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+        script.async = true;
+        document.body.appendChild(script);
+        return () => document.body.removeChild(script);
+    }, []);
+    const handleExcelUpload = e => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+
+        reader.onload = evt => {
+            const XLSX = window.XLSX;
+            if (!XLSX) {
+                alert("XLSX 로딩 안 됨");
+                return;
+            }
+
+            const data = new Uint8Array(evt.target.result);
+            const wb = XLSX.read(data, { type: "array" });
+            const sheet = wb.Sheets[wb.SheetNames[0]];
+            const rows = XLSX.utils.sheet_to_json(sheet);
+
+            const nextDomestic = [];
+            const nextUS = [];
+            let nextOcean = null;
+
+            rows.forEach(r => {
+                const item = {
+                    name: r["내역"],
+                    qty: Number(r["수량"] || 1),
+                    v20: Number(r["20FT"] || 0),
+                    v40: Number(r["40HQ"] || 0)
+                };
+
+                if (r["구분"] === "국내비용") nextDomestic.push(item);
+                if (r["구분"] === "미국비용") nextUS.push(item);
+                if (r["구분"] === "해상운임") {
+                    nextOcean = {
+                        qty: item.qty,
+                        v20: item.v20,
+                        v40: item.v40
+                    };
+                }
+            });
+
+            setDomesticMap(prev => ({
+                ...prev,
+                [route]: nextDomestic.length ? nextDomestic : prev[route]
+            }));
+
+            setUsCostMap(prev => ({
+                ...prev,
+                [route]: nextUS.length ? nextUS : prev[route]
+            }));
+
+            if (nextOcean) setOcean(nextOcean);
+
+            alert("엑셀 업로드 완료");
+        };
+
+        reader.readAsArrayBuffer(file);
+        e.target.value = "";
+    };
+
     const [graphOpen, setGraphOpen] = useState(false);
 
-    const navigate = useNavigate();
 
     const yearListRef = useRef(null);        // 조회연도
 
@@ -445,6 +511,22 @@ export default function ShipmentPage() {
                     </Button>
                 )}
 
+
+                {editMode && (
+                    <Button
+                        variant="contained"
+                        component="label"
+                        sx={{ fontWeight: "bold" }}
+                    >
+                        엑셀 업로드
+                        <input
+                            type="file"
+                            accept=".xlsx,.xls"
+                            hidden
+                            onChange={handleExcelUpload}
+                        />
+                    </Button>
+                )}
                 {editMode && (
                     <Button
                         variant="contained"
