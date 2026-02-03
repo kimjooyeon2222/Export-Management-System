@@ -176,7 +176,27 @@ export default function UserManagementPage() {
                         value={selectedUserId}
                         onChange={(e) => setSelectedUserId(e.target.value)}
                         sx={{ fontWeight: 'bold' }}
+                        MenuProps={{
+                            PaperProps: {
+                                sx: {
+                                    ml: 0,
+                                    pl: 0,
+                                    maxHeight: 40 * 10,   // ⭐ 사용자 10명 기준
+                                    overflowY: 'auto',   // ⭐ 넘치면 스크롤
+                                },
+                            },
+                            anchorOrigin: {
+                                vertical: 'bottom',
+                                horizontal: 'left',
+                            },
+                            transformOrigin: {
+                                vertical: 'top',
+                                horizontal: 'left',
+                            },
+                        }}
+
                     >
+
                         {users.map((u) => (
                             <MenuItem
                                 key={u.id}
@@ -184,7 +204,8 @@ export default function UserManagementPage() {
                                 sx={{ fontWeight: 'bold' }}
                             >
                                 {/* 🔥 company (role) */}
-                                {u.company} ({u.role})
+                                {u.user_name} ({u.company})
+
                             </MenuItem>
                         ))}
                     </Select>
