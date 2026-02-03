@@ -15,6 +15,8 @@ import {
 } from "@mui/material";
 import { apiFetch } from "api/apiFetch";
 import { useNavigate } from "react-router-dom";
+import { Dialog } from "@mui/material";
+import ShipmentGraph from "./ShipmentGraph";
 
 /* ============================
    항목 정의
@@ -41,6 +43,8 @@ const ROUTE_LABEL = {
 };
 
 export default function ShipmentPage() {
+    const [graphOpen, setGraphOpen] = useState(false);
+
     const navigate = useNavigate();
 
     const yearListRef = useRef(null);        // 조회연도
@@ -582,14 +586,11 @@ export default function ShipmentPage() {
                             borderColor: "#111827"
                         }
                     }}
-                    onClick={() => {
-                        navigate("/shipment/graph", {
-                            state: { route, year, month }
-                        });
-                    }}
+                    onClick={() => setGraphOpen(true)}
                 >
                     운임비 추이 그래프
                 </Button>
+
 
 
             </Box>
@@ -884,6 +885,21 @@ export default function ShipmentPage() {
                     </TableBody>
                 </Table>
             </Paper>
+            <Dialog
+                open={graphOpen}
+                onClose={() => setGraphOpen(false)}
+                maxWidth="xl"
+                fullWidth
+            >
+                <Box sx={{ p: 2 }}>
+                    <ShipmentGraph
+                        route={route}
+                        year={year}
+                        month={month}
+                    />
+                </Box>
+            </Dialog>
+
         </Box>
     );
 }

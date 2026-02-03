@@ -23,7 +23,8 @@ const ROUTES = [
 
 const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
 
-export default function ShipmentGraph() {
+export default function ShipmentGraph({ route, year, month }) {
+
     const API_BASE = import.meta.env.VITE_API_URL;
 
     const ITEM_HEIGHT = 48;
@@ -96,32 +97,50 @@ export default function ShipmentGraph() {
         return result;
     }, [startYear, startMonth, endYear, endMonth]);
 
+useEffect(() => {
+  const initPeriod = async () => {
+    // ✅ 1순위: 현재 화면에서 넘어온 값
+    if (year && month) {
+      setStartYear(year);
+      setStartMonth(month);
 
-    useEffect(() => {
-        const loadDefaultPeriod = async () => {
-            const res = await apiFetch(`${API_BASE}/api/shipment/setting`);
-            const data = await res.json();
+      let ey = year;
+      let em = month + 11;
 
-            if (data.default_year && data.default_month) {
-                setStartYear(data.default_year);
-                setStartMonth(data.default_month);
+      if (em > 12) {
+        ey += Math.floor((em - 1) / 12);
+        em = ((em - 1) % 12) + 1;
+      }
 
-                // ✅ 기본은 "기준연월 ~ 기준연월 + 11개월"
-                let ey = data.default_year;
-                let em = data.default_month + 11;
+      setEndYear(ey);
+      setEndMonth(em);
+      return;
+    }
 
-                if (em > 12) {
-                    ey += Math.floor((em - 1) / 12);
-                    em = ((em - 1) % 12) + 1;
-                }
+    // ✅ 2순위: DB 기준연월 (fallback)
+    const res = await apiFetch(`${API_BASE}/api/shipment/setting`);
+    const data = await res.json();
 
-                setEndYear(ey);
-                setEndMonth(em);
-            }
-        };
+    if (data.default_year && data.default_month) {
+      setStartYear(data.default_year);
+      setStartMonth(data.default_month);
 
-        loadDefaultPeriod();
-    }, []);
+      let ey = data.default_year;
+      let em = data.default_month + 11;
+
+      if (em > 12) {
+        ey += Math.floor((em - 1) / 12);
+        em = ((em - 1) % 12) + 1;
+      }
+
+      setEndYear(ey);
+      setEndMonth(em);
+    }
+  };
+
+  initPeriod();
+}, [year, month]);
+
 
     /* ============================
        데이터 로드 (노선별)
