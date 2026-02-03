@@ -21,6 +21,10 @@ import { useRef } from "react";
 
 
 export default function EvSubPage() {
+  // 🔥 운송 스케줄 삭제 모드
+  const [scheduleDeleteMode, setScheduleDeleteMode] = useState(false);
+  const [selectedScheduleRowIds, setSelectedScheduleRowIds] = useState([]);
+
   // 🔥 EV 재고실사 → 박스입수량 / 실사재고 / 적정재고 연동
   const applyEvAuditToRowsPure = async (rows) => {
     if (!usDate || !rows.length) return rows;
@@ -762,11 +766,17 @@ export default function EvSubPage() {
           variant="outlined"
           onClick={() => {
             if (editMode) {
-              // ✅ 수정모드 종료 시만 초기화
               setEditMode(false);
-              setSelectedEvRowIds([]);   // 선택 행 초기화
-              setDeleteMode(false);      // 삭제모드도 같이 종료
-            } else {
+
+              // 🔹 과부족 상태표
+              setSelectedEvRowIds([]);
+              setDeleteMode(false);
+
+              // 🔹 운송 스케줄
+              setSelectedScheduleRowIds([]);
+              setScheduleDeleteMode(false);
+            }
+            else {
               setEditMode(true);
             }
           }}
@@ -1254,9 +1264,37 @@ export default function EvSubPage() {
               <Button variant="contained" color="success" size="small" onClick={addRow}>
                 + 행추가
               </Button>
-              <Button variant="contained" color="error" size="small" onClick={deleteRow}>
-                - 행삭제
+              <Button
+                variant="contained"
+                color="error"
+                size="small"
+                onClick={() => {
+                  // 1️⃣ 삭제모드 진입
+                  if (!scheduleDeleteMode) {
+                    setScheduleDeleteMode(true);
+                    setSelectedScheduleRowIds([]);
+                    return;
+                  }
+
+                  // 2️⃣ 선택 안 했을 때
+                  if (selectedScheduleRowIds.length === 0) {
+                    alert("삭제할 행을 선택하세요.");
+                    return;
+                  }
+
+                  // 3️⃣ 선택 삭제
+                  setScheduleRows(prev =>
+                    prev.filter(r => !selectedScheduleRowIds.includes(r.tempId))
+                  );
+
+                  // 4️⃣ 초기화
+                  setSelectedScheduleRowIds([]);
+                  setScheduleDeleteMode(false);
+                }}
+              >
+                {scheduleDeleteMode ? "선택 삭제" : "- 행삭제"}
               </Button>
+
             </Box>
           </Box>
 
@@ -1408,13 +1446,33 @@ export default function EvSubPage() {
               {scheduleRows.map(row => (
                 <TableRow
                   key={row.tempId}
+                  onClick={() => {
+                    if (!editMode || !scheduleDeleteMode) return;
+
+                    setSelectedScheduleRowIds(prev =>
+                      prev.includes(row.tempId)
+                        ? prev.filter(id => id !== row.tempId)
+                        : [...prev, row.tempId]
+                    );
+                  }}
                   sx={{
-                    borderBottom: "1px solid #ddd",   // 🔥 얇은 회색 라인
+                    cursor: scheduleDeleteMode ? "pointer" : "default",
+
+                    backgroundColor: selectedScheduleRowIds.includes(row.tempId)
+                      ? "#cfe8ff"            // ✅ 선택된 행 강조
+                      : "inherit",
+
+                    "&:hover": scheduleDeleteMode
+                      ? { backgroundColor: "#e3f2fd" }
+                      : {},
+
+                    borderBottom: "1px solid #ddd",
                     "& td": {
-                      borderBottom: "1px solid #ddd"  // 각 셀마다 동일 적용
+                      borderBottom: "1px solid #ddd"
                     }
                   }}
                 >
+
 
 
                   {/* INV# (수정가능) */}
@@ -1423,6 +1481,9 @@ export default function EvSubPage() {
                       <TextField
                         size="small"
                         value={row.inv_no || ""}
+                        onClick={(e) => {
+                          if (scheduleDeleteMode) e.stopPropagation(); // ⭐ 핵심
+                        }}
                         onChange={e => handleInvChange(row.tempId, e.target.value)}
                         sx={{ width: 120 }}
                       />
