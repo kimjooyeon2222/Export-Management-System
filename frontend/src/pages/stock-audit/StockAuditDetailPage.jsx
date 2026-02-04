@@ -365,7 +365,10 @@ export default function StockAuditDetailPage() {
                                 })
                                     .then(() => {
                                         alert("저장 완료");
+                                        // 🔥 저장 후 상태 전부 초기화 (종료 버튼과 동일)
                                         setEditMode(false);
+                                        setEditSelectMode(false);
+                                        setEditingRowId(null);
                                         setDirty(false);
                                     })
                                     .catch(err => {
