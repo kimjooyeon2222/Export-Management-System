@@ -646,7 +646,7 @@ export default function POManagementPage() {
                   setPoDeleteMode(true);
                   setSelectedPoRowIds([]);
 
-                  alert("삭제할 PO 행을 선택하세요.");
+                  alert("<주의>\n저장버튼을 누르지 않아도 삭제됩니다.\n삭제할 PO 행을 선택하세요.");
 
                   return;
                 }
@@ -654,7 +654,7 @@ export default function POManagementPage() {
 
                 // 2️⃣ 선택 안 했을 때
                 if (selectedPoRowIds.length === 0) {
-                  alert("삭제할 PO 행을 선택하세요.");
+                  alert("<주의>\n저장버튼을 누르지 않아도 삭제됩니다.\n삭제할 PO 행을 선택하세요.");
                   return;
                 }
 
