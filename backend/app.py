@@ -1253,7 +1253,7 @@ def save_ev_schedule_bulk():
 
 @app.route("/packing/find", methods=["POST"])
 @jwt_required()
-@permission_required("INVOICE", "write")
+@permission_required("INVOICE", "read")
 def find_item():
     data = request.json
     part_no = data.get("part_no")
@@ -2465,7 +2465,7 @@ def get_arrival_summary():
     return jsonify(sorted(summary.values(), key=lambda x: x["date"]))
 
 @app.route("/api/shipment/save", methods=["POST", "OPTIONS"])
-@jwt_required(optional=True)
+@jwt_required()
 @permission_required("SHIPMENT", "write")
 
 def save_shipment():
