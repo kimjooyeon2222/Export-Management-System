@@ -22,6 +22,12 @@ import { useRef } from "react";
 
 
 export default function AxleSubPage() {
+  const resetAxleEditState = () => {
+    setEditMode(false);
+    setSelectedRowIds([]);
+    setSelectedScheduleRowIds([]);
+    setDeletedAxleIds([]);
+  };
 
   const axleCompanyColors = {
     "윤영테크": "#FFD966",
@@ -671,7 +677,8 @@ export default function AxleSubPage() {
       });
 
       alert("저장 완료!");
-      setEditMode(false);
+      resetAxleEditState();
+
 
 
 
@@ -743,15 +750,11 @@ export default function AxleSubPage() {
           variant="outlined"
           onClick={() => {
             if (editMode) {
-              // ✅ 수정모드 종료
-              setEditMode(false);
-              setSelectedRowIds([]);   // ⭐ 핵심
-              setSelectedScheduleRowIds([]); // ⭐ 추가
-
+              resetAxleEditState();
             } else {
-              // 수정모드 진입
               setEditMode(true);
             }
+
           }}
           sx={{
             borderColor: editMode ? "#d32f2f" : "#1976d2",

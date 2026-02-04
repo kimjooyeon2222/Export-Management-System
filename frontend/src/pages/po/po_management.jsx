@@ -21,6 +21,17 @@ import { apiFetch } from "api/apiFetch";
 
 export default function POManagementPage() {
 
+  const resetPoEditState = () => {
+    setEditMode(false);
+
+    // PO 삭제 관련
+    setPoDeleteMode(false);
+    setSelectedPoRowIds([]);
+
+    // 보기 상태도 초기화 (편집 중 강제 해제했던 것)
+    setShowParentOnly(true);
+  };
+
   // POManagementPage 맨 위 (import 아래)
   const token = localStorage.getItem("access_token");
 
@@ -349,7 +360,7 @@ export default function POManagementPage() {
       });
 
       alert("저장 완료!");
-      setEditMode(false);
+      resetPoEditState();
       loadPOData();
       loadUsDate();
 
@@ -545,15 +556,13 @@ export default function POManagementPage() {
           <Button
             variant="outlined"
             onClick={() => {
-              const next = !editMode;
-              setEditMode(next);
-
-              if (next) {
-                setShowParentOnly(false);
+              if (editMode) {
+                resetPoEditState();
               } else {
-                setPoDeleteMode(false);
-                setSelectedPoRowIds([]);
+                setEditMode(true);
+                setShowParentOnly(false); // 편집 시작 시만
               }
+
             }}
 
             sx={{ fontWeight: "bold" }}

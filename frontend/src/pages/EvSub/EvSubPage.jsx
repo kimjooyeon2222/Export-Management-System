@@ -21,6 +21,18 @@ import { useRef } from "react";
 
 
 export default function EvSubPage() {
+  const resetEvEditState = () => {
+    setEditMode(false);
+
+    // 과부족 상태표
+    setSelectedEvRowIds([]);
+    setDeleteMode(false);
+
+    // 운송 스케줄
+    setSelectedScheduleRowIds([]);
+    setScheduleDeleteMode(false);
+  };
+
   // 🔥 운송 스케줄 삭제 모드
   const [scheduleDeleteMode, setScheduleDeleteMode] = useState(false);
   const [selectedScheduleRowIds, setSelectedScheduleRowIds] = useState([]);
@@ -307,8 +319,6 @@ export default function EvSubPage() {
 
       const qty_map = fullData.qty_map || {};
 
-      const normalize = (v) =>
-        (v || "").toString().trim().replace(/\s+/g, "").toUpperCase();
 
       // 3) qty 맵핑
       const newQuantities = {};
@@ -384,7 +394,8 @@ export default function EvSubPage() {
       });
 
       alert("저장 완료!");
-      setEditMode(false);
+      resetEvEditState();
+
 
     } catch (e) {
       console.error("EV 저장 실패:", e);
@@ -773,24 +784,16 @@ export default function EvSubPage() {
             저장
           </Button>
         )}
-        
+
         <Button
           variant="outlined"
           onClick={() => {
             if (editMode) {
-              setEditMode(false);
-
-              // 🔹 과부족 상태표
-              setSelectedEvRowIds([]);
-              setDeleteMode(false);
-
-              // 🔹 운송 스케줄
-              setSelectedScheduleRowIds([]);
-              setScheduleDeleteMode(false);
-            }
-            else {
+              resetEvEditState();
+            } else {
               setEditMode(true);
             }
+
           }}
           sx={{
             borderColor: editMode ? "#d32f2f" : "#1976d2",

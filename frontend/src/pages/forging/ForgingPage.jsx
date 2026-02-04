@@ -636,6 +636,14 @@ export default function ForgingPage() {
 
                 alert("저장 완료되었습니다!");
                 setEditMode(false);
+
+                // 🔹 운송 스케줄
+                setDeleteSelectMode(false);
+                setSelectedRowIds([]);
+
+                // 🔹 품목
+                setItemDeleteSelectMode(false);
+                setSelectedItemIds([]);
               } catch (e) {
                 console.error(e);
                 alert("저장 실패!");

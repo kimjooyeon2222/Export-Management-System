@@ -222,15 +222,12 @@ export default function OilShipmentSchedule() {
   };
 
 
-  const updateOilCell = (no, field, value) => {
-    setOilList(prev =>
-      prev.map(row =>
-        row.no === no
-          ? { ...row, [field]: value }
-          : row
-      )
-    );
+  const resetOilEditState = () => {
+    setOilEditMode(false);
+    setOilEditSelectMode(false);
+    setEditingOilNo(null);
   };
+
   const saveOilList = async () => {
     await apiFetch(`${API_BASE}/api/oil-items/bulk`, {
       method: "POST",
@@ -253,7 +250,8 @@ export default function OilShipmentSchedule() {
 
     alert("오일 관리 리스트 저장 완료!");
 
-    setOilEditMode(false);
+    resetOilEditState();
+
   };
 
 
@@ -703,7 +701,7 @@ export default function OilShipmentSchedule() {
                   저장하기
                 </Button>
 
-                <Button variant="outlined" color="error" onClick={() => setOilEditMode(false)} sx={{ fontWeight: "bold" }}>
+                <Button variant="outlined" color="error" onClick={resetOilEditState} sx={{ fontWeight: "bold" }}>
                   수정 종료
                 </Button>
               </Box>

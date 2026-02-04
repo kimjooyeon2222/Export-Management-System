@@ -298,6 +298,7 @@ export default function ItemPage() {
             setDeleteMode(false);
             setSelectedRows([]);
             setEditingRowId(null);
+            setEditSelectMode(false);
 
           }}
           sx={{ fontWeight: "bold" }}

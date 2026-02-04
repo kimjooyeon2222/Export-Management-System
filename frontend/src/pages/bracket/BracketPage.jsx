@@ -19,6 +19,18 @@ import UnitSearchDialog from "components/dialog/UnitSearchDialog";
 import { useRef } from "react";
 
 export default function BracketPage() {
+  const resetBracketEditState = () => {
+    setEditMode(false);
+
+    // 품목(과부족) 쪽
+    setSelectedBrRowIds([]);
+    setDeleteMode(false);
+
+    // 운송 스케줄 쪽
+    setSelectedScheduleRowIds([]);
+    setScheduleDeleteMode(false);
+  };
+
   // 🔥 운송 스케줄 삭제 모드
   const [scheduleDeleteMode, setScheduleDeleteMode] = useState(false);
   const [selectedScheduleRowIds, setSelectedScheduleRowIds] = useState([]);
@@ -343,7 +355,8 @@ export default function BracketPage() {
       });
 
       alert("저장 완료!");
-      setEditMode(false);
+      resetBracketEditState();
+
 
     } catch (err) {
       console.error("🚨 저장 오류:", err);
@@ -627,19 +640,11 @@ export default function BracketPage() {
           variant="outlined"
           onClick={() => {
             if (editMode) {
-              setEditMode(false);
-
-              // 품목 쪽
-              setSelectedBrRowIds([]);
-              setDeleteMode(false);
-
-              // ⭐ 스케줄 쪽 (추가)
-              setSelectedScheduleRowIds([]);
-              setScheduleDeleteMode(false);
-            }
-            else {
+              resetBracketEditState();
+            } else {
               setEditMode(true);
             }
+
           }}
           sx={{
             borderColor: editMode ? "#d32f2f" : "#1976d2",
