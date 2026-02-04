@@ -65,7 +65,7 @@ export default function StockAuditListPage() {
   const [rows, setRows] = useState([]);
 
   const handleDeleteAudit = async (id) => {
-    if (!window.confirm("해당 재고실사를 삭제하시겠습니까?")) return;
+    if (!window.confirm("<주의>\n삭제 버튼을 누를 시 즉시 삭제됩니다.\n해당 재고실사를 삭제하시겠습니까?")) return;
 
     try {
       const res = await apiFetch(
