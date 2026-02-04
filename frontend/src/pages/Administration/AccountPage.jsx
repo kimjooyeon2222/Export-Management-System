@@ -412,19 +412,7 @@ export default function UserAccountPage() {
                                     )}
                                 </TableCell>
 
-                                <TableCell align="center">
-                                    {isEditMode && editTargetUserId === user.id && (
 
-                                        <Button
-                                            color="error"
-                                            size="small"
-                                            sx={{ fontWeight: 'bold' }}
-                                            onClick={() => handleDeleteUser(user.id)}
-                                        >
-                                            삭제
-                                        </Button>
-                                    )}
-                                </TableCell>
                                 <TableCell align="center">
                                     {isEditMode && editTargetUserId === user.id && (
 
@@ -435,6 +423,19 @@ export default function UserAccountPage() {
                                             onClick={() => handleUpdateUser(user.id)}
                                         >
                                             저장
+                                        </Button>
+                                    )}
+                                </TableCell>
+                                <TableCell align="center">
+                                    {isEditMode && editTargetUserId === user.id && (
+
+                                        <Button
+                                            color="error"
+                                            size="small"
+                                            sx={{ fontWeight: 'bold' }}
+                                            onClick={() => handleDeleteUser(user.id)}
+                                        >
+                                            삭제
                                         </Button>
                                     )}
                                 </TableCell>
