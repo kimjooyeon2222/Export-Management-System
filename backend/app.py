@@ -1896,39 +1896,29 @@ def save_stock_audit_items():
 
     audit = StockAudit.query.get_or_404(audit_id)
 
+    # 🔥 1) 해당 audit의 기존 item 전부 삭제
+    StockAuditItem.query.filter_by(audit_id=audit_id).delete()
+
+    # 🔥 2) 현재 화면 상태 그대로 다시 저장
     for item in items:
-        if item.get("id"):
-            row = StockAuditItem.query.get(item["id"])
-        else:
-            row = StockAuditItem.query.filter_by(
-                audit_id=audit_id,
-                item_no=item["item_no"],
-                company_name=item.get("company_name")
-            ).first()
+        db.session.add(StockAuditItem(
+            audit_id=audit_id,
+            item_no=item.get("item_no"),
+            item_name=item.get("item_name"),
+            company_name=item.get("company_name"),
+            audit_qty=item.get("audit_qty", 0),
+            defect_qty=item.get("defect_qty", 0),
+            shortage_qty=item.get("shortage_qty", 0),
+            optimal_qty=item.get("optimal_qty", 0),
+            box_qty=item.get("box_qty", 0),
+        ))
 
-        if not row:
-            row = StockAuditItem(
-                audit_id=audit_id,
-                item_no=item["item_no"],
-                company_name=item.get("company_name")
-            )
-
-        row.item_name = item.get("item_name")
-        row.audit_qty = item.get("audit_qty", 0)
-        row.defect_qty = item.get("defect_qty", 0)
-        row.shortage_qty = item.get("shortage_qty", 0)
-        row.optimal_qty = item.get("optimal_qty", 0)
-        row.box_qty = item.get("box_qty", 0)
-
-        db.session.add(row)
-
-    # 🔥 품목 수 자동 업데이트
-    audit.item_count = StockAuditItem.query.filter_by(
-        audit_id=audit_id
-    ).count()
+    # 🔥 3) 품목 수는 payload 기준
+    audit.item_count = len(items)
 
     db.session.commit()
     return jsonify({"message": "saved"})
+
 
 
 @app.route("/api/stock-audits/<int:id>", methods=["DELETE"])
