@@ -383,7 +383,7 @@ export default function PackingList({ inv: propInv, isPopup = false, onClose }) 
               variant="contained"
               size="small"
               onClick={handlePackingExcelDownload}
-
+              sx={{ fontWeight: "bold" }}
             >
               엑셀 다운로드
             </Button>
@@ -396,6 +396,7 @@ export default function PackingList({ inv: propInv, isPopup = false, onClose }) 
               size="small"
               component="label"
               disabled={!isEditMode}
+              sx={{ fontWeight: "bold" }}
             >
               엑셀 업로드
               <input
@@ -414,6 +415,7 @@ export default function PackingList({ inv: propInv, isPopup = false, onClose }) 
             size="small"
             onClick={handleAdd}
             disabled={!isEditMode}
+            sx={{ fontWeight: "bold" }}
           >
             추가
           </Button>
@@ -424,6 +426,7 @@ export default function PackingList({ inv: propInv, isPopup = false, onClose }) 
             color="error"
             size="small"
             disabled={!isEditMode}
+            sx={{ fontWeight: "bold" }}
             onClick={async () => {
               if (!isEditMode) return;
 
@@ -453,13 +456,15 @@ export default function PackingList({ inv: propInv, isPopup = false, onClose }) 
             }}
           >
             {deleteMode ? "삭제 실행" : "삭제"}
-            
+
           </Button>
           {/* 🟠 수정 모드 버튼 — 그대로 유지 */}
           <Button
             variant="contained"
             color={isEditMode ? "secondary" : "warning"}
             size="small"
+            sx={{ fontWeight: "bold" }}
+
             onClick={() => {
               setIsEditMode(prev => {
                 const newMode = !prev;
