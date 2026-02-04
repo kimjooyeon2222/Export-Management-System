@@ -800,6 +800,8 @@ export default function BracketPage() {
                   onClick={async () => {
                     // 1️⃣ 삭제 모드 진입
                     if (!deleteMode) {
+                      alert("<주의>\n저장버튼을 누르지 않아도 삭제되니 주의바랍니다.\n삭제할 행을 선택하여 선택 삭제 버튼 누르세요.");
+
                       setDeleteMode(true);
                       setSelectedBrRowIds([]);
                       return;
@@ -932,7 +934,8 @@ export default function BracketPage() {
                   <TableRow
                     key={row.id ?? row.tempId}
                     onClick={() => {
-                      if (!editMode) return;
+                      if (!editMode || !deleteMode) return;
+
 
                       setSelectedBrRowIds(prev =>
                         prev.includes(row.tempId)
