@@ -1068,6 +1068,52 @@ export default function InvoicePage() {
         >
           추가
         </Button>
+        
+        <Button
+          variant="contained"
+          color="error"
+          size="small"
+          disabled={!isEditMode}
+          onClick={async () => {
+            if (!isEditMode) {
+              alert("수정 모드를 먼저 활성화하세요.");
+              return;
+            }
+
+            // 🔹 1. 삭제 모드 진입
+            if (!deleteMode) {
+              setDeleteMode(true);
+              setSelectedInvs([]);
+              alert("🗑 삭제 모드 활성화\n행을 클릭해서 선택하세요.");
+              return;
+            }
+
+            // 🔹 2. 삭제 모드 + 선택 0건 → 취소
+            if (deleteMode && selectedInvs.length === 0) {
+              setDeleteMode(false);
+              return;
+            }
+
+            // 🔹 3. 삭제 실행
+            if (!window.confirm(`${selectedInvs.length}개 항목을 삭제할까요?`)) return;
+
+            for (const inv of selectedInvs) {
+              await apiFetch(`${API_BASE}/api/invoices/inv/${inv}`, {
+                method: "DELETE",
+              });
+            }
+
+            setRows(prev => prev.filter(r => !selectedInvs.includes(r.inv_no)));
+            setSelectedInvs([]);
+            setDeleteMode(false);
+          }}
+        >
+          {!deleteMode
+            ? "삭제"
+            : selectedInvs.length > 0
+              ? "삭제 실행"
+              : "삭제 취소"}
+        </Button>
 
         <Button
           variant="contained"
@@ -1121,51 +1167,6 @@ export default function InvoicePage() {
           }}
         >
           {isEditMode ? '수정 종료' : '수정 모드'}
-        </Button>
-        <Button
-          variant="contained"
-          color="error"
-          size="small"
-          disabled={!isEditMode}
-          onClick={async () => {
-            if (!isEditMode) {
-              alert("수정 모드를 먼저 활성화하세요.");
-              return;
-            }
-
-            // 🔹 1. 삭제 모드 진입
-            if (!deleteMode) {
-              setDeleteMode(true);
-              setSelectedInvs([]);
-              alert("🗑 삭제 모드 활성화\n행을 클릭해서 선택하세요.");
-              return;
-            }
-
-            // 🔹 2. 삭제 모드 + 선택 0건 → 취소
-            if (deleteMode && selectedInvs.length === 0) {
-              setDeleteMode(false);
-              return;
-            }
-
-            // 🔹 3. 삭제 실행
-            if (!window.confirm(`${selectedInvs.length}개 항목을 삭제할까요?`)) return;
-
-            for (const inv of selectedInvs) {
-              await apiFetch(`${API_BASE}/api/invoices/inv/${inv}`, {
-                method: "DELETE",
-              });
-            }
-
-            setRows(prev => prev.filter(r => !selectedInvs.includes(r.inv_no)));
-            setSelectedInvs([]);
-            setDeleteMode(false);
-          }}
-        >
-          {!deleteMode
-            ? "삭제"
-            : selectedInvs.length > 0
-              ? "삭제 실행"
-              : "삭제 취소"}
         </Button>
 
 
