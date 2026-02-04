@@ -597,6 +597,54 @@ export default function ForgingPage() {
       {/* 🔥 저장 버튼 (DB 저장) */}
 
       <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2, gap: 1 }}>
+        {editMode && (
+          <Button
+            variant="contained"
+            color="primary"
+            disabled={!editMode}
+            onClick={async () => {
+              const formattedUsDate = usDate ? new Date(usDate).toISOString().split("T")[0] : null;
+
+              try {
+                // ✅ forging_audit 자체를 업데이트
+                await apiFetch(`${API_BASE}/api/forging-audits/${auditId}`, {
+                  method: "PUT",
+                  body: JSON.stringify({
+                    writer,
+                    us_date: formattedUsDate
+                  })
+                });
+                // 2️ forging_item (🔥 추가)
+                await apiFetch(`${API_BASE}/api/forging-items/bulk`, {
+                  method: "POST",
+                  body: JSON.stringify({
+                    audit_id: auditId,
+                    items: items
+                  })
+                });
+                const cleanRows = rows
+
+                // 3) schedule_rows 저장 ← 여기 핵심!!
+                await apiFetch(`${API_BASE}/api/schedule-row/bulk`, {
+                  method: "POST",
+                  body: JSON.stringify({
+                    audit_id: auditId,
+                    rows: cleanRows
+                  })
+                });
+
+
+                alert("저장 완료되었습니다!");
+                setEditMode(false);
+              } catch (e) {
+                console.error(e);
+                alert("저장 실패!");
+              }
+            }}
+          >
+            저장
+          </Button>
+        )}
         {/* 🔧 수정모드 버튼 */}
         <Button
           variant="outlined"
@@ -626,52 +674,8 @@ export default function ForgingPage() {
         >
           {editMode ? "수정모드 종료" : "수정모드 활성화"}
         </Button>
-        <Button
-          variant="contained"
-          color="primary"
-          disabled={!editMode}
-          onClick={async () => {
-            const formattedUsDate = usDate ? new Date(usDate).toISOString().split("T")[0] : null;
-
-            try {
-              // ✅ forging_audit 자체를 업데이트
-              await apiFetch(`${API_BASE}/api/forging-audits/${auditId}`, {
-                method: "PUT",
-                body: JSON.stringify({
-                  writer,
-                  us_date: formattedUsDate
-                })
-              });
-              // 2️ forging_item (🔥 추가)
-              await apiFetch(`${API_BASE}/api/forging-items/bulk`, {
-                method: "POST",
-                body: JSON.stringify({
-                  audit_id: auditId,
-                  items: items
-                })
-              });
-              const cleanRows = rows
-
-              // 3) schedule_rows 저장 ← 여기 핵심!!
-              await apiFetch(`${API_BASE}/api/schedule-row/bulk`, {
-                method: "POST",
-                body: JSON.stringify({
-                  audit_id: auditId,
-                  rows: cleanRows
-                })
-              });
 
 
-              alert("저장 완료되었습니다!");
-              setEditMode(false);
-            } catch (e) {
-              console.error(e);
-              alert("저장 실패!");
-            }
-          }}
-        >
-          저장
-        </Button>
       </Box>
 
 
@@ -790,64 +794,68 @@ export default function ForgingPage() {
 
           {/* ✅ 버튼 영역 — 운송 스케줄 현황과 완전히 동일 */}
           <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2, mb: 1, gap: 1 }}>
-            <Button
-              variant="contained"
-              color="success"
+            {editMode && (
 
-              size="small"
-              disabled={!editMode}
-              onClick={() =>
-                setItems(prev => [
-                  ...prev,
-                  {
-                    id: uuidv4(),
-                    itemCode: "",
-                    itemName: "",
-                    overStock: 0,
-                    defect: 0,
-                    normalStock: 0,
-                    running: 0,
-                    unit: 0,
+              <Button
+                variant="contained"
+                color="success"
+
+                size="small"
+                disabled={!editMode}
+                onClick={() =>
+                  setItems(prev => [
+                    ...prev,
+                    {
+                      id: uuidv4(),
+                      itemCode: "",
+                      itemName: "",
+                      overStock: 0,
+                      defect: 0,
+                      normalStock: 0,
+                      running: 0,
+                      unit: 0,
+                    }
+                  ])
+                }
+              >
+                + 품목추가
+              </Button>
+            )}
+            {editMode && (
+
+              <Button
+                variant="contained"
+                color="error"
+                size="small"
+                disabled={!editMode}
+                onClick={() => {
+                  // 1️⃣ 아직 선택모드 아님
+                  if (!itemDeleteSelectMode) {
+                    alert("삭제할 품목을 선택하세요.");
+                    setItemDeleteSelectMode(true);
+                    setSelectedItemIds([]);
+                    return;
                   }
-                ])
-              }
-            >
-              + 품목추가
-            </Button>
 
-            <Button
-              variant="contained"
-              color="error"
-              size="small"
-              disabled={!editMode}
-              onClick={() => {
-                // 1️⃣ 아직 선택모드 아님
-                if (!itemDeleteSelectMode) {
-                  alert("삭제할 품목을 선택하세요.");
-                  setItemDeleteSelectMode(true);
+                  // 2️⃣ 선택모드인데 선택 없음
+                  if (selectedItemIds.length === 0) {
+                    alert("삭제할 품목을 선택해주세요.");
+                    return;
+                  }
+
+                  // 3️⃣ 실제 삭제
+                  setItems(prev =>
+                    prev.filter(it => !selectedItemIds.includes(it.id))
+                  );
+
+                  // 4️⃣ 종료
                   setSelectedItemIds([]);
-                  return;
-                }
-
-                // 2️⃣ 선택모드인데 선택 없음
-                if (selectedItemIds.length === 0) {
-                  alert("삭제할 품목을 선택해주세요.");
-                  return;
-                }
-
-                // 3️⃣ 실제 삭제
-                setItems(prev =>
-                  prev.filter(it => !selectedItemIds.includes(it.id))
-                );
-
-                // 4️⃣ 종료
-                setSelectedItemIds([]);
-                setItemDeleteSelectMode(false);
-              }}
-            >
-              {itemDeleteSelectMode ? "선택 품목 삭제" : "품목삭제"}
-            </Button>
-
+                  setItemDeleteSelectMode(false);
+                }}
+              >
+                {itemDeleteSelectMode ? "선택 품목 삭제" : "품목삭제"}
+              </Button>
+            )}
           </Box>
 
 
@@ -1189,65 +1197,70 @@ export default function ForgingPage() {
       🔶 행추가 버튼  
   =============================== */}
         <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2, mb: 1, gap: 1 }}>
-          <Button
-            variant="contained"
-            color="success"
-            size="small"
-            disabled={!editMode}   // ⭐ 추가
-            onClick={() =>
-              setRows((prev) => [
-                ...prev,
-                {
-                  id: uuidv4(),
-                  inv_no: "",
-                  no: "",
-                  status: "",
-                  etd: "",
-                  eta: "",
-                  month_depart: "",
-                  month_arrive: "",
-                  quantities: {} // key = itemCode
-                },
-              ])
-            }
-          >
-            + 행추가
-          </Button>
+          {editMode && (
 
+            <Button
+              variant="contained"
+              color="success"
+              size="small"
+              disabled={!editMode}   // ⭐ 추가
+              onClick={() =>
+                setRows((prev) => [
+                  ...prev,
+                  {
+                    id: uuidv4(),
+                    inv_no: "",
+                    no: "",
+                    status: "",
+                    etd: "",
+                    eta: "",
+                    month_depart: "",
+                    month_arrive: "",
+                    quantities: {} // key = itemCode
+                  },
+                ])
+              }
+            >
+              + 행추가
+            </Button>
+          )}
           {/* 🔥 행삭제(마지막 행 삭제 버튼) */}
-          <Button
-            variant="contained"
-            color="error"
-            size="small"
-            disabled={!editMode}
-            onClick={() => {
-              // 🔹 1단계: 아직 선택모드 아님
-              if (!deleteSelectMode) {
-                alert("삭제할 행을 선택하세요.");
-                setDeleteSelectMode(true);
+          {editMode && (
+
+
+            <Button
+              variant="contained"
+              color="error"
+              size="small"
+              disabled={!editMode}
+              onClick={() => {
+                // 🔹 1단계: 아직 선택모드 아님
+                if (!deleteSelectMode) {
+                  alert("삭제할 행을 선택하세요.");
+                  setDeleteSelectMode(true);
+                  setSelectedRowIds([]);
+                  return;
+                }
+
+                // 🔹 2단계: 선택모드인데 선택 없음
+                if (selectedRowIds.length === 0) {
+                  alert("삭제할 행을 선택해주세요.");
+                  return;
+                }
+
+                // 🔹 3단계: 실제 삭제
+                setRows(prev =>
+                  prev.filter(r => !selectedRowIds.includes(r.id))
+                );
+
+                // 🔹 종료
                 setSelectedRowIds([]);
-                return;
-              }
-
-              // 🔹 2단계: 선택모드인데 선택 없음
-              if (selectedRowIds.length === 0) {
-                alert("삭제할 행을 선택해주세요.");
-                return;
-              }
-
-              // 🔹 3단계: 실제 삭제
-              setRows(prev =>
-                prev.filter(r => !selectedRowIds.includes(r.id))
-              );
-
-              // 🔹 종료
-              setSelectedRowIds([]);
-              setDeleteSelectMode(false);
-            }}
-          >
-            {deleteSelectMode ? "선택 행 삭제" : "선택 행삭제"}
-          </Button>
-
+                setDeleteSelectMode(false);
+              }}
+            >
+              {deleteSelectMode ? "선택 행 삭제" : "선택 행삭제"}
+            </Button>
+          )}
 
         </Box>
 

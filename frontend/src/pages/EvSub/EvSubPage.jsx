@@ -762,6 +762,18 @@ export default function EvSubPage() {
 
       {/* 수정모드 & 저장 */}
       <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2, gap: 1 }}>
+        {editMode && (
+
+          <Button
+            variant="contained"
+            color="primary"
+            disabled={!editMode}
+            onClick={saveSchedule}
+          >
+            저장
+          </Button>
+        )}
+        
         <Button
           variant="outlined"
           onClick={() => {
@@ -790,14 +802,6 @@ export default function EvSubPage() {
         </Button>
 
 
-        <Button
-          variant="contained"
-          color="primary"
-          disabled={!editMode}
-          onClick={saveSchedule}
-        >
-          저장
-        </Button>
       </Box>
 
       {/* 작성자 + 북미 날짜 */}

@@ -644,6 +644,17 @@ export default function BracketPage() {
 
       {/* 수정모드 */}
       <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2, gap: 1 }}>
+
+        {editMode && (
+          <Button
+            variant="contained"
+            disabled={!editMode}
+            onClick={handleSave}
+          >
+            저장
+          </Button>
+        )}
+
         <Button
           variant="outlined"
           onClick={() => {
@@ -671,14 +682,6 @@ export default function BracketPage() {
           {editMode ? "수정모드 종료" : "수정모드 활성화"}
         </Button>
 
-
-        <Button
-          variant="contained"
-          disabled={!editMode}
-          onClick={handleSave}
-        >
-          저장
-        </Button>
       </Box>
 
       {/* 작성자 + 날짜 */}

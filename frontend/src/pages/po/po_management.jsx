@@ -534,7 +534,14 @@ export default function POManagementPage() {
           {getHeaderTitle()}
         </Typography>
 
+
         <Box sx={{ display: "flex", gap: 1 }}>
+          {editMode && (
+            <Button variant="contained" disabled={!editMode} onClick={handleSave} >
+              저장
+            </Button>
+          )}
+
           <Button
             variant="outlined"
             onClick={() => {
@@ -554,10 +561,6 @@ export default function POManagementPage() {
             {editMode ? "수정모드 종료" : "수정모드 활성화"}
           </Button>
 
-
-          <Button variant="contained" disabled={!editMode} onClick={handleSave} >
-            저장
-          </Button>
 
 
         </Box>
@@ -620,55 +623,59 @@ export default function POManagementPage() {
 
         {/* 오른쪽: 행추가/행삭제 버튼 */}
         <Box sx={{ display: "flex", gap: 1 }}>
-          <Button
-            variant="contained"
-            color="success"
-            disabled={!editMode}
-            onClick={addRow}
-          >
-            + 행추가
-          </Button>
+          {editMode && (
 
-          <Button
-            variant="contained"
-            color="error"
-            disabled={!editMode}
-            onClick={async () => {
-              // 1️⃣ 삭제모드 진입
-              if (!poDeleteMode) {
-                setPoDeleteMode(true);
+            <Button
+              variant="contained"
+              color="success"
+              disabled={!editMode}
+              onClick={addRow}
+            >
+              + 행추가
+            </Button>
+          )}
+          {editMode && (
+
+            <Button
+              variant="contained"
+              color="error"
+              disabled={!editMode}
+              onClick={async () => {
+                // 1️⃣ 삭제모드 진입
+                if (!poDeleteMode) {
+                  setPoDeleteMode(true);
+                  setSelectedPoRowIds([]);
+
+                  alert("삭제할 PO 행을 선택하세요.");
+
+                  return;
+                }
+
+
+                // 2️⃣ 선택 안 했을 때
+                if (selectedPoRowIds.length === 0) {
+                  alert("삭제할 PO 행을 선택하세요.");
+                  return;
+                }
+
+                // 3️⃣ DB 삭제 (부모만 삭제 → subrow는 cascade)
+                for (const id of selectedPoRowIds) {
+                  await apiFetch(`${API_BASE}/api/po/${id}`, {
+                    method: "DELETE",
+                  });
+                }
+
+                // 4️⃣ 프론트 반영
+                setPoRows(prev => prev.filter(r => !selectedPoRowIds.includes(r.id)));
+
+                // 5️⃣ 초기화
                 setSelectedPoRowIds([]);
-
-                alert("삭제할 PO 행을 선택하세요."); 
-
-                return;
-              }
-
-
-              // 2️⃣ 선택 안 했을 때
-              if (selectedPoRowIds.length === 0) {
-                alert("삭제할 PO 행을 선택하세요.");
-                return;
-              }
-
-              // 3️⃣ DB 삭제 (부모만 삭제 → subrow는 cascade)
-              for (const id of selectedPoRowIds) {
-                await apiFetch(`${API_BASE}/api/po/${id}`, {
-                  method: "DELETE",
-                });
-              }
-
-              // 4️⃣ 프론트 반영
-              setPoRows(prev => prev.filter(r => !selectedPoRowIds.includes(r.id)));
-
-              // 5️⃣ 초기화
-              setSelectedPoRowIds([]);
-              setPoDeleteMode(false);
-            }}
-          >
-            {poDeleteMode ? "선택 삭제" : "- 행삭제"}
-          </Button>
-
+                setPoDeleteMode(false);
+              }}
+            >
+              {poDeleteMode ? "선택 삭제" : "- 행삭제"}
+            </Button>
+          )}
 
         </Box>
       </Box>

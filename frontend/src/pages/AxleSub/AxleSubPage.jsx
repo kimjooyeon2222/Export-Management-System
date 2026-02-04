@@ -729,6 +729,16 @@ export default function AxleSubPage() {
 
       {/* 수정모드 + 저장버튼 */}
       <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2, gap: 1 }}>
+        {editMode && (
+
+          <Button
+            variant="contained"
+            disabled={!editMode}
+            onClick={saveAxleData}
+          >
+            저장
+          </Button>
+        )}
         <Button
           variant="outlined"
           onClick={() => {
@@ -753,13 +763,6 @@ export default function AxleSubPage() {
         </Button>
 
 
-        <Button
-          variant="contained"
-          disabled={!editMode}
-          onClick={saveAxleData}
-        >
-          저장
-        </Button>
       </Box>
 
       {/* 작성자 + 날짜 */}
@@ -846,69 +849,73 @@ export default function AxleSubPage() {
 
 
           <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 1, gap: 1 }}>
-            <Button
-              variant="contained"
-              color="success"
-              size="small"
-              disabled={!editMode}
-              onClick={() =>
-                setAxleRows(prev => [
-                  ...prev,
-                  {
-                    id: null,
-                    tempId: uuidv4(),
-                    _isNew: true,          // ⭐ 신규 플래그
-                    item_code: "",
-                    item_name: "",
-                    company: "",
-                    box_qty: 0,
-                    actual_stock: 0,
-                    target_stock: 0,
-                  }
-                ])
-              }
-            >
-              + 품목추가
-            </Button>
+            {editMode && (
 
-            <Button
-              variant="contained"
-              color="error"
-              size="small"
-              disabled={!editMode}
-              onClick={() => {
-                // ✅ 아무 것도 선택 안 했을 때
-                if (selectedRowIds.length === 0) {
-                  alert("삭제할 행을 선택해주세요.");
-                  return;
-                }
-
-                setAxleRows(prev => {
-                  const toDelete = prev.filter(r =>
-                    selectedRowIds.includes(r.tempId)
-                  );
-
-                  // 🔥 DB에 있는 행만 삭제 목록에 기록
-                  toDelete.forEach(r => {
-                    if (r.id) {
-                      setDeletedAxleIds(ids => [...ids, r.id]);
+              <Button
+                variant="contained"
+                color="success"
+                size="small"
+                disabled={!editMode}
+                onClick={() =>
+                  setAxleRows(prev => [
+                    ...prev,
+                    {
+                      id: null,
+                      tempId: uuidv4(),
+                      _isNew: true,          // ⭐ 신규 플래그
+                      item_code: "",
+                      item_name: "",
+                      company: "",
+                      box_qty: 0,
+                      actual_stock: 0,
+                      target_stock: 0,
                     }
+                  ])
+                }
+              >
+                + 품목추가
+              </Button>
+            )}
+            {editMode && (
+
+              <Button
+                variant="contained"
+                color="error"
+                size="small"
+                disabled={!editMode}
+                onClick={() => {
+                  // ✅ 아무 것도 선택 안 했을 때
+                  if (selectedRowIds.length === 0) {
+                    alert("삭제할 행을 선택해주세요.");
+                    return;
+                  }
+
+                  setAxleRows(prev => {
+                    const toDelete = prev.filter(r =>
+                      selectedRowIds.includes(r.tempId)
+                    );
+
+                    // 🔥 DB에 있는 행만 삭제 목록에 기록
+                    toDelete.forEach(r => {
+                      if (r.id) {
+                        setDeletedAxleIds(ids => [...ids, r.id]);
+                      }
+                    });
+
+                    // 🔥 선택된 행 전부 제거
+                    return prev.filter(r =>
+                      !selectedRowIds.includes(r.tempId)
+                    );
                   });
 
-                  // 🔥 선택된 행 전부 제거
-                  return prev.filter(r =>
-                    !selectedRowIds.includes(r.tempId)
-                  );
-                });
+                  // 선택 초기화
+                  setSelectedRowIds([]);
+                }}
 
-                // 선택 초기화
-                setSelectedRowIds([]);
-              }}
-
-            >
-              - 품목삭제
-            </Button>
-
+              >
+                - 품목삭제
+              </Button>
+            )}
 
           </Box>
 
@@ -1179,57 +1186,62 @@ export default function AxleSubPage() {
           ※ 운송 스케줄 현황 ※
         </Typography>
         <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 1, gap: 1 }}>
-          <Button
-            variant="contained"
-            color="success"
-            size="small"
-            disabled={!editMode}
-            onClick={() =>
-              setScheduleRows(prev => [
-                ...prev,
-                {
-                  tempId: uuidv4(),
-                  id: null,
-                  inv_no: "",
-                  etd: "",
-                  eta: "",
-                  quantities: {}   // 🔥 qty는 전부 여기
-                }
+          {editMode && (
 
-                // ★ inv_no 빈값 금지
-              ])
-            }
+            <Button
+              variant="contained"
+              color="success"
+              size="small"
+              disabled={!editMode}
+              onClick={() =>
+                setScheduleRows(prev => [
+                  ...prev,
+                  {
+                    tempId: uuidv4(),
+                    id: null,
+                    inv_no: "",
+                    etd: "",
+                    eta: "",
+                    quantities: {}   // 🔥 qty는 전부 여기
+                  }
 
-          >
-            + 행추가
-          </Button>
-
-          <Button
-            variant="contained"
-            color="error"
-            size="small"
-            disabled={!editMode}
-            onClick={() => {
-              if (selectedScheduleRowIds.length === 0) {
-                alert("삭제할 행을 선택해주세요.");
-                return;
+                  // ★ inv_no 빈값 금지
+                ])
               }
 
-              setScheduleRows(prev =>
-                prev.filter(r => !selectedScheduleRowIds.includes(r.tempId))
-              );
+            >
+              + 행추가
+            </Button>
+          )}
+          {editMode && (
 
-              // ⭐ 선택 초기화
-              setSelectedScheduleRowIds([]);
-            }}
+            <Button
+              variant="contained"
+              color="error"
+              size="small"
+              disabled={!editMode}
+              onClick={() => {
+                if (selectedScheduleRowIds.length === 0) {
+                  alert("삭제할 행을 선택해주세요.");
+                  return;
+                }
+
+                setScheduleRows(prev =>
+                  prev.filter(r => !selectedScheduleRowIds.includes(r.tempId))
+                );
+
+                // ⭐ 선택 초기화
+                setSelectedScheduleRowIds([]);
+              }}
 
 
 
 
 
-          >
-            - 행삭제
-          </Button>
+            >
+              - 행삭제
+            </Button>
+          )}
         </Box>
         <Table
           size="small"
