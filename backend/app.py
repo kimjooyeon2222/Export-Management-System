@@ -2480,9 +2480,6 @@ def save_shipment():
     claims = get_jwt()
     print("🔥 JWT claims:", claims)
 
-    if claims.get("role") != "admin":
-        return jsonify({"error": "admin only"}), 403
-
     data = request.json
     print("🔥 shipment data:", data)
 
