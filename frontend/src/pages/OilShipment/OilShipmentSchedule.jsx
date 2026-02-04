@@ -249,7 +249,7 @@ export default function OilShipmentSchedule() {
     }
 
     alert("오일 관리 리스트 저장 완료!");
-
+    await saveAll();
     resetOilEditState();
 
   };
