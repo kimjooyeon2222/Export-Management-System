@@ -45,7 +45,7 @@ export const UNIT_OPTIONS = [
 
 export default function ItemPage() {
   const makeTempId = () =>
-  `${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+    `${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 
 
   // 검색용
@@ -246,44 +246,51 @@ export default function ItemPage() {
 
       {/* 🔹 버튼 영역 */}
       <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mb: 2 }}>
-        <Button variant="contained" onClick={addItemRow} disabled={!editMode}>
-          + 품목등록
-        </Button>
-        <Button
-          variant="contained"
-          color={editSelectMode ? "info" : "secondary"}
-          disabled={!editMode}
-          onClick={() => {
-            setEditSelectMode(prev => !prev);
-            setDeleteMode(false);
-            setSelectedRows([]);
-            setEditingRowId(null);
+        {editMode && (
+          <Button variant="contained" onClick={addItemRow} disabled={!editMode}>
+            + 품목등록
+          </Button>
+        )}
+        {editMode && (
 
-            if (!editSelectMode) {
-              alert("✏ 수정할 행을 클릭하세요.");
-            }
-          }}
-        >
-          {editSelectMode ? "수정 취소" : "수정"}
-        </Button>
+          <Button
+            variant="contained"
+            color={editSelectMode ? "info" : "secondary"}
+            disabled={!editMode}
+            onClick={() => {
+              setEditSelectMode(prev => !prev);
+              setDeleteMode(false);
+              setSelectedRows([]);
+              setEditingRowId(null);
 
-        <Button
-          variant="contained"
-          color={deleteMode ? "error" : "warning"}
-          onClick={toggleDeleteMode}
-          disabled={!editMode}
-        >
-          {deleteMode ? "삭제 실행" : "삭제"}
-        </Button>
-        <Button
-          variant="contained"
-          color="success"
-          disabled={!editMode}
-          onClick={handleSave}
-        >
-          저장
-        </Button>
-
+              if (!editSelectMode) {
+                alert("✏ 수정할 행을 클릭하세요.");
+              }
+            }}
+          >
+            {editSelectMode ? "수정 취소" : "수정"}
+          </Button>
+        )}
+        {editMode && (
+          <Button
+            variant="contained"
+            color={deleteMode ? "error" : "warning"}
+            onClick={toggleDeleteMode}
+            disabled={!editMode}
+          >
+            {deleteMode ? "삭제 실행" : "삭제"}
+          </Button>
+        )}
+        {editMode && (
+          <Button
+            variant="contained"
+            color="success"
+            disabled={!editMode}
+            onClick={handleSave}
+          >
+            저장
+          </Button>
+        )}
         <Button
           variant="outlined"
           onClick={() => {
@@ -303,7 +310,7 @@ export default function ItemPage() {
       <Paper component="form" sx={{ p: 1, mb: 2 }} onSubmit={(e) => { e.preventDefault(); handleSearch(); }}>
         <Grid container spacing={2} justifyContent="center">
           <Grid item xs={3}>
-            <TextField label="품목번호" name="itemNo" fullWidth value={search.itemNo} onChange={handleSearchChange}  />
+            <TextField label="품목번호" name="itemNo" fullWidth value={search.itemNo} onChange={handleSearchChange} />
           </Grid>
           <Grid item xs={3}>
             <TextField label="품목명" name="itemName" fullWidth value={search.itemName} onChange={handleSearchChange} />
