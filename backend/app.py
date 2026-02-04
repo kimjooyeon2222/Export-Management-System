@@ -2373,14 +2373,7 @@ def get_stock_audit_for_bracket(audit_date):
         print("🔥 bracket stock audit error:", e)
         return jsonify([]), 500
 
-@app.route("/api/br-inventory/<int:id>", methods=["DELETE"])
-@jwt_required()
-@permission_required("BRACKET", "delete")
-def delete_br_inventory(id):
-    row = BrInventory.query.get_or_404(id)
-    db.session.delete(row)
-    db.session.commit()
-    return jsonify({"message": "deleted"})
+
 
 @app.route("/api/stock-audits/<int:id>", methods=["PUT"])
 @jwt_required()
@@ -2842,7 +2835,28 @@ def download_excel_template(filename):
         filename,
         as_attachment=True
     )
-    
+
+@app.route("/api/br-inventory/bulk", methods=["POST"])
+@jwt_required()
+@permission_required("BRACKET", "write")
+def save_br_inventory_bulk():
+    rows = request.json  # 프론트 전체 목록
+
+    # 🔥 전체 삭제
+    BrInventory.query.delete()
+
+    # 🔥 다시 삽입
+    for r in rows:
+        db.session.add(BrInventory(
+            company=r.get("company"),
+            item_code=r.get("item_code"),
+            item_name=r.get("item_name"),
+            actual_stock=r.get("actual_stock", 0),
+        ))
+
+    db.session.commit()
+    return jsonify({"message": "saved"})
+
 # ============================================
 # 서버 실행
 # ============================================

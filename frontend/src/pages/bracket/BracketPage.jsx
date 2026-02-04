@@ -325,43 +325,11 @@ export default function BracketPage() {
 
       // 2) 각 품목(actual_stock) 저장
       // 2) BRACKET 품목 저장 (신규/기존 분기)
-      for (const row of bracketRows) {
-        if (row.id) {
-          // ✅ 기존 데이터 → PUT
-          await apiFetch(`${API_BASE}/api/br-inventory/${row.id}`, {
-            method: "PUT",
-            body: JSON.stringify({
-              company: row.company,
-              item_code: row.item_code,
-              item_name: row.item_name,
-              actual_stock: row.actual_stock,
+      await apiFetch(`${API_BASE}/api/br-inventory/bulk`, {
+        method: "POST",
+        body: JSON.stringify(bracketRows),
+      });
 
-
-            }),
-          });
-        } else {
-          // ✅ 신규 데이터 → POST
-          const res = await apiFetch(`${API_BASE}/api/br-inventory`, {
-            method: "POST",
-            body: JSON.stringify({
-              company: row.company,
-              item_code: row.item_code,
-              item_name: row.item_name,
-              actual_stock: row.actual_stock,
-            }),
-          });
-
-          const saved = await res.json();
-
-          setBracketRows(prev =>
-            prev.map(r =>
-              r.tempId === row.tempId
-                ? { ...r, id: saved.id }
-                : r
-            )
-          );
-        }
-      }
 
 
       // 3) 스케줄 저장
@@ -800,7 +768,7 @@ export default function BracketPage() {
                   onClick={async () => {
                     // 1️⃣ 삭제 모드 진입
                     if (!deleteMode) {
-                      alert("<주의>\n저장버튼을 누르지 않아도 삭제되니 주의바랍니다.\n삭제할 행을 선택하여 선택 삭제 버튼 누르세요.");
+                      alert("삭제할 행을 선택하세요.");
 
                       setDeleteMode(true);
                       setSelectedBrRowIds([]);
@@ -813,15 +781,6 @@ export default function BracketPage() {
                       return;
                     }
 
-                    // 3️⃣ DB 삭제 (id 있는 것만)
-                    for (const tempId of selectedBrRowIds) {
-                      const row = bracketRows.find(r => r.tempId === tempId);
-                      if (row?.id) {
-                        await apiFetch(`${API_BASE}/api/br-inventory/${row.id}`, {
-                          method: "DELETE",
-                        });
-                      }
-                    }
 
                     // 4️⃣ 프론트 삭제
                     setBracketRows(prev =>
