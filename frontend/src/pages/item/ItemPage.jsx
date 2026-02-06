@@ -44,6 +44,23 @@ export const UNIT_OPTIONS = [
 ];
 
 export default function ItemPage() {
+  const formatUtcToBrowserTime = (value) => {
+    if (!value) return "";
+
+    // UTC라고 명시
+    const d = new Date(value.replace(" ", "T") + "Z");
+
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    const hh = String(d.getHours()).padStart(2, "0");
+    const mi = String(d.getMinutes()).padStart(2, "0");
+    const ss = String(d.getSeconds()).padStart(2, "0");
+
+    return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
+  };
+
+
   const makeTempId = () =>
     `${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 
@@ -624,8 +641,9 @@ export default function ItemPage() {
                   </TableCell>
 
 
-                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "14px" }}>{row.created_at}</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "14px" }}>{row.updated_at}</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "14px" }}> {formatUtcToBrowserTime(row.created_at)}</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: "bold", fontSize: "14px" }}>  {formatUtcToBrowserTime(row.updated_at)}
+                  </TableCell>
                 </TableRow>
               ))}
           </TableBody>
