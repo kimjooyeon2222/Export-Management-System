@@ -3,17 +3,16 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-
 class Config:
     @staticmethod
     def get_db_uri():
         return (
-            f"mysql+pymysql://"
+            f"mssql+pyodbc://"
             f"{os.environ['DB_USER']}:"
             f"{os.environ['DB_PASSWORD']}@"
-            f"{os.environ['DB_HOST']}:"
-            f"{os.environ['DB_PORT']}/"
+            f"{os.environ['DB_HOST']}/"
             f"{os.environ['DB_NAME']}"
+            "?driver=ODBC+Driver+17+for+SQL+Server"
         )
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False

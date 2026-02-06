@@ -131,7 +131,6 @@ class ScheduleRow(db.Model):
     updated_at = db.Column(
         db.DateTime,
         default=datetime.utcnow,
-        onupdate=datetime.utcnow
     )
 
 # ============================================================
@@ -258,7 +257,6 @@ class EvSetting(db.Model):
     updated_at = db.Column(
         db.DateTime,
         default=datetime.utcnow,
-        onupdate=datetime.utcnow
     )
 
     def to_dict(self):
@@ -287,7 +285,6 @@ class EvInventory(db.Model):
     updated_at = db.Column(
         db.DateTime,
         default=datetime.utcnow,
-        onupdate=datetime.utcnow
     )
 
     def to_dict(self):
@@ -314,7 +311,6 @@ class EvSchedule(db.Model):
     updated_at = db.Column(
         db.DateTime,
         default=datetime.utcnow,
-        onupdate=datetime.utcnow
     )
 
     def to_dict(self):
@@ -340,7 +336,6 @@ class BrInventory(db.Model):
     updated_at = db.Column(
         db.DateTime,
         default=datetime.utcnow,
-        onupdate=datetime.utcnow
     )
 
     def to_dict(self):
@@ -365,7 +360,6 @@ class BrSchedule(db.Model):
     updated_at = db.Column(
         db.DateTime,
         default=datetime.utcnow,
-        onupdate=datetime.utcnow
     )
 
     def to_dict(self):
@@ -390,7 +384,6 @@ class BrSetting(db.Model):
     updated_at = db.Column(
         db.DateTime,
         default=datetime.utcnow,
-        onupdate=datetime.utcnow
     )
 
     def to_dict(self):
@@ -476,7 +469,6 @@ class DashboardMemo(db.Model):
     updated_at = db.Column(
         db.DateTime,
         default=datetime.utcnow,
-        onupdate=datetime.utcnow
     )
 
     def to_dict(self):
@@ -549,7 +541,6 @@ class ItemMaster(db.Model):
     updated_at = db.Column(
         db.DateTime,
         default=datetime.utcnow,
-        onupdate=datetime.utcnow
     )
 
     def to_dict(self):
@@ -584,7 +575,6 @@ class StockAudit(db.Model):
     updated_at = db.Column(
         db.DateTime,
         default=datetime.utcnow,
-        onupdate=datetime.utcnow
     )
 
     # 🔥 실사 삭제 시 상세 자동 삭제
@@ -671,7 +661,6 @@ class ForgingAudit(db.Model):
     updated_at = db.Column(
         db.DateTime,
         default=datetime.utcnow,
-        onupdate=datetime.utcnow
     )
 
     def to_dict(self):
@@ -710,10 +699,8 @@ class ShipmentHeader(db.Model):
 
     id = db.Column(db.BigInteger, primary_key=True,autoincrement=True)
 
-    route = db.Column(
-        db.Enum("SAVANNAH", "MOBILE", "LA", name="shipment_route_enum"),
-        nullable=False
-    )
+    route = db.Column(db.String(20), nullable=False)
+
 
     year = db.Column(db.SmallInteger, nullable=False)
     month = db.Column(db.SmallInteger, nullable=False)
@@ -724,7 +711,6 @@ class ShipmentHeader(db.Model):
     updated_at = db.Column(
         db.DateTime,
         default=datetime.utcnow,
-        onupdate=datetime.utcnow
     )
 
     __table_args__ = (
@@ -793,7 +779,6 @@ class ShipmentDomesticCost(db.Model):
     updated_at = db.Column(
         db.DateTime,
         default=datetime.utcnow,
-        onupdate=datetime.utcnow
     )
 
     def to_dict(self):
@@ -832,7 +817,6 @@ class ShipmentOceanCost(db.Model):
     updated_at = db.Column(
         db.DateTime,
         default=datetime.utcnow,
-        onupdate=datetime.utcnow
     )
 
     def to_dict(self):
@@ -871,7 +855,6 @@ class ShipmentUSCost(db.Model):
     updated_at = db.Column(
         db.DateTime,
         default=datetime.utcnow,
-        onupdate=datetime.utcnow
     )
 
     def to_dict(self):
@@ -896,7 +879,6 @@ class ShipmentSetting(db.Model):
     updated_at = db.Column(
         db.DateTime,
         default=datetime.utcnow,
-        onupdate=datetime.utcnow
     )
 
     def to_dict(self):

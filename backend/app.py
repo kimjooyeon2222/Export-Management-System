@@ -150,7 +150,7 @@ def calc_status(etd, eta):
 
 
 def home():
-    return "Flask + MySQL Connected!"
+    return "Flask + MSSQL Connected!"
 
 # ============================================
 # 🔐 USER MANAGEMENT API
